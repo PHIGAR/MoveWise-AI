@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MoveWise AI</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    <!-- ==================================================
+         HOME
+    =================================================== -->
+
+    <section
+        id="home-screen"
+        class="screen active"
+    >
+
+        <header class="header">
+
+            <div class="brand">
+
+                <div class="brand-mark">
+                    M
+                </div>
+
+                <div>
+
+                    <h1>
+                        MoveWise <span>AI</span>
+                    </h1>
+
+                    <p>
+                        Movement Intelligence
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="system-status">
+
+                <span class="status-dot"></span>
+
+                AI พร้อมทำงาน
+
+            </div>
+
+        </header>
+
+
+        <div class="home-hero">
+
+            <div class="hero-badge">
+                AI MOVEMENT INTELLIGENCE
+            </div>
+
+
+            <h2>
+                เข้าใจร่างกายของคุณ<br>
+                <span>ด้วย AI</span>
+            </h2>
+
+
+            <p>
+
+                วิเคราะห์การเคลื่อนไหวแบบ Real-time
+                เพื่อช่วยให้คุณออกกำลังกายได้
+                เหมาะสมและมีประสิทธิภาพมากขึ้น
+
+            </p>
+
+        </div>
+
+
+        <div class="exercise-title">
+
+            <div>
+
+                <h3>
+                    เลือกการออกกำลังกาย
+                </h3>
+
+                <p>
+                    เลือกท่าที่ต้องการให้ AI วิเคราะห์
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="exercise-grid">
+
+
+            <!-- JUMPING JACK -->
+
+            <button
+                class="exercise-card"
+                id="jumping-jack-card"
+            >
+
+                <div class="exercise-card-top">
+
+                    <div class="exercise-symbol">
+                        🏃
+                    </div>
+
+                    <span>
+                        AI READY
+                    </span>
+
+                </div>
+
+
+                <div class="exercise-card-content">
+
+                    <h3>
+                        Jumping Jack
+                    </h3>
+
+                    <p>
+                        Cardio & Full Body
+                    </p>
+
+                </div>
+
+
+                <div class="exercise-card-bottom">
+
+                    <span>
+                        เริ่มการฝึก
+                    </span>
+
+                    <strong>
+                        →
+                    </strong>
+
+                </div>
+
+            </button>
+
+
+
+            <!-- SQUAT -->
+
+            <button
+                class="exercise-card disabled"
+            >
+
+                <div class="exercise-card-top">
+
+                    <div class="exercise-symbol">
+                        🏋️
+                    </div>
+
+                    <span>
+                        COMING SOON
+                    </span>
+
+                </div>
+
+
+                <div class="exercise-card-content">
+
+                    <h3>
+                        Squat
+                    </h3>
+
+                    <p>
+                        Lower Body
+                    </p>
+
+                </div>
+
+
+                <div class="exercise-card-bottom">
+
+                    <span>
+                        เร็ว ๆ นี้
+                    </span>
+
+                    <strong>
+                        ล็อก
+                    </strong>
+
+                </div>
+
+            </button>
+
+
+        </div>
+
+
+        <div class="home-features">
+
+            <div>
+                <strong>AI Vision</strong>
+                <span>ตรวจจับร่างกาย</span>
+            </div>
+
+            <div>
+                <strong>Real-time</strong>
+                <span>Feedback ทันที</span>
+            </div>
+
+            <div>
+                <strong>Personalized</strong>
+                <span>วิเคราะห์เฉพาะบุคคล</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         EXERCISE
+    =================================================== -->
+
+    <section
+        id="exercise-screen"
+        class="screen"
+    >
+
+        <header class="header exercise-header">
+
+
+            <button
+                id="back-home"
+                class="back-button"
+            >
+                ← กลับ
+            </button>
+
+
+            <div class="exercise-title-center">
+
+                <strong>
+                    🏃 Jumping Jack
+                </strong>
+
+                <span>
+                    AI Movement Analysis
+                </span>
+
+            </div>
+
+
+            <div class="exercise-timer">
+
+                <span>
+                    เวลา
+                </span>
+
+                <strong id="timer">
+                    00:00
+                </strong>
+
+            </div>
+
+
+        </header>
+
+
+        <main class="main-layout">
+
+
+            <!-- CAMERA -->
+
+            <section class="camera-section">
+
+                <div class="camera-card">
+
+
+                    <video
+                        id="webcam"
+                        autoplay
+                        playsinline
+                        muted
+                    ></video>
+
+
+                    <canvas
+                        id="output_canvas"
+                    ></canvas>
+
+
+                    <div class="camera-top">
+
+                        <div
+                            id="status"
+                            class="ai-status"
+                        >
+
+                            กำลังโหลด AI...
+
+                        </div>
+
+
+                        <div class="camera-label">
+
+                            AI VISION
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="debug-panel">
+
+                        <div class="debug-title">
+
+                            AI ANALYSIS
+
+                        </div>
+
+
+                        <div class="debug-row">
+
+                            <span>
+                                ตรวจจับร่างกาย
+                            </span>
+
+                            <strong id="pose-status">
+                                --
+
+                            </strong>
+
+                        </div>
+
+
+                        <div class="debug-row">
+
+                            <span>
+                                ความมั่นใจ
+                            </span>
+
+                            <strong id="confidence">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="debug-row">
+
+                            <span>
+                                ตำแหน่งเท้า
+                            </span>
+
+                            <strong>
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="debug-row">
+
+                            <span>
+                                การเคลื่อนไหว
+                            </span>
+
+                            <strong id="squat-state">
+                                ท่าเริ่มต้น
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="camera-hint">
+
+                        ✦ AI กำลังวิเคราะห์การเคลื่อนไหวแบบ Real-time
+
+                    </div>
+
+
+                </div>
+
+
+                <button
+                    id="finish-exercise"
+                    class="finish-button"
+                >
+
+                    จบการฝึก
+
+                </button>
+
+            </section>
+
+
+
+            <!-- RIGHT -->
+
+            <aside class="control-panel">
+
+
+                <div class="rep-card">
+
+                    <div class="rep-header">
+
+                        <span>
+                            จำนวนครั้ง
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="rep"
+                        class="rep-number"
+                    >
+                        0
+                    </div>
+
+
+                    <div class="rep-subtitle">
+                        REPETITIONS
+                    </div>
+
+                </div>
+
+
+
+                <div class="coach-card">
+
+                    <div class="section-title">
+
+                        <div class="section-icon">
+                            ✦
+                        </div>
+
+                        <div>
+
+                            <span>
+                                AI COACH
+                            </span>
+
+                            <small>
+                                Real-time feedback
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="form"
+                        class="coach-status"
+                    >
+                        พร้อมใช้งาน
+                    </div>
+
+
+                    <p
+                        id="feedback"
+                        class="coach-message"
+                    >
+                        ยืนให้เห็นเต็มตัว
+                    </p>
+
+                </div>
+
+
+
+                <div class="score-card">
+
+                    <div class="score-header">
+
+                        <div>
+
+                            <span class="score-label">
+                                คุณภาพการเคลื่อนไหว
+                            </span>
+
+                            <small>
+                                Movement Quality
+                            </small>
+
+                        </div>
+
+
+                        <strong
+                            id="form-score"
+                        >
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="score-progress">
+
+                        <div
+                            id="score-bar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="start"
+                    class="start-button"
+                >
+
+                    ▶ เริ่มการวิเคราะห์ด้วย AI
+
+                </button>
+
+
+            </aside>
+
+        </main>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         RESULT
+    =================================================== -->
+
+    <section
+        id="result-screen"
+        class="screen"
+    >
+
+
+        <div class="result-container">
+
+
+            <div class="result-header">
+
+                <div class="hero-badge">
+                    SESSION COMPLETE
+                </div>
+
+
+                <h2>
+                    🎉 ทำได้ดีมาก!
+                </h2>
+
+
+                <p>
+                    ผลการฝึก Jumping Jack ของคุณ
+                </p>
+
+            </div>
+
+
+            <div class="result-main-score">
+
+                <span>
+                    จำนวนครั้ง
+                </span>
+
+                <strong id="result-reps">
+                    0
+                </strong>
+
+                <small>
+                    REPETITIONS
+                </small>
+
+            </div>
+
+
+            <div class="result-grid">
+
+
+                <div class="result-card">
+
+                    <span>
+                        Movement Quality
+                    </span>
+
+                    <strong id="result-quality">
+                        0%
+                    </strong>
+
+                    <div class="result-progress">
+
+                        <div
+                            id="result-quality-bar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="result-card">
+
+                    <span>
+                        Accuracy
+                    </span>
+
+                    <strong id="result-accuracy">
+                        0%
+                    </strong>
+
+                    <div class="result-progress">
+
+                        <div
+                            id="result-accuracy-bar"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="result-card">
+
+                    <span>
+                        เวลา
+                    </span>
+
+                    <strong id="result-time">
+                        00:00
+                    </strong>
+
+                    <small>
+                        SESSION TIME
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="insight-card">
+
+                <div class="insight-icon">
+                    ✦
+                </div>
+
+                <div>
+
+                    <span>
+                        AI MOVEMENT INSIGHT
+                    </span>
+
+                    <h3 id="ai-insight-title">
+                        กำลังวิเคราะห์...
+                    </h3>
+
+                    <p id="ai-insight">
+                        กำลังสร้างข้อมูลจากการเคลื่อนไหวของคุณ
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="recommendation-card">
+
+                <div class="recommendation-icon">
+                    💡
+                </div>
+
+                <div>
+
+                    <span>
+                        AI RECOMMENDATION
+                    </span>
+
+                    <h3>
+                        คำแนะนำสำหรับคุณ
+                    </h3>
+
+                    <p id="ai-recommendation">
+                        วิเคราะห์ผลการฝึกเพื่อสร้างคำแนะนำ
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="result-actions">
+
+                <button
+                    id="again-button"
+                    class="start-button"
+                >
+
+                    ↻ ฝึกอีกครั้ง
+
+                </button>
+
+
+                <button
+                    id="home-button"
+                    class="secondary-button"
+                >
+
+                    ← กลับหน้าแรก
+
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+<script
+    type="module"
+    src="app.js"
+></script>
+
+
+</body>
+
+</html>
