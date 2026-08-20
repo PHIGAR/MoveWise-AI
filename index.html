@@ -10,27 +10,23 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>MoveWise AI</title>
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
+    <meta
+        name="theme-color"
+        content="#0b1220"
     >
 
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
+    <meta
+        name="description"
+        content="MoveWise AI - AI Movement Intelligence Platform"
     >
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
+    <title>
+        MoveWise AI
+    </title>
 
     <link
         rel="stylesheet"
-        href="style.css"
+        href="./style.css"
     >
 
 </head>
@@ -38,87 +34,34 @@
 
 <body>
 
-
 <div class="app">
 
 
-    <!-- ==================================================
-         HOME
-    =================================================== -->
+<!-- =========================================================
+     HOME
+========================================================= -->
 
-    <section
-        id="home-screen"
-        class="screen active"
-    >
+<section
+    id="home-screen"
+    class="screen active"
+>
 
-        <header class="header">
+    <header class="header">
 
-            <div class="brand">
+        <div class="brand">
 
-                <div class="brand-mark">
-                    M
-                </div>
-
-                <div>
-
-                    <h1>
-                        MoveWise <span>AI</span>
-                    </h1>
-
-                    <p>
-                        Movement Intelligence
-                    </p>
-
-                </div>
-
+            <div class="brand-mark">
+                M
             </div>
-
-
-            <div class="system-status">
-
-                <span class="status-dot"></span>
-
-                AI พร้อมทำงาน
-
-            </div>
-
-        </header>
-
-
-        <div class="home-hero">
-
-            <div class="hero-badge">
-                AI MOVEMENT INTELLIGENCE
-            </div>
-
-
-            <h2>
-                เข้าใจร่างกายของคุณ<br>
-                <span>ด้วย AI</span>
-            </h2>
-
-
-            <p>
-
-                วิเคราะห์การเคลื่อนไหวแบบ Real-time
-                เพื่อช่วยให้คุณออกกำลังกายได้
-                เหมาะสมและมีประสิทธิภาพมากขึ้น
-
-            </p>
-
-        </div>
-
-
-        <div class="exercise-title">
 
             <div>
 
-                <h3>
-                    เลือกการออกกำลังกาย
-                </h3>
+                <h1>
+                    Move<span>Wise</span>
+                </h1>
 
                 <p>
-                    เลือกท่าที่ต้องการให้ AI วิเคราะห์
+                    AI Movement Intelligence
                 </p>
 
             </div>
@@ -126,53 +69,158 @@
         </div>
 
 
-        <div class="exercise-grid">
+        <button
+            id="home-profile-button"
+            class="profile-button"
+            type="button"
+            aria-label="Profile"
+        >
+
+            <span>
+                👤
+            </span>
+
+        </button>
+
+    </header>
+
+
+
+    <!-- GREETING -->
+
+    <section class="dashboard-greeting">
+
+        <div>
+
+            <span class="dashboard-eyebrow">
+                YOUR PERSONAL MOVEMENT AI
+            </span>
+
+            <h2>
+                สวัสดี 👋
+            </h2>
+
+            <p>
+                พร้อมขยับร่างกายให้ดีขึ้นหรือยัง?
+            </p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- MOVEMENT SCORE -->
+
+    <section class="movement-score-card">
+
+        <div class="movement-score-info">
+
+            <span>
+                YOUR MOVEMENT SCORE
+            </span>
+
+            <small>
+                คะแนนการเคลื่อนไหวล่าสุด
+            </small>
+
+            <strong id="home-movement-score">
+                92
+            </strong>
+
+            <div class="score-change">
+                ↑ 8% จาก Session ก่อน
+            </div>
+
+        </div>
+
+
+        <div class="score-circle">
+
+            <div>
+
+                <strong>
+                    92
+                </strong>
+
+                <span>
+                    /100
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- QUICK START -->
+
+    <section class="dashboard-section">
+
+        <div class="dashboard-section-header">
+
+            <div>
+
+                <span>
+                    QUICK START
+                </span>
+
+                <h3>
+                    เริ่มการฝึก
+                </h3>
+
+            </div>
+
+
+            <button
+                id="view-all-exercises"
+                class="text-button"
+                type="button"
+            >
+                ดูทั้งหมด →
+            </button>
+
+        </div>
+
+
+        <div class="quick-exercise-grid">
 
 
             <!-- JUMPING JACK -->
 
             <button
-                class="exercise-card"
-                id="jumping-jack-card"
+                id="home-jumping-jack"
+                class="quick-exercise-card active-exercise"
+                type="button"
             >
 
-                <div class="exercise-card-top">
-
-                    <div class="exercise-symbol">
-                        🏃
-                    </div>
-
-                    <span>
-                        AI READY
-                    </span>
-
+                <div class="quick-card-icon">
+                    🏃
                 </div>
 
 
-                <div class="exercise-card-content">
+                <div class="quick-card-body">
 
-                    <h3>
+                    <span>
+                        CARDIO
+                    </span>
+
+                    <h4>
                         Jumping Jack
-                    </h3>
+                    </h4>
 
                     <p>
-                        Cardio & Full Body
+                        Full AI Analysis
                     </p>
 
                 </div>
 
 
-                <div class="exercise-card-bottom">
-
-                    <span>
-                        เริ่มการฝึก
-                    </span>
-
-                    <strong>
-                        →
-                    </strong>
-
-                </div>
+                <strong>
+                    →
+                </strong>
 
             </button>
 
@@ -181,69 +229,76 @@
             <!-- SQUAT -->
 
             <button
-                class="exercise-card disabled"
+                id="home-squat"
+                class="quick-exercise-card"
+                type="button"
             >
 
-                <div class="exercise-card-top">
-
-                    <div class="exercise-symbol">
-                        🏋️
-                    </div>
-
-                    <span>
-                        COMING SOON
-                    </span>
-
+                <div class="quick-card-icon">
+                    🏋️
                 </div>
 
 
-                <div class="exercise-card-content">
+                <div class="quick-card-body">
 
-                    <h3>
+                    <span>
+                        STRENGTH
+                    </span>
+
+                    <h4>
                         Squat
-                    </h3>
+                    </h4>
 
                     <p>
-                        Lower Body
+                        Coming Soon
                     </p>
 
                 </div>
 
 
-                <div class="exercise-card-bottom">
-
-                    <span>
-                        เร็ว ๆ นี้
-                    </span>
-
-                    <strong>
-                        ล็อก
-                    </strong>
-
-                </div>
+                <strong>
+                    —
+                </strong>
 
             </button>
 
 
-        </div>
+
+            <!-- PUSH UP -->
+
+            <button
+                class="quick-exercise-card"
+                type="button"
+                disabled
+            >
+
+                <div class="quick-card-icon">
+                    💪
+                </div>
 
 
-        <div class="home-features">
+                <div class="quick-card-body">
 
-            <div>
-                <strong>AI Vision</strong>
-                <span>ตรวจจับร่างกาย</span>
-            </div>
+                    <span>
+                        STRENGTH
+                    </span>
 
-            <div>
-                <strong>Real-time</strong>
-                <span>Feedback ทันที</span>
-            </div>
+                    <h4>
+                        Push-up
+                    </h4>
 
-            <div>
-                <strong>Personalized</strong>
-                <span>วิเคราะห์เฉพาะบุคคล</span>
-            </div>
+                    <p>
+                        Coming Soon
+                    </p>
+
+                </div>
+
+
+                <strong>
+                    —
+                </strong>
+
+            </button>
 
         </div>
 
@@ -251,513 +306,1590 @@
 
 
 
-    <!-- ==================================================
-         EXERCISE
-    =================================================== -->
+    <!-- AI RECOMMENDED -->
 
-    <section
-        id="exercise-screen"
-        class="screen"
-    >
+    <section class="dashboard-section">
 
-        <header class="header exercise-header">
+        <div class="dashboard-section-header">
+
+            <div>
+
+                <span>
+                    AI RECOMMENDED
+                </span>
+
+                <h3>
+                    เหมาะกับคุณ
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <div class="recommendation-home-card">
+
+            <div class="recommendation-home-icon">
+                ✦
+            </div>
+
+
+            <div class="recommendation-home-content">
+
+                <span>
+                    BASED ON YOUR MOVEMENT
+                </span>
+
+                <h3>
+                    Improve Full Body Mobility
+                </h3>
+
+                <p>
+                    ฝึกการเคลื่อนไหวของแขนและขา
+                    เพื่อเพิ่ม Range of Motion
+                </p>
+
+
+                <div class="recommendation-meta">
+
+                    <span>
+                        ⏱ 10 min
+                    </span>
+
+                    <span>
+                        • Beginner
+                    </span>
+
+                    <span>
+                        • Full Body
+                    </span>
+
+                </div>
+
+            </div>
 
 
             <button
-                id="back-home"
-                class="back-button"
+                id="recommended-start"
+                class="recommendation-start"
+                type="button"
             >
-                ← กลับ
+                เริ่ม →
             </button>
 
-
-            <div class="exercise-title-center">
-
-                <strong>
-                    🏃 Jumping Jack
-                </strong>
-
-                <span>
-                    AI Movement Analysis
-                </span>
-
-            </div>
-
-
-            <div class="exercise-timer">
-
-                <span>
-                    เวลา
-                </span>
-
-                <strong id="timer">
-                    00:00
-                </strong>
-
-            </div>
-
-
-        </header>
-
-
-        <main class="main-layout">
-
-
-            <!-- CAMERA -->
-
-            <section class="camera-section">
-
-                <div class="camera-card">
-
-
-                    <video
-                        id="webcam"
-                        autoplay
-                        playsinline
-                        muted
-                    ></video>
-
-
-                    <canvas
-                        id="output_canvas"
-                    ></canvas>
-
-
-                    <div class="camera-top">
-
-                        <div
-                            id="status"
-                            class="ai-status"
-                        >
-
-                            กำลังโหลด AI...
-
-                        </div>
-
-
-                        <div class="camera-label">
-
-                            AI VISION
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="debug-panel">
-
-                        <div class="debug-title">
-
-                            AI ANALYSIS
-
-                        </div>
-
-
-                        <div class="debug-row">
-
-                            <span>
-                                ตรวจจับร่างกาย
-                            </span>
-
-                            <strong id="pose-status">
-                                --
-
-                            </strong>
-
-                        </div>
-
-
-                        <div class="debug-row">
-
-                            <span>
-                                ความมั่นใจ
-                            </span>
-
-                            <strong id="confidence">
-                                --
-                            </strong>
-
-                        </div>
-
-
-                        <div class="debug-row">
-
-                            <span>
-                                ตำแหน่งเท้า
-                            </span>
-
-                            <strong>
-                                --
-                            </strong>
-
-                        </div>
-
-
-                        <div class="debug-row">
-
-                            <span>
-                                การเคลื่อนไหว
-                            </span>
-
-                            <strong id="squat-state">
-                                ท่าเริ่มต้น
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="camera-hint">
-
-                        ✦ AI กำลังวิเคราะห์การเคลื่อนไหวแบบ Real-time
-
-                    </div>
-
-
-                </div>
-
-
-                <button
-                    id="finish-exercise"
-                    class="finish-button"
-                >
-
-                    จบการฝึก
-
-                </button>
-
-            </section>
-
-
-
-            <!-- RIGHT -->
-
-            <aside class="control-panel">
-
-
-                <div class="rep-card">
-
-                    <div class="rep-header">
-
-                        <span>
-                            จำนวนครั้ง
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        id="rep"
-                        class="rep-number"
-                    >
-                        0
-                    </div>
-
-
-                    <div class="rep-subtitle">
-                        REPETITIONS
-                    </div>
-
-                </div>
-
-
-
-                <div class="coach-card">
-
-                    <div class="section-title">
-
-                        <div class="section-icon">
-                            ✦
-                        </div>
-
-                        <div>
-
-                            <span>
-                                AI COACH
-                            </span>
-
-                            <small>
-                                Real-time feedback
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        id="form"
-                        class="coach-status"
-                    >
-                        พร้อมใช้งาน
-                    </div>
-
-
-                    <p
-                        id="feedback"
-                        class="coach-message"
-                    >
-                        ยืนให้เห็นเต็มตัว
-                    </p>
-
-                </div>
-
-
-
-                <div class="score-card">
-
-                    <div class="score-header">
-
-                        <div>
-
-                            <span class="score-label">
-                                คุณภาพการเคลื่อนไหว
-                            </span>
-
-                            <small>
-                                Movement Quality
-                            </small>
-
-                        </div>
-
-
-                        <strong
-                            id="form-score"
-                        >
-                            0%
-                        </strong>
-
-                    </div>
-
-
-                    <div class="score-progress">
-
-                        <div
-                            id="score-bar"
-                        ></div>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    id="start"
-                    class="start-button"
-                >
-
-                    ▶ เริ่มการวิเคราะห์ด้วย AI
-
-                </button>
-
-
-            </aside>
-
-        </main>
+        </div>
 
     </section>
 
 
 
-    <!-- ==================================================
-         RESULT
-    =================================================== -->
+    <!-- WEEKLY ACTIVITY -->
 
-    <section
-        id="result-screen"
-        class="screen"
-    >
+    <section class="dashboard-section">
+
+        <div class="dashboard-section-header">
+
+            <div>
+
+                <span>
+                    THIS WEEK
+                </span>
+
+                <h3>
+                    Activity Overview
+                </h3>
+
+            </div>
+
+        </div>
 
 
-        <div class="result-container">
+        <div class="activity-card">
 
 
-            <div class="result-header">
+            <div class="activity-stat">
 
-                <div class="hero-badge">
-                    SESSION COMPLETE
-                </div>
+                <span>
+                    Sessions
+                </span>
 
+                <strong id="home-sessions">
+                    4
+                </strong>
+
+            </div>
+
+
+            <div class="activity-stat">
+
+                <span>
+                    Total Reps
+                </span>
+
+                <strong id="home-total-reps">
+                    86
+                </strong>
+
+            </div>
+
+
+            <div class="activity-stat">
+
+                <span>
+                    Avg Quality
+                </span>
+
+                <strong id="home-average-quality">
+                    91%
+                </strong>
+
+            </div>
+
+
+            <div class="activity-mini-chart">
+
+                <div style="height:35%"></div>
+                <div style="height:55%"></div>
+                <div style="height:45%"></div>
+                <div style="height:70%"></div>
+                <div style="height:62%"></div>
+                <div style="height:85%"></div>
+                <div style="height:75%"></div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- HOME NAVIGATION -->
+
+    <nav class="bottom-navigation">
+
+        <button
+            class="bottom-nav-item active"
+            data-nav="home"
+            type="button"
+        >
+
+            <span>
+                🏠
+            </span>
+
+            <small>
+                Home
+            </small>
+
+        </button>
+
+
+        <button
+            class="bottom-nav-item"
+            data-nav="analyze"
+            type="button"
+        >
+
+            <span>
+                🎯
+            </span>
+
+            <small>
+                Analyze
+            </small>
+
+        </button>
+
+
+        <button
+            class="bottom-nav-item"
+            data-nav="progress"
+            type="button"
+        >
+
+            <span>
+                📊
+            </span>
+
+            <small>
+                Progress
+            </small>
+
+        </button>
+
+
+        <button
+            class="bottom-nav-item"
+            data-nav="profile"
+            type="button"
+        >
+
+            <span>
+                👤
+            </span>
+
+            <small>
+                Profile
+            </small>
+
+        </button>
+
+    </nav>
+
+</section>
+
+
+
+<!-- =========================================================
+     ANALYZE
+========================================================= -->
+
+<section
+    id="analyze-screen"
+    class="screen"
+>
+
+    <div class="analyze-page">
+
+
+        <header class="analyze-header">
+
+            <div>
+
+                <span class="dashboard-eyebrow">
+                    AI MOVEMENT LIBRARY
+                </span>
 
                 <h2>
-                    🎉 ทำได้ดีมาก!
+                    วิเคราะห์การเคลื่อนไหว
                 </h2>
 
-
                 <p>
-                    ผลการฝึก Jumping Jack ของคุณ
+                    เลือกท่าที่ต้องการให้ MoveWise AI วิเคราะห์
                 </p>
 
             </div>
 
 
-            <div class="result-main-score">
+            <button
+                id="analyze-back-home"
+                class="back-button"
+                type="button"
+            >
+                ← Home
+            </button>
+
+        </header>
+
+
+
+        <!-- SEARCH -->
+
+        <div class="exercise-search">
+
+            <span>
+                ⌕
+            </span>
+
+            <input
+                id="exercise-search-input"
+                type="text"
+                placeholder="ค้นหาท่าออกกำลังกาย..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+
+        <!-- FILTER -->
+
+        <div class="exercise-filters">
+
+            <button
+                class="exercise-filter active"
+                data-filter="all"
+                type="button"
+            >
+                ทั้งหมด
+            </button>
+
+
+            <button
+                class="exercise-filter"
+                data-filter="cardio"
+                type="button"
+            >
+                Cardio
+            </button>
+
+
+            <button
+                class="exercise-filter"
+                data-filter="strength"
+                type="button"
+            >
+                Strength
+            </button>
+
+
+            <button
+                class="exercise-filter"
+                data-filter="mobility"
+                type="button"
+            >
+                Mobility
+            </button>
+
+        </div>
+
+
+
+        <!-- EXERCISE LIBRARY -->
+
+        <div
+            id="exercise-library"
+            class="exercise-library"
+        >
+
+
+            <!-- JUMPING JACK -->
+
+            <article
+                class="library-card"
+                data-category="cardio"
+                data-name="jumping jack"
+            >
+
+                <div class="library-icon">
+                    🏃
+                </div>
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            CARDIO
+                        </span>
+
+                        <span class="available-badge">
+                            ● AVAILABLE
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Jumping Jack
+                    </h3>
+
+
+                    <p>
+                        วิเคราะห์ Full Body Movement,
+                        ROM, Symmetry และ Movement Quality
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Full Body
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            AI Analysis
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start"
+                    data-exercise="jumping-jack"
+                    type="button"
+                >
+                    เริ่ม →
+                </button>
+
+            </article>
+
+
+
+            <!-- SQUAT -->
+
+            <article
+                class="library-card"
+                data-category="strength"
+                data-name="squat"
+            >
+
+                <div class="library-icon">
+                    🏋️
+                </div>
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            STRENGTH
+                        </span>
+
+                        <span class="coming-badge">
+                            COMING SOON
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Squat
+                    </h3>
+
+
+                    <p>
+                        Knee Angle, Hip Angle,
+                        Squat Depth และ Body Alignment
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Lower Body
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            AI Analysis
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start disabled"
+                    type="button"
+                    disabled
+                >
+                    เตรียมระบบ
+                </button>
+
+            </article>
+
+
+
+            <!-- PUSH UP -->
+
+            <article
+                class="library-card"
+                data-category="strength"
+                data-name="push up"
+            >
+
+                <div class="library-icon">
+                    💪
+                </div>
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            STRENGTH
+                        </span>
+
+                        <span class="coming-badge">
+                            COMING SOON
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Push-up
+                    </h3>
+
+
+                    <p>
+                        Elbow Angle, Body Alignment
+                        และ Rep Quality
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Upper Body
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start disabled"
+                    type="button"
+                    disabled
+                >
+                    เตรียมระบบ
+                </button>
+
+            </article>
+
+
+
+            <!-- LUNGE -->
+
+            <article
+                class="library-card"
+                data-category="strength"
+                data-name="lunge"
+            >
+
+                <div class="library-icon">
+                    🦵
+                </div>
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            STRENGTH
+                        </span>
+
+                        <span class="coming-badge">
+                            COMING SOON
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Lunge
+                    </h3>
+
+
+                    <p>
+                        Knee Angle, Balance,
+                        Symmetry และ Stability
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Lower Body
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start disabled"
+                    type="button"
+                    disabled
+                >
+                    เตรียมระบบ
+                </button>
+
+            </article>
+
+
+
+            <!-- SHOULDER RAISE -->
+
+            <article
+                class="library-card"
+                data-category="mobility"
+                data-name="shoulder raise"
+            >
+
+                <div class="library-icon">
+                    🙆
+                </div>
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            MOBILITY
+                        </span>
+
+                        <span class="coming-badge">
+                            COMING SOON
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Shoulder Raise
+                    </h3>
+
+
+                    <p>
+                        Shoulder ROM,
+                        Symmetry และ Movement Control
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Upper Body
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start disabled"
+                    type="button"
+                    disabled
+                >
+                    เตรียมระบบ
+                </button>
+
+            </article>
+
+
+
+            <!-- SIDE BEND -->
+
+            <article
+                class="library-card"
+                data-category="mobility"
+                data-name="side bend"
+            >
+
+                <div class="library-icon">
+                    ↔️
+                </div>
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            MOBILITY
+                        </span>
+
+                        <span class="coming-badge">
+                            COMING SOON
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Side Bend
+                    </h3>
+
+
+                    <p>
+                        Trunk Angle,
+                        Symmetry และ Range of Motion
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Mobility
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start disabled"
+                    type="button"
+                    disabled
+                >
+                    เตรียมระบบ
+                </button>
+
+            </article>
+
+        </div>
+
+
+
+        <div
+            id="no-exercise-result"
+            class="no-exercise-result"
+        >
+            ไม่พบท่าออกกำลังกายที่ค้นหา
+        </div>
+
+
+
+        <!-- ANALYZE NAV -->
+
+        <nav class="bottom-navigation">
+
+            <button
+                class="bottom-nav-item"
+                data-nav="home"
+                type="button"
+            >
 
                 <span>
-                    จำนวนครั้ง
+                    🏠
                 </span>
 
-                <strong id="result-reps">
+                <small>
+                    Home
+                </small>
+
+            </button>
+
+
+            <button
+                class="bottom-nav-item active"
+                data-nav="analyze"
+                type="button"
+            >
+
+                <span>
+                    🎯
+                </span>
+
+                <small>
+                    Analyze
+                </small>
+
+            </button>
+
+
+            <button
+                class="bottom-nav-item"
+                data-nav="progress"
+                type="button"
+            >
+
+                <span>
+                    📊
+                </span>
+
+                <small>
+                    Progress
+                </small>
+
+            </button>
+
+
+            <button
+                class="bottom-nav-item"
+                data-nav="profile"
+                type="button"
+            >
+
+                <span>
+                    👤
+                </span>
+
+                <small>
+                    Profile
+                </small>
+
+            </button>
+
+        </nav>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     EXERCISE / CAMERA
+========================================================= -->
+
+<section
+    id="exercise-screen"
+    class="screen"
+>
+
+    <div class="exercise-header">
+
+        <button
+            id="back-home"
+            class="back-button"
+            type="button"
+        >
+            ← กลับ
+        </button>
+
+
+        <div class="exercise-title-center">
+
+            <strong>
+                Jumping Jack
+            </strong>
+
+            <span>
+                AI Movement Analysis
+            </span>
+
+        </div>
+
+
+        <div class="exercise-timer">
+
+            <span>
+                SESSION
+            </span>
+
+            <strong id="timer">
+                00:00
+            </strong>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-layout">
+
+
+        <!-- CAMERA -->
+
+        <div class="camera-section">
+
+            <div class="camera-card">
+
+                <video
+                    id="webcam"
+                    autoplay
+                    playsinline
+                    muted
+                ></video>
+
+
+                <canvas
+                    id="output_canvas"
+                ></canvas>
+
+
+                <div class="camera-top">
+
+                    <div
+                        id="status"
+                        class="ai-status"
+                    >
+                        AI พร้อมทำงาน
+                    </div>
+
+
+                    <div class="camera-label">
+                        MOVEWISE AI
+                    </div>
+
+                </div>
+
+
+                <div class="debug-panel">
+
+                    <div class="debug-title">
+                        MOVEMENT TRACKING
+                    </div>
+
+
+                    <div class="debug-row">
+
+                        <span>
+                            Pose
+                        </span>
+
+                        <strong id="pose-status">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="debug-row">
+
+                        <span>
+                            Confidence
+                        </span>
+
+                        <strong id="confidence">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="debug-row">
+
+                        <span>
+                            State
+                        </span>
+
+                        <strong id="squat-state">
+                            ท่าเริ่มต้น
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="camera-hint">
+
+                    💡
+                    ยืนให้เห็นศีรษะถึงเท้า
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- CONTROL PANEL -->
+
+        <div class="control-panel">
+
+
+            <!-- REP -->
+
+            <div class="rep-card">
+
+                <div class="rep-header">
+
+                    <span>
+                        CURRENT REP
+                    </span>
+
+                    <span>
+                        JUMPING JACK
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="rep"
+                    class="rep-number"
+                >
                     0
+                </div>
+
+
+                <div class="rep-subtitle">
+                    COMPLETED REPETITIONS
+                </div>
+
+            </div>
+
+
+
+            <!-- COACH -->
+
+            <div class="coach-card">
+
+                <div class="section-title">
+
+                    <div class="section-icon">
+                        AI
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            AI COACH
+                        </span>
+
+                        <small>
+                            Real-time feedback
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="form"
+                    class="coach-status"
+                >
+                    พร้อมเริ่ม
+                </div>
+
+
+                <p
+                    id="feedback"
+                    class="coach-message"
+                >
+                    กดเริ่มเพื่อให้ AI วิเคราะห์
+                </p>
+
+            </div>
+
+
+
+            <!-- SCORE -->
+
+            <div class="score-card">
+
+                <div class="score-header">
+
+                    <div>
+
+                        <span class="score-label">
+                            Movement Quality
+                        </span>
+
+                        <small>
+                            Real-time movement score
+                        </small>
+
+                    </div>
+
+
+                    <strong id="form-score">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="score-progress">
+
+                    <div
+                        id="score-bar"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- MOVEMENT INTELLIGENCE -->
+
+            <div class="movement-intelligence">
+
+                <div class="mi-header">
+
+                    <div>
+
+                        <span class="mi-eyebrow">
+                            AI MOVEMENT INTELLIGENCE
+                        </span>
+
+                        <h3>
+                            การวิเคราะห์การเคลื่อนไหว
+                        </h3>
+
+                    </div>
+
+
+                    <div class="mi-live">
+
+                        <span></span>
+
+                        LIVE
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- ROM -->
+
+                <div class="mi-card">
+
+                    <div class="mi-card-top">
+
+                        <span>
+                            Range of Motion
+                        </span>
+
+                        <strong id="live-rom">
+                            --%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="mi-bar">
+
+                        <div
+                            id="live-rom-bar"
+                            class="mi-bar-fill"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="mi-detail">
+
+                        <span>
+                            แขน
+                        </span>
+
+                        <span id="live-arm-rom">
+                            --%
+                        </span>
+
+                    </div>
+
+
+                    <div class="mi-detail">
+
+                        <span>
+                            ขา
+                        </span>
+
+                        <span id="live-leg-rom">
+                            --%
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- SYMMETRY -->
+
+                <div class="mi-card">
+
+                    <div class="mi-card-top">
+
+                        <span>
+                            Body Symmetry
+                        </span>
+
+                        <strong id="live-symmetry">
+                            --%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="mi-bar">
+
+                        <div
+                            id="live-symmetry-bar"
+                            class="mi-bar-fill"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="mi-detail">
+
+                        <span>
+                            แขนซ้าย
+                        </span>
+
+                        <span id="live-left-angle">
+                            --°
+                        </span>
+
+                    </div>
+
+
+                    <div class="mi-detail">
+
+                        <span>
+                            แขนขวา
+                        </span>
+
+                        <span id="live-right-angle">
+                            --°
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- QUALITY -->
+
+                <div class="mi-quality">
+
+                    <div class="mi-quality-score">
+
+                        <span id="live-quality">
+                            --
+                        </span>
+
+                        <small>
+                            /100
+                        </small>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="mi-eyebrow">
+                            MOVEMENT QUALITY
+                        </span>
+
+                        <h4 id="live-quality-label">
+                            รอการวิเคราะห์
+                        </h4>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- START -->
+
+            <button
+                id="start"
+                class="start-button"
+                type="button"
+            >
+                ▶ เริ่มการวิเคราะห์ด้วย AI
+            </button>
+
+
+
+            <!-- FINISH -->
+
+            <button
+                id="finish-exercise"
+                class="finish-button"
+                type="button"
+            >
+                จบการฝึก
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     RESULT
+========================================================= -->
+
+<section
+    id="result-screen"
+    class="screen"
+>
+
+    <div class="result-container">
+
+
+        <div class="result-header">
+
+            <div class="hero-badge">
+                AI SESSION ANALYSIS
+            </div>
+
+            <h2>
+                ผลการฝึก
+            </h2>
+
+            <p>
+                MoveWise AI วิเคราะห์ Session
+                ของคุณเสร็จแล้ว
+            </p>
+
+        </div>
+
+
+
+        <!-- TOTAL REPS -->
+
+        <div class="result-main-score">
+
+            <span>
+                TOTAL REPETITIONS
+            </span>
+
+            <strong id="result-reps">
+                0
+            </strong>
+
+            <small>
+                JUMPING JACK
+            </small>
+
+        </div>
+
+
+
+        <!-- RESULT GRID -->
+
+        <div class="result-grid">
+
+
+            <!-- QUALITY -->
+
+            <div class="result-card">
+
+                <span>
+                    Movement Quality
+                </span>
+
+                <strong id="result-quality">
+                    0%
                 </strong>
 
                 <small>
-                    REPETITIONS
+                    คุณภาพการเคลื่อนไหว
+                </small>
+
+
+                <div class="result-progress">
+
+                    <div
+                        id="result-quality-bar"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- ACCURACY -->
+
+            <div class="result-card">
+
+                <span>
+                    Accuracy
+                </span>
+
+                <strong id="result-accuracy">
+                    0%
+                </strong>
+
+                <small>
+                    ความแม่นยำของ Rep
+                </small>
+
+
+                <div class="result-progress">
+
+                    <div
+                        id="result-accuracy-bar"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TIME -->
+
+            <div class="result-card">
+
+                <span>
+                    Session Time
+                </span>
+
+                <strong id="result-time">
+                    00:00
+                </strong>
+
+                <small>
+                    เวลาที่ใช้
                 </small>
 
             </div>
 
-
-            <div class="result-grid">
-
-
-                <div class="result-card">
-
-                    <span>
-                        Movement Quality
-                    </span>
-
-                    <strong id="result-quality">
-                        0%
-                    </strong>
-
-                    <div class="result-progress">
-
-                        <div
-                            id="result-quality-bar"
-                        ></div>
-
-                    </div>
-
-                </div>
+        </div>
 
 
-                <div class="result-card">
 
-                    <span>
-                        Accuracy
-                    </span>
+        <!-- AI INSIGHT -->
 
-                    <strong id="result-accuracy">
-                        0%
-                    </strong>
+        <div class="insight-card">
 
-                    <div class="result-progress">
-
-                        <div
-                            id="result-accuracy-bar"
-                        ></div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="result-card">
-
-                    <span>
-                        เวลา
-                    </span>
-
-                    <strong id="result-time">
-                        00:00
-                    </strong>
-
-                    <small>
-                        SESSION TIME
-                    </small>
-
-                </div>
-
+            <div class="insight-icon">
+                AI
             </div>
 
 
-            <div class="insight-card">
+            <div>
 
-                <div class="insight-icon">
-                    ✦
-                </div>
+                <span class="mi-eyebrow">
+                    AI INSIGHT
+                </span>
 
-                <div>
+                <h3 id="ai-insight-title">
+                    กำลังวิเคราะห์
+                </h3>
 
-                    <span>
-                        AI MOVEMENT INSIGHT
-                    </span>
-
-                    <h3 id="ai-insight-title">
-                        กำลังวิเคราะห์...
-                    </h3>
-
-                    <p id="ai-insight">
-                        กำลังสร้างข้อมูลจากการเคลื่อนไหวของคุณ
-                    </p>
-
-                </div>
+                <p id="ai-insight">
+                    -
+                </p>
 
             </div>
-
-
-            <div class="recommendation-card">
-
-                <div class="recommendation-icon">
-                    💡
-                </div>
-
-                <div>
-
-                    <span>
-                        AI RECOMMENDATION
-                    </span>
-
-                    <h3>
-                        คำแนะนำสำหรับคุณ
-                    </h3>
-
-                    <p id="ai-recommendation">
-                        วิเคราะห์ผลการฝึกเพื่อสร้างคำแนะนำ
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="result-actions">
-
-                <button
-                    id="again-button"
-                    class="start-button"
-                >
-
-                    ↻ ฝึกอีกครั้ง
-
-                </button>
-
-
-                <button
-                    id="home-button"
-                    class="secondary-button"
-                >
-
-                    ← กลับหน้าแรก
-
-                </button>
-
-            </div>
-
 
         </div>
 
-    </section>
+
+
+        <!-- RECOMMENDATION -->
+
+        <div class="recommendation-card">
+
+            <div class="recommendation-icon">
+                ✦
+            </div>
+
+
+            <div>
+
+                <span class="mi-eyebrow">
+                    PERSONALIZED RECOMMENDATION
+                </span>
+
+                <h3>
+                    คำแนะนำสำหรับคุณ
+                </h3>
+
+                <p id="ai-recommendation">
+                    -
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ACTIONS -->
+
+        <div class="result-actions">
+
+            <button
+                id="again-button"
+                class="start-button"
+                type="button"
+            >
+                ↻ ฝึกอีกครั้ง
+            </button>
+
+
+            <button
+                id="home-button"
+                class="back-button"
+                type="button"
+            >
+                ← กลับหน้าแรก
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
 
 
 </div>
 
 
+<!-- =========================================================
+     APP SCRIPT
+========================================================= -->
+
 <script
     type="module"
-    src="app.js"
+    src="./app.js"
 ></script>
 
 
