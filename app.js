@@ -1,7 +1,41 @@
 import {
-    PoseLandmarker,
-    FilesetResolver
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
+    initializePoseDetector,
+    detectPose,
+    getPoseDetectorStatus
+} from "./src/ai/pose/detector.js";
+
+import {
+    initializeCamera,
+    stopCamera
+} from "./src/core/camera.js";
+
+import {
+    createJumpingJackAnalyzer
+} from "./src/exercises/jumpingJack.js";
+
+import {
+    createExerciseAnalyzer
+} from "./src/exercises/exerciseRegistry.js";
+
+import {
+    createSession
+} from "./src/core/session.js";
+
+import {
+    saveSession
+} from "./src/core/storage.js";
+
+import {
+    getSessions
+} from "./src/core/storage.js";
+
+import {
+    generateRecommendation
+} from "./src/ai/recommendation/recommendation.js";
+
+import {
+    getProgressSummary
+} from "./src/core/progress.js";
 
 
 /* =========================================================
@@ -48,6 +82,9 @@ const exerciseScreen =
 
 const resultScreen =
     $("result-screen");
+
+const progressScreen =
+    $("progress-screen");
 
 
 const video =
@@ -98,6 +135,9 @@ const movementStateElement =
 const timerElement =
     $("timer");
 
+const exerciseNameElement =
+    $("exercise-name");
+
 
 /* Result */
 
@@ -118,6 +158,9 @@ const resultAccuracyBar =
 
 const resultTime =
     $("result-time");
+
+const resultExerciseName =
+    $("result-exercise-name");
 
 const aiInsightTitle =
     $("ai-insight-title");
@@ -155,18 +198,61 @@ const liveLeftAngle =
 const liveRightAngle =
     $("live-right-angle");
 
+const liveLeftAngleLabel =
+    $("live-left-angle-label");
+
+const liveRightAngleLabel =
+    $("live-right-angle-label");
+
 const liveQuality =
     $("live-quality");
 
 const liveQualityLabel =
     $("live-quality-label");
 
+const homeSessions =
+    $("home-sessions");
+
+const homeTotalReps =
+    $("home-total-reps");
+
+const homeAverageQuality =
+    $("home-average-quality");
+
+const progressTotalSessions =
+    $("progress-total-sessions");
+
+const progressTotalReps =
+    $("progress-total-reps");
+
+const progressAverageQuality =
+    $("progress-average-quality");
+
+const progressAverageAccuracy =
+    $("progress-average-accuracy");
+
+const progressBestQuality =
+    $("progress-best-quality");
+
+const progressAverageDuration =
+    $("progress-average-duration");
+
+const progressRecentSessions =
+    $("progress-recent-sessions");
+
+const progressQualityTrend =
+    $("progress-quality-trend");
+
+const progressEmptyState =
+    $("progress-empty-state");
+
+const progressAIInsight =
+    $("progress-ai-insight");
+
 
 /* =========================================================
    AI
 ========================================================= */
-
-let poseLandmarker = null;
 
 let running = false;
 
@@ -183,37 +269,16 @@ let timerInterval = null;
 
 let sessionStartTime = null;
 
+let sessionSaved = false;
+
 
 /* =========================================================
    REP
 ========================================================= */
 
-let jumpingState =
-    "CLOSED";
-
-let reps = 0;
-
-let attempts = 0;
-
-let validReps = 0;
-
-let lastRepTime = 0;
-
-let currentRepStartTime =
-    null;
-
-
 /* =========================================================
    SESSION DATA
 ========================================================= */
-
-let qualityScores = [];
-
-let repRecords = [];
-
-let repStartTimes = [];
-
-let repMovementMetrics = [];
 
 let sessionROMValues = [];
 
@@ -289,6 +354,28 @@ const REQUIRED_LANDMARKS = [
     28
 
 ];
+
+
+const jumpingJackAnalyzer =
+    createJumpingJackAnalyzer({
+        handUpOffset: CONFIG.handUpOffset,
+        footOpenRatio: CONFIG.footOpenRatio,
+        footClosedRatio: CONFIG.footClosedRatio,
+        repCooldown: CONFIG.repCooldown
+    });
+
+const squatAnalyzer =
+    createExerciseAnalyzer("squat");
+
+let activeExerciseId =
+    "jumping-jack";
+
+
+function getActiveExerciseAnalyzer() {
+    return activeExerciseId === "squat"
+        ? squatAnalyzer
+        : jumpingJackAnalyzer;
+}
 
 
 /* =========================================================
@@ -489,7 +576,19 @@ function updateMovementState() {
             "กางเต็มที่",
 
         CLOSING:
-            "กำลังหุบ"
+            "กำลังหุบ",
+
+        STANDING:
+            "ท่ายืน",
+
+        DESCENDING:
+            "กำลังย่อตัว",
+
+        BOTTOM:
+            "ท่าล่าง",
+
+        ASCENDING:
+            "กำลังยืนขึ้น"
 
     };
 
@@ -497,7 +596,10 @@ function updateMovementState() {
     if (movementStateElement) {
 
         movementStateElement.textContent =
-            labels[jumpingState];
+            labels[
+                getActiveExerciseAnalyzer()
+                    .getState().state
+            ];
 
     }
 
@@ -643,46 +745,7 @@ async function initializeAI() {
         );
 
 
-        const vision =
-            await FilesetResolver.forVisionTasks(
-
-                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-
-            );
-
-
-        poseLandmarker =
-            await PoseLandmarker.createFromOptions(
-
-                vision,
-
-                {
-
-                    baseOptions: {
-
-                        modelAssetPath:
-                            "./models/pose_landmarker_lite.task"
-
-                    },
-
-                    runningMode:
-                        "VIDEO",
-
-                    numPoses:
-                        1,
-
-                    minPoseDetectionConfidence:
-                        0.5,
-
-                    minPosePresenceConfidence:
-                        0.5,
-
-                    minTrackingConfidence:
-                        0.5
-
-                }
-
-            );
+        await initializePoseDetector();
 
 
         console.log(
@@ -736,36 +799,12 @@ async function initializeAI() {
 
 function resetSessionData() {
 
-    reps =
-        0;
+    jumpingJackAnalyzer.reset();
 
-    attempts =
-        0;
+    squatAnalyzer.reset();
 
-    validReps =
-        0;
-
-    jumpingState =
-        "CLOSED";
-
-    lastRepTime =
-        0;
-
-    currentRepStartTime =
-        null;
-
-
-    qualityScores =
-        [];
-
-    repRecords =
-        [];
-
-    repStartTimes =
-        [];
-
-    repMovementMetrics =
-        [];
+    sessionSaved =
+        false;
 
     sessionROMValues =
         [];
@@ -807,37 +846,6 @@ function prepareExercise() {
 
 
     resetSessionData();
-
-
-    lastVideoTime =
-        -1;
-
-
-    if (repElement) {
-
-        repElement.textContent =
-            "0";
-
-    }
-
-
-    if (timerElement) {
-
-        timerElement.textContent =
-            "00:00";
-
-    }
-
-
-    updateScore(
-        0
-    );
-
-
-    updateMovementState();
-
-
-    resetLiveUI();
 
 
     if (poseStatus) {
@@ -952,69 +960,7 @@ async function startSession() {
 
     try {
 
-        if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
-        ) {
-
-            throw new Error(
-                "Browser ไม่รองรับ Camera API"
-            );
-
-        }
-
-
-        const stream =
-            await navigator.mediaDevices.getUserMedia({
-
-                video: {
-
-                    width: {
-                        ideal: 1280
-                    },
-
-                    height: {
-                        ideal: 720
-                    },
-
-                    facingMode:
-                        "user"
-
-                },
-
-                audio:
-                    false
-
-            });
-
-
-        video.srcObject =
-            stream;
-
-
-        await new Promise(
-            resolve => {
-
-                if (
-                    video.readyState >= 1
-                ) {
-
-                    resolve();
-
-                }
-
-                else {
-
-                    video.onloadedmetadata =
-                        resolve;
-
-                }
-
-            }
-        );
-
-
-        await video.play();
+        await initializeCamera(video);
 
 
         syncCanvasSize();
@@ -1105,23 +1051,7 @@ function stopSession() {
     stopTimer();
 
 
-    if (video.srcObject) {
-
-        video.srcObject
-            .getTracks()
-            .forEach(
-                track => {
-
-                    track.stop();
-
-                }
-            );
-
-
-        video.srcObject =
-            null;
-
-    }
+    stopCamera(video);
 
 
     clearCanvas();
@@ -1877,529 +1807,92 @@ function resetLiveUI() {
 function analyzeJumpingJack(
     landmarks
 ) {
-
-    const leftShoulder =
-        landmarks[11];
-
-    const rightShoulder =
-        landmarks[12];
-
-    const leftWrist =
-        landmarks[15];
-
-    const rightWrist =
-        landmarks[16];
-
-    const leftAnkle =
-        landmarks[27];
-
-    const rightAnkle =
-        landmarks[28];
-
-
-    const shoulderWidth =
-        Math.abs(
-
-            leftShoulder.x -
-            rightShoulder.x
-
-        );
-
-
-    const footWidth =
-        Math.abs(
-
-            leftAnkle.x -
-            rightAnkle.x
-
-        );
-
-
-    const leftHandUp =
-        leftWrist.y <
-        leftShoulder.y -
-        CONFIG.handUpOffset;
-
-
-    const rightHandUp =
-        rightWrist.y <
-        rightShoulder.y -
-        CONFIG.handUpOffset;
-
-
-    const handsUp =
-        leftHandUp &&
-        rightHandUp;
-
-
-    const handsDown =
-
-        leftWrist.y >
-            leftShoulder.y
-
-        &&
-
-        rightWrist.y >
-            rightShoulder.y;
-
-
-    const feetOpen =
-        footWidth >
-        shoulderWidth *
-        CONFIG.footOpenRatio;
-
-
-    const feetClosed =
-        footWidth <
-        shoulderWidth *
-        CONFIG.footClosedRatio;
-
-
-    return {
-
-        leftHandUp,
-
-        rightHandUp,
-
-        handsUp,
-
-        handsDown,
-
-        feetOpen,
-
-        feetClosed,
-
-        isOpen:
-            handsUp &&
-            feetOpen,
-
-        isClosed:
-            handsDown &&
-            feetClosed,
-
-        shoulderWidth,
-
-        footWidth
-
-    };
-
+    return jumpingJackAnalyzer.analyze(
+        landmarks
+    );
 }
 
-
-/* =========================================================
-   MOVEMENT SCORE
-========================================================= */
-
-function calculateMovementScore(
-    data
-) {
-
-    let score =
-        0;
-
-
-    if (
-        data.handsUp
-    ) {
-
-        score +=
-            50;
-
-    }
-
-    else if (
-
-        data.leftHandUp ||
-        data.rightHandUp
-
-    ) {
-
-        score +=
-            25;
-
-    }
-
-
-    if (
-        data.feetOpen
-    ) {
-
-        score +=
-            50;
-
-    }
-
-
-    return score;
-
-}
-
-
-/* =========================================================
-   STATE MACHINE
-========================================================= */
 
 function processJumpingJack(
     data
 ) {
+    const result =
+        jumpingJackAnalyzer.process(
+            data,
+            currentMovementMetrics
+        );
+
+    updateScore(result.score);
+
+    setCoach(
+        result.feedback.title,
+        result.feedback.message
+    );
 
     if (
-        jumpingState ===
-        "CLOSED"
+        result.repCompleted &&
+        repElement
     ) {
+        repElement.textContent =
+            result.repetitions;
 
-        updateScore(
-            100
+        console.log(
+            "MoveWise AI Rep:",
+            result.record
         );
-
-
-        setCoach(
-
-            "พร้อมเริ่ม",
-
-            "กระโดดกางแขนและขา"
-
-        );
-
-
-        if (
-
-            data.handsUp ||
-            data.feetOpen
-
-        ) {
-
-            jumpingState =
-                "OPENING";
-
-
-            attempts++;
-
-
-            currentRepStartTime =
-                performance.now();
-
-
-            setCoach(
-
-                "กำลังกาง",
-
-                "กางแขนและขาให้เต็มที่"
-
-            );
-
-        }
-
     }
-
-
-    else if (
-        jumpingState ===
-        "OPENING"
-    ) {
-
-        updateScore(
-
-            Math.max(
-
-                calculateMovementScore(
-                    data
-                ),
-
-                currentMovementMetrics.quality
-
-            )
-
-        );
-
-
-        setCoach(
-
-            "กำลังกาง",
-
-            `ROM แขน ${currentMovementMetrics.armROM}% · ROM ขา ${currentMovementMetrics.legROM}%`
-
-        );
-
-
-        if (
-            data.isOpen
-        ) {
-
-            jumpingState =
-                "OPEN";
-
-
-            updateScore(
-                currentMovementMetrics.quality
-            );
-
-
-            setCoach(
-
-                "✓ ท่าถูกต้อง",
-
-                `Symmetry ${currentMovementMetrics.symmetry}% · หุบกลับ`
-
-            );
-
-        }
-
-    }
-
-
-    else if (
-        jumpingState ===
-        "OPEN"
-    ) {
-
-        updateScore(
-            currentMovementMetrics.quality
-        );
-
-
-        setCoach(
-
-            "✓ ท่าถูกต้อง",
-
-            "หุบแขนและขากลับ"
-
-        );
-
-
-        if (
-
-            data.handsDown ||
-            data.feetClosed
-
-        ) {
-
-            jumpingState =
-                "CLOSING";
-
-
-            setCoach(
-
-                "กำลังหุบ",
-
-                "กลับสู่ท่าเริ่มต้น"
-
-            );
-
-        }
-
-    }
-
-
-    else if (
-        jumpingState ===
-        "CLOSING"
-    ) {
-
-        if (
-            data.isClosed
-        ) {
-
-            completeRep();
-
-
-            jumpingState =
-                "CLOSED";
-
-
-            updateScore(
-                currentMovementMetrics.quality
-            );
-
-
-            setCoach(
-
-                "✓ ทำสำเร็จ 1 ครั้ง",
-
-                "ยอดเยี่ยม! พร้อมทำครั้งต่อไป"
-
-            );
-
-        }
-
-        else {
-
-            setCoach(
-
-                "กำลังหุบ",
-
-                "นำมือและเท้ากลับสู่ตำแหน่งเริ่มต้น"
-
-            );
-
-        }
-
-    }
-
 
     updateMovementState();
-
 }
 
 
-/* =========================================================
-   REP QUALITY
-========================================================= */
-
-function calculateRepQuality() {
-
-    const m =
-        currentMovementMetrics;
-
-
-    const quality =
-        Math.round(
-
-            (
-                m.armROM +
-                m.legROM +
-                m.symmetry
-            ) / 3
-
-        );
-
-
-    repMovementMetrics.push({
-
-        rep:
-            reps + 1,
-
-        armROM:
-            m.armROM,
-
-        legROM:
-            m.legROM,
-
-        symmetry:
-            m.symmetry,
-
-        quality:
-            quality
-
-    });
-
-
-    return quality;
-
-}
-
-
-/* =========================================================
-   COMPLETE REP
-========================================================= */
-
-function completeRep() {
-
-    const now =
-        performance.now();
-
-
-    if (
-
-        now -
-        lastRepTime <
-        CONFIG.repCooldown
-
-    ) {
-
-        return;
-
-    }
-
-
-    lastRepTime =
-        now;
-
-
-    let duration =
-        0;
-
-
-    if (
-        currentRepStartTime !== null
-    ) {
-
-        duration =
-
-            (
-                now -
-                currentRepStartTime
-            ) / 1000;
-
-    }
-
-
-    const quality =
-        calculateRepQuality();
-
-
-    reps++;
-
-    validReps++;
-
-
-    const record = {
-
-        rep:
-            reps,
-
-        quality:
-            quality,
-
-        duration:
-            Number(
-                duration.toFixed(2)
-            ),
-
-        armROM:
-            currentMovementMetrics.armROM,
-
-        legROM:
-            currentMovementMetrics.legROM,
-
-        symmetry:
-            currentMovementMetrics.symmetry
-
+function processSquat(
+    movement
+) {
+    const metrics = {
+        leftArmAngle: Math.round(movement.leftKneeAngle),
+        rightArmAngle: Math.round(movement.rightKneeAngle),
+        leftLegAngle: Math.round(movement.leftKneeAngle),
+        rightLegAngle: Math.round(movement.rightKneeAngle),
+        armROM: Math.round(movement.depth),
+        legROM: Math.round(movement.depth),
+        symmetry: Math.round(movement.symmetry),
+        quality: Math.round(movement.quality),
+        leftKneeAngle: Math.round(movement.leftKneeAngle),
+        rightKneeAngle: Math.round(movement.rightKneeAngle),
+        kneeAngle: Math.round(movement.kneeAngle)
     };
 
+    currentMovementMetrics = metrics;
+    sessionROMValues.push(metrics.legROM);
+    sessionSymmetryValues.push(metrics.symmetry);
+    updateMovementIntelligenceUI(metrics);
 
-    repRecords.push(
-        record
+    const result = squatAnalyzer.process(
+        movement,
+        metrics
     );
 
-
-    qualityScores.push(
-        quality
+    updateScore(result.score);
+    setCoach(
+        result.feedback.type,
+        result.feedback.message
     );
 
-
-    repStartTimes.push(
-        duration
-    );
-
-
-    if (repElement) {
-
+    if (
+        result.repCompleted &&
+        repElement
+    ) {
         repElement.textContent =
-            reps;
+            result.repetitions;
 
+        console.log(
+            "MoveWise AI Rep:",
+            result.record
+        );
     }
 
-
-    currentRepStartTime =
-        null;
-
-
-    console.log(
-        "MoveWise AI Rep:",
-        record
-    );
-
+    updateMovementState();
 }
 
 
@@ -2690,7 +2183,7 @@ function predict() {
     }
 
 
-    if (!poseLandmarker) {
+    if (!getPoseDetectorStatus().ready) {
 
         requestAnimationFrame(
             predict
@@ -2721,7 +2214,7 @@ function predict() {
         try {
 
             results =
-                poseLandmarker.detectForVideo(
+                detectPose(
 
                     video,
 
@@ -2826,12 +2319,8 @@ function predict() {
                 );
 
 
-                jumpingState =
-                    "CLOSED";
-
-
-                currentRepStartTime =
-                    null;
+                getActiveExerciseAnalyzer()
+                    .resetMovementState();
 
 
                 updateMovementState();
@@ -2868,39 +2357,36 @@ function predict() {
             }
 
 
-            const movement =
-                analyzeJumpingJack(
-                    landmarks
+            if (activeExerciseId === "squat") {
+                processSquat(
+                    squatAnalyzer.analyze(landmarks)
                 );
+            }
+            else {
+                const movement =
+                    analyzeJumpingJack(
+                        landmarks
+                    );
 
+                const metrics =
+                    analyzeMovementMetrics(
+                        landmarks,
+                        movement
+                    );
 
-            const metrics =
-                analyzeMovementMetrics(
-
-                    landmarks,
-
+                updateMovementMetrics(
+                    metrics,
                     movement
-
                 );
 
+                updateMovementIntelligenceUI(
+                    metrics
+                );
 
-            updateMovementMetrics(
-
-                metrics,
-
-                movement
-
-            );
-
-
-            updateMovementIntelligenceUI(
-                metrics
-            );
-
-
-            processJumpingJack(
-                movement
-            );
+                processJumpingJack(
+                    movement
+                );
+            }
 
         }
 
@@ -2947,12 +2433,8 @@ function predict() {
             resetLiveUI();
 
 
-            jumpingState =
-                "CLOSED";
-
-
-            currentRepStartTime =
-                null;
+            getActiveExerciseAnalyzer()
+                .resetMovementState();
 
 
             updateMovementState();
@@ -2977,6 +2459,10 @@ function predict() {
 ========================================================= */
 
 function calculateConsistency() {
+
+    const {
+        repStartTimes
+    } = getActiveExerciseAnalyzer().getState();
 
     if (
         repStartTimes.length < 2
@@ -3048,6 +2534,10 @@ function calculateConsistency() {
 
 function calculateAverageRepTime() {
 
+    const {
+        repStartTimes
+    } = getActiveExerciseAnalyzer().getState();
+
     if (
         !repStartTimes.length
     ) {
@@ -3077,6 +2567,134 @@ function calculateAverageRepTime() {
 }
 
 
+function averageMetric(
+    values
+) {
+    if (!values.length) {
+        return null;
+    }
+
+    return Math.round(
+        values.reduce(
+            (sum, value) => sum + value,
+            0
+        ) / values.length
+    );
+}
+
+
+function updateHomeProgress() {
+    const summary =
+        getProgressSummary();
+
+    if (homeSessions) {
+        homeSessions.textContent =
+            summary.totalSessions;
+    }
+
+    if (homeTotalReps) {
+        homeTotalReps.textContent =
+            summary.totalRepetitions;
+    }
+
+    if (homeAverageQuality) {
+        homeAverageQuality.textContent =
+            summary.averageQuality === null
+                ? "--"
+                : `${summary.averageQuality}%`;
+    }
+}
+
+
+function renderProgressPage() {
+    const summary =
+        getProgressSummary();
+    const sessions =
+        getSessions();
+    const currentSession =
+        sessions.length
+            ? sessions[sessions.length - 1]
+            : null;
+    const recommendation =
+        generateRecommendation(
+            currentSession,
+            sessions.slice(0, -1)
+        );
+
+    if (progressTotalSessions) {
+        progressTotalSessions.textContent =
+            summary.totalSessions;
+    }
+
+    if (progressTotalReps) {
+        progressTotalReps.textContent =
+            summary.totalRepetitions;
+    }
+
+    if (progressAverageQuality) {
+        progressAverageQuality.textContent =
+            summary.averageQuality === null
+                ? "--"
+                : `${summary.averageQuality}%`;
+    }
+
+    if (progressAverageAccuracy) {
+        progressAverageAccuracy.textContent =
+            summary.averageAccuracy === null
+                ? "--"
+                : `${summary.averageAccuracy}%`;
+    }
+
+    if (progressBestQuality) {
+        progressBestQuality.textContent =
+            summary.bestQuality === null
+                ? "--"
+                : `${summary.bestQuality}%`;
+    }
+
+    if (progressAverageDuration) {
+        progressAverageDuration.textContent =
+            summary.averageDuration === null
+                ? "--"
+                : formatTime(summary.averageDuration);
+    }
+
+    if (progressRecentSessions) {
+        progressRecentSessions.textContent = "";
+
+        summary.recentSessions.forEach(session => {
+            const item = document.createElement("li");
+            item.textContent =
+                `${session.exerciseId} · ${session.repetitions} reps · ${session.quality === null ? "--" : `${session.quality}%`}`;
+            progressRecentSessions.appendChild(item);
+        });
+    }
+
+    if (progressQualityTrend) {
+        progressQualityTrend.textContent =
+            summary.qualityTrend.length
+                ? summary.qualityTrend
+                    .map(item => `${item.quality}%`)
+                    .join(" → ")
+                : "--";
+    }
+
+    if (progressAIInsight) {
+        progressAIInsight.textContent =
+            recommendation.trend.status === "available"
+                ? recommendation.summary
+                : "ฝึกเพิ่มอีกเล็กน้อยเพื่อให้ระบบวิเคราะห์พัฒนาการของคุณได้แม่นยำขึ้น";
+    }
+
+    if (progressEmptyState) {
+        progressEmptyState.style.display =
+            summary.totalSessions === 0
+                ? "block"
+                : "none";
+    }
+}
+
+
 /* =========================================================
    RESULT
 ========================================================= */
@@ -3085,15 +2703,18 @@ function generateResult(
     duration
 ) {
 
+    const exerciseState =
+        getActiveExerciseAnalyzer().getState();
+
     const quality =
 
-        qualityScores.length
+        exerciseState.qualityScores.length
 
             ?
 
             Math.round(
 
-                qualityScores.reduce(
+                exerciseState.qualityScores.reduce(
 
                     (sum,value) =>
                         sum + value,
@@ -3102,7 +2723,7 @@ function generateResult(
 
                 )
                 /
-                qualityScores.length
+                exerciseState.qualityScores.length
 
             )
 
@@ -3113,15 +2734,15 @@ function generateResult(
 
     const accuracy =
 
-        attempts > 0
+        exerciseState.attempts > 0
 
             ?
 
             Math.round(
 
                 (
-                    validReps /
-                    attempts
+                    exerciseState.validReps /
+                    exerciseState.attempts
                 ) * 100
 
             )
@@ -3129,6 +2750,34 @@ function generateResult(
             :
 
             0;
+
+
+    if (
+        !sessionSaved &&
+        sessionStartTime &&
+        exerciseState.repetitions > 0
+    ) {
+        const session = createSession({
+            exerciseId: activeExerciseId,
+            startedAt: new Date(
+                sessionStartTime
+            ).toISOString(),
+            completedAt: new Date().toISOString(),
+            duration,
+            repetitions: exerciseState.repetitions,
+            quality,
+            accuracy,
+            rom: averageMetric(sessionROMValues),
+            symmetry: averageMetric(sessionSymmetryValues),
+            repRecords: exerciseState.repRecords
+        });
+
+        sessionSaved = saveSession(session);
+
+        if (sessionSaved) {
+            updateHomeProgress();
+        }
+    }
 
 
     const consistency =
@@ -3142,7 +2791,7 @@ function generateResult(
     if (resultReps) {
 
         resultReps.textContent =
-            reps;
+            exerciseState.repetitions;
 
     }
 
@@ -3209,7 +2858,7 @@ function generateResult(
 
     console.log(
         "Reps:",
-        reps
+        exerciseState.repetitions
     );
 
 
@@ -3239,13 +2888,13 @@ function generateResult(
 
     console.log(
         "Rep Records:",
-        repRecords
+        exerciseState.repRecords
     );
 
 
     console.log(
         "Movement Metrics:",
-        repMovementMetrics
+        exerciseState.repMovementMetrics
     );
 
 }
@@ -3267,7 +2916,49 @@ function generateAIRecommendation(
 
 ) {
 
-    if (!reps) {
+    const exerciseState =
+        getActiveExerciseAnalyzer().getState();
+
+    if (!exerciseState.repetitions) {
+        aiInsightTitle.textContent =
+            "ยังมีข้อมูลไม่เพียงพอ";
+        aiInsight.textContent =
+            "ยังมีข้อมูลไม่เพียงพอสำหรับวิเคราะห์พัฒนาการ";
+        aiRecommendation.textContent =
+            "เริ่มจากทำท่าช้า ๆ และยืนให้เห็นร่างกายเต็มตัว";
+        return;
+    }
+
+    const currentSession = {
+        id: "current-result",
+        exerciseId: activeExerciseId,
+        quality,
+        accuracy,
+        symmetry: currentMovementMetrics.symmetry,
+        armROM: currentMovementMetrics.armROM,
+        legROM: currentMovementMetrics.legROM,
+        consistency
+    };
+    const history =
+        getSessions().slice(0, -1);
+    const recommendation =
+        generateRecommendation(
+            currentSession,
+            history
+        );
+
+    aiInsightTitle.textContent =
+        recommendation.priority || "AI Movement Insight";
+    aiInsight.textContent =
+        recommendation.summary;
+    aiRecommendation.textContent =
+        recommendation.recommendations.length
+            ? recommendation.recommendations[0].message
+            : "ฝึกต่อโดยเน้น Range of Motion และความสม่ำเสมอของการเคลื่อนไหว";
+
+    return;
+
+    if (!exerciseState.repetitions) {
 
         aiInsightTitle.textContent =
             "ยังมีข้อมูลไม่เพียงพอ";
@@ -3375,7 +3066,7 @@ function generateAIRecommendation(
 
 
         aiInsight.textContent =
-            `ทำได้ ${reps} Reps · Quality ${quality}% · Accuracy ${accuracy}%`;
+            `ทำได้ ${exerciseState.repetitions} Reps · Quality ${quality}% · Accuracy ${accuracy}%`;
 
 
         aiRecommendation.textContent =
@@ -3391,7 +3082,7 @@ function generateAIRecommendation(
 
 
     aiInsight.textContent =
-        `ทำได้ ${reps} Reps · Quality ${quality}% · Accuracy ${accuracy}%`;
+        `ทำได้ ${exerciseState.repetitions} Reps · Quality ${quality}% · Accuracy ${accuracy}%`;
 
 
     aiRecommendation.textContent =
@@ -3460,6 +3151,8 @@ showScreen(
 
 resetLiveUI();
 
+updateHomeProgress();
+
 
 initializeAI();
 
@@ -3469,10 +3162,53 @@ initializeAI();
 
 function openJumpingJack() {
 
+    activeExerciseId =
+        "jumping-jack";
+
+    updateExerciseLabels();
+
     showScreen(exerciseScreen);
 
     prepareExercise();
 
+}
+
+
+function openSquat() {
+    activeExerciseId = "squat";
+    updateExerciseLabels();
+    showScreen(exerciseScreen);
+    prepareExercise();
+}
+
+
+function updateExerciseLabels() {
+    const name = activeExerciseId === "squat"
+        ? "Squat"
+        : "Jumping Jack";
+
+    if (exerciseNameElement) {
+        exerciseNameElement.textContent = name;
+    }
+
+    if (resultExerciseName) {
+        resultExerciseName.textContent =
+            name.toUpperCase();
+    }
+
+    if (liveLeftAngleLabel) {
+        liveLeftAngleLabel.textContent =
+            activeExerciseId === "squat"
+                ? "เข่าซ้าย"
+                : "แขนซ้าย";
+    }
+
+    if (liveRightAngleLabel) {
+        liveRightAngleLabel.textContent =
+            activeExerciseId === "squat"
+                ? "เข่าขวา"
+                : "แขนขวา";
+    }
 }
 
 
@@ -3572,9 +3308,7 @@ if (nav === "analyze") {
                     nav === "progress"
                 ) {
 
-                    alert(
-                        "Progress Dashboard จะเปิดใช้งานในขั้นตอนถัดไป"
-                    );
+                    openProgressPage();
 
                 }
 
@@ -3614,6 +3348,13 @@ function openAnalyzePage() {
         "analyze"
     );
 
+}
+
+
+function openProgressPage() {
+    showScreen(progressScreen);
+    renderProgressPage();
+    setActiveNavigation("progress");
 }
 
 
@@ -3660,6 +3401,11 @@ document
 
                 () => {
 
+                    activeExerciseId =
+                        "jumping-jack";
+
+                    updateExerciseLabels();
+
                     showScreen(
                         exerciseScreen
                     );
@@ -3676,6 +3422,23 @@ document
 
             );
 
+        }
+    );
+
+
+document
+    .querySelectorAll(
+        '[data-exercise="squat"]'
+    )
+    .forEach(
+        button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    setActiveNavigation("analyze");
+                    openSquat();
+                }
+            );
         }
     );
 
@@ -3948,9 +3711,7 @@ document
                         nav === "progress"
                     ) {
 
-                        alert(
-                            "Progress Dashboard — Phase ถัดไป"
-                        );
+                        openProgressPage();
 
                     }
 
@@ -3984,4 +3745,10 @@ $("view-all-exercises")?.addEventListener(
 
     openAnalyzePage
 
+);
+
+
+$("home-squat")?.addEventListener(
+    "click",
+    openSquat
 );

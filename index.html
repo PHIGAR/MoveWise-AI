@@ -196,9 +196,11 @@
                 type="button"
             >
 
-                <div class="quick-card-icon">
-                    🏃
-                </div>
+                <img
+                    src="./src/assets/exercises/jumping-jack.svg"
+                    alt="Jumping Jack Exercise"
+                    class="quick-card-image"
+                >
 
 
                 <div class="quick-card-body">
@@ -230,13 +232,15 @@
 
             <button
                 id="home-squat"
-                class="quick-exercise-card"
+                class="quick-exercise-card active-exercise"
                 type="button"
             >
 
-                <div class="quick-card-icon">
-                    🏋️
-                </div>
+                <img
+                    src="./src/assets/exercises/squat.svg"
+                    alt="Squat Exercise"
+                    class="quick-card-image"
+                >
 
 
                 <div class="quick-card-body">
@@ -250,14 +254,14 @@
                     </h4>
 
                     <p>
-                        Coming Soon
+                        Full AI Analysis
                     </p>
 
                 </div>
 
 
                 <strong>
-                    —
+                    →
                 </strong>
 
             </button>
@@ -662,9 +666,11 @@
                 data-name="jumping jack"
             >
 
-                <div class="library-icon">
-                    🏃
-                </div>
+                <img
+                    src="./src/assets/exercises/jumping-jack.svg"
+                    alt="Jumping Jack Exercise"
+                    class="library-image"
+                />
 
 
                 <div class="library-content">
@@ -740,9 +746,11 @@
                 data-name="squat"
             >
 
-                <div class="library-icon">
-                    🏋️
-                </div>
+                <img
+                    src="./src/assets/exercises/squat.svg"
+                    alt="Squat Exercise"
+                    class="library-image"
+                />
 
 
                 <div class="library-content">
@@ -799,11 +807,11 @@
 
 
                 <button
-                    class="library-start disabled"
+                    class="library-start"
+                    data-exercise="squat"
                     type="button"
-                    disabled
                 >
-                    เตรียมระบบ
+                    เริ่ม →
                 </button>
 
             </article>
@@ -1202,7 +1210,7 @@
 
         <div class="exercise-title-center">
 
-            <strong>
+            <strong id="exercise-name">
                 Jumping Jack
             </strong>
 
@@ -1566,7 +1574,7 @@
 
                     <div class="mi-detail">
 
-                        <span>
+                        <span id="live-left-angle-label">
                             แขนซ้าย
                         </span>
 
@@ -1579,7 +1587,7 @@
 
                     <div class="mi-detail">
 
-                        <span>
+                        <span id="live-right-angle-label">
                             แขนขวา
                         </span>
 
@@ -1659,6 +1667,124 @@
 
 
 <!-- =========================================================
+     PROGRESS
+========================================================= -->
+
+<section
+    id="progress-screen"
+    class="screen"
+>
+
+    <div class="result-container">
+
+        <div class="result-header">
+
+            <div class="hero-badge">
+                MOVEMENT PROGRESS
+            </div>
+
+            <h2>
+                พัฒนาการของคุณ
+            </h2>
+
+            <p>
+                ติดตามผลจาก Session ที่บันทึกไว้
+            </p>
+
+        </div>
+
+        <div
+            id="progress-empty-state"
+            class="insight-card"
+            style="display:none"
+        >
+            <div>
+                <h3>ยังไม่มีประวัติการฝึก</h3>
+                <p>เริ่มการฝึกครั้งแรกเพื่อดูพัฒนาการของคุณ</p>
+            </div>
+        </div>
+
+        <div class="result-grid">
+
+            <div class="result-card">
+                <span>Total Sessions</span>
+                <strong id="progress-total-sessions">0</strong>
+            </div>
+
+            <div class="result-card">
+                <span>Total Repetitions</span>
+                <strong id="progress-total-reps">0</strong>
+            </div>
+
+            <div class="result-card">
+                <span>Average Quality</span>
+                <strong id="progress-average-quality">--</strong>
+            </div>
+
+            <div class="result-card">
+                <span>Average Accuracy</span>
+                <strong id="progress-average-accuracy">--</strong>
+            </div>
+
+            <div class="result-card">
+                <span>Best Quality</span>
+                <strong id="progress-best-quality">--</strong>
+            </div>
+
+            <div class="result-card">
+                <span>Average Duration</span>
+                <strong id="progress-average-duration">--</strong>
+            </div>
+
+        </div>
+
+        <div class="insight-card">
+            <div>
+                <span class="mi-eyebrow">RECENT SESSIONS</span>
+                <ul id="progress-recent-sessions"></ul>
+            </div>
+        </div>
+
+        <div class="recommendation-card">
+            <div>
+                <span class="mi-eyebrow">QUALITY TREND</span>
+                <p id="progress-quality-trend">--</p>
+            </div>
+        </div>
+
+        <div class="insight-card">
+            <div>
+                <span class="mi-eyebrow">AI INSIGHT</span>
+                <p id="progress-ai-insight">ฝึกเพิ่มอีกเล็กน้อยเพื่อให้ระบบวิเคราะห์พัฒนาการของคุณได้แม่นยำขึ้น</p>
+            </div>
+        </div>
+
+        <nav class="bottom-navigation">
+            <button class="bottom-nav-item" data-nav="home" type="button">
+                <span>🏠</span>
+                <small>Home</small>
+            </button>
+            <button class="bottom-nav-item" data-nav="analyze" type="button">
+                <span>🎯</span>
+                <small>Analyze</small>
+            </button>
+            <button class="bottom-nav-item active" data-nav="progress" type="button">
+                <span>📊</span>
+                <small>Progress</small>
+            </button>
+            <button class="bottom-nav-item" data-nav="profile" type="button">
+                <span>👤</span>
+                <small>Profile</small>
+            </button>
+        </nav>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
      RESULT
 ========================================================= -->
 
@@ -1701,7 +1827,7 @@
                 0
             </strong>
 
-            <small>
+            <small id="result-exercise-name">
                 JUMPING JACK
             </small>
 
@@ -1891,7 +2017,7 @@
     type="module"
     src="./app.js"
 ></script>
-
+ฺ
 
 </body>
 
