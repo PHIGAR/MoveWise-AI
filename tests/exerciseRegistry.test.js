@@ -12,7 +12,7 @@ const allExercises = getExercises();
 
 assert.equal(
     allExercises.length,
-    5
+    6
 );
 
 assert.equal(
@@ -22,7 +22,7 @@ assert.equal(
 
 assert.equal(
     getAvailableExercises().length,
-    2
+    5
 );
 
 assert.equal(
@@ -39,6 +39,51 @@ assert.equal(
     isExerciseAvailable("squat"),
     true
 );
+
+assert.equal(
+    isExerciseAvailable("push-up"),
+    true
+);
+
+assert.equal(
+    isExerciseAvailable("lunge"),
+    true
+);
+
+assert.equal(
+    isExerciseAvailable("bicep-curl"),
+    true
+);
+
+const pushUpAnalyzer =
+    createExerciseAnalyzer("push-up");
+
+const lungeAnalyzer =
+    createExerciseAnalyzer("lunge");
+
+const bicepCurlAnalyzer =
+    createExerciseAnalyzer("bicep-curl");
+
+for (const method of [
+    "analyze",
+    "process",
+    "reset",
+    "resetMovementState",
+    "getState"
+]) {
+    assert.equal(
+        typeof pushUpAnalyzer[method],
+        "function"
+    );
+    assert.equal(
+        typeof lungeAnalyzer[method],
+        "function"
+    );
+    assert.equal(
+        typeof bicepCurlAnalyzer[method],
+        "function"
+    );
+}
 
 const analyzer =
     createExerciseAnalyzer("jumping-jack");
@@ -59,11 +104,6 @@ for (const method of [
 assert.throws(
     () => createExerciseAnalyzer("missing"),
     /Unknown exercise/
-);
-
-assert.throws(
-    () => createExerciseAnalyzer("push-up"),
-    /not available/
 );
 
 console.log("Exercise registry tests passed");

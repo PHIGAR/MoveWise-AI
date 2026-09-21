@@ -4,6 +4,9 @@ import {
 } from "../ai/analysis/rom.js";
 import { calculateSymmetry } from "../ai/analysis/symmetry.js";
 import { calculateQuality } from "../ai/analysis/quality.js";
+import {
+    validateLandmarks
+} from "../ai/pose/landmarks.js";
 
 
 const DEFAULT_CONFIG = {
@@ -11,6 +14,16 @@ const DEFAULT_CONFIG = {
     bottomKneeAngle: 100,
     repCooldown: 700
 };
+
+
+const REQUIRED_LANDMARKS = [
+    23,
+    24,
+    25,
+    26,
+    27,
+    28
+];
 
 
 function createInitialState() {
@@ -39,6 +52,25 @@ export function createSquatAnalyzer(
     let exerciseState = createInitialState();
 
     function analyze(landmarks) {
+        const validation = validateLandmarks(
+            landmarks,
+            REQUIRED_LANDMARKS
+        );
+
+        if (!validation.valid) {
+            return {
+                hasRequiredLandmarks: false,
+                leftKneeAngle: 0,
+                rightKneeAngle: 0,
+                kneeAngle: 0,
+                symmetry: 0,
+                depth: 0,
+                quality: 0,
+                isStanding: false,
+                isBottom: false
+            };
+        }
+
         const leftKneeAngle = calculateAngle(
             landmarks[23],
             landmarks[25],
@@ -68,6 +100,7 @@ export function createSquatAnalyzer(
         });
 
         return {
+            hasRequiredLandmarks: true,
             leftKneeAngle,
             rightKneeAngle,
             kneeAngle,
@@ -118,7 +151,7 @@ export function createSquatAnalyzer(
 
     function process(
         movement,
-        metrics = movement,
+        metrics = movement || {},
         timestamp = performance.now()
     ) {
         let feedback = {
@@ -128,6 +161,26 @@ export function createSquatAnalyzer(
         };
         let repCompleted = false;
         let record = null;
+
+        if (!movement?.hasRequiredLandmarks) {
+            return {
+                state: exerciseState.state,
+                repCompleted: false,
+                repetitions: exerciseState.repetitions,
+                attempts: exerciseState.attempts,
+                validReps: exerciseState.validReps,
+                score: 0,
+                quality: 0,
+                feedback: {
+                    type: "form",
+                    severity: "warning",
+                    message: "ต้องเห็นขาและเข่าครบก่อนเริ่มวิเคราะห์"
+                },
+                metrics,
+                record: null,
+                valid: false
+            };
+        }
 
         if (exerciseState.state === "STANDING") {
             if (!movement.isStanding) {
@@ -191,8 +244,11 @@ export function createSquatAnalyzer(
             state: exerciseState.state,
             repCompleted,
             repetitions: exerciseState.repetitions,
+            attempts: exerciseState.attempts,
+            validReps: exerciseState.validReps,
             valid: movement.isStanding || movement.isBottom,
-            score: metrics.quality,
+            score: metrics.quality ?? 0,
+            quality: metrics.quality ?? 0,
             feedback,
             metrics,
             record

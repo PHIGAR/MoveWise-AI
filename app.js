@@ -14,7 +14,9 @@ import {
 } from "./src/exercises/jumpingJack.js";
 
 import {
-    createExerciseAnalyzer
+    createExerciseAnalyzer,
+    getAvailableExercises,
+    getExercises
 } from "./src/exercises/exerciseRegistry.js";
 
 import {
@@ -36,6 +38,10 @@ import {
 import {
     getProgressSummary
 } from "./src/core/progress.js";
+
+import {
+    validateLandmarks
+} from "./src/ai/pose/landmarks.js";
 
 
 /* =========================================================
@@ -210,6 +216,30 @@ const liveQuality =
 const liveQualityLabel =
     $("live-quality-label");
 
+const liveMetricsExercise =
+    $("live-metrics-exercise");
+
+const liveMetricOneLabel =
+    $("live-metric-one-label");
+
+const liveMetricOne =
+    $("live-metric-one");
+
+const liveMetricTwoLabel =
+    $("live-metric-two-label");
+
+const liveMetricTwo =
+    $("live-metric-two");
+
+const liveMetricThreeLabel =
+    $("live-metric-three-label");
+
+const liveMetricThree =
+    $("live-metric-three");
+
+const exerciseLibrary =
+    $("exercise-library");
+
 const homeSessions =
     $("home-sessions");
 
@@ -218,6 +248,33 @@ const homeTotalReps =
 
 const homeAverageQuality =
     $("home-average-quality");
+
+const homeTodayEmpty =
+    $("home-today-empty");
+
+const homeTodayActivity =
+    $("home-today-activity");
+
+const homeTodayWorkouts =
+    $("home-today-workouts");
+
+const homeTodayReps =
+    $("home-today-reps");
+
+const homeTodayQuality =
+    $("home-today-quality");
+
+const homeTodayDuration =
+    $("home-today-duration");
+
+const homeRecentEmpty =
+    $("home-recent-empty");
+
+const homeRecentWorkouts =
+    $("home-recent-workouts");
+
+const homeQuickExercises =
+    $("home-quick-exercises");
 
 const progressTotalSessions =
     $("progress-total-sessions");
@@ -339,21 +396,13 @@ const CONFIG = {
    REQUIRED LANDMARKS
 ========================================================= */
 
-const REQUIRED_LANDMARKS = [
-
-    11,
-    12,
-
-    15,
-    16,
-
-    23,
-    24,
-
-    27,
-    28
-
-];
+const REQUIRED_LANDMARKS = {
+    "jumping-jack": [11, 12, 15, 16, 27, 28],
+    squat: [23, 24, 25, 26, 27, 28],
+    "push-up": [11, 12, 13, 14, 15, 16, 23, 24, 27, 28],
+    lunge: [23, 24, 25, 26, 27, 28],
+    "bicep-curl": [11, 12, 13, 14, 15, 16]
+};
 
 
 const jumpingJackAnalyzer =
@@ -367,14 +416,30 @@ const jumpingJackAnalyzer =
 const squatAnalyzer =
     createExerciseAnalyzer("squat");
 
+const pushUpAnalyzer =
+    createExerciseAnalyzer("push-up");
+
+const lungeAnalyzer =
+    createExerciseAnalyzer("lunge");
+
+const bicepCurlAnalyzer =
+    createExerciseAnalyzer("bicep-curl");
+
+const exerciseAnalyzers = {
+    "jumping-jack": jumpingJackAnalyzer,
+    squat: squatAnalyzer,
+    "push-up": pushUpAnalyzer,
+    lunge: lungeAnalyzer,
+    "bicep-curl": bicepCurlAnalyzer
+};
+
 let activeExerciseId =
     "jumping-jack";
 
 
 function getActiveExerciseAnalyzer() {
-    return activeExerciseId === "squat"
-        ? squatAnalyzer
-        : jumpingJackAnalyzer;
+    return exerciseAnalyzers[activeExerciseId]
+        || jumpingJackAnalyzer;
 }
 
 
@@ -588,7 +653,16 @@ function updateMovementState() {
             "ท่าล่าง",
 
         ASCENDING:
-            "กำลังยืนขึ้น"
+            "กำลังยืนขึ้น",
+
+        UP:
+            "ท่าเริ่มต้น",
+
+        DOWN:
+            "กำลังลง",
+
+        BOTTOM:
+            "ท่าล่าง"
 
     };
 
@@ -1077,42 +1151,12 @@ function stopSession() {
 function checkFullBody(
     landmarks
 ) {
-
-    for (
-        const index
-        of REQUIRED_LANDMARKS
-    ) {
-
-        const point =
-            landmarks[index];
-
-
-        if (!point) {
-
-            return false;
-
-        }
-
-
-        if (
-
-            point.visibility !== undefined
-
-            &&
-
-            point.visibility <
-            CONFIG.fullBodyVisibility
-
-        ) {
-
-            return false;
-
-        }
-
-    }
-
-
-    return true;
+    return validateLandmarks(
+        landmarks,
+        REQUIRED_LANDMARKS[activeExerciseId]
+            || REQUIRED_LANDMARKS["jumping-jack"],
+        CONFIG.fullBodyVisibility
+    ).valid;
 
 }
 
@@ -1130,7 +1174,10 @@ function getBodyConfidence(
 
     for (
         const index
-        of REQUIRED_LANDMARKS
+        of (
+            REQUIRED_LANDMARKS[activeExerciseId]
+                || REQUIRED_LANDMARKS["jumping-jack"]
+        )
     ) {
 
         const point =
@@ -1581,6 +1628,8 @@ function updateMovementMetrics(
     currentMovementMetrics =
         metrics;
 
+    updateLiveMetricValues(metrics);
+
 
     if (
 
@@ -1797,6 +1846,12 @@ function resetLiveUI() {
             "รอการวิเคราะห์";
     }
 
+    [liveMetricOne, liveMetricTwo, liveMetricThree].forEach(element => {
+        if (element) {
+            element.textContent = "--";
+        }
+    });
+
 }
 
 
@@ -1813,9 +1868,24 @@ function analyzeJumpingJack(
 }
 
 
+function resetMovementStateIfLandmarksMissing(
+    analyzer,
+    movement
+) {
+    if (movement?.hasRequiredLandmarks === false) {
+        analyzer.resetMovementState();
+    }
+}
+
+
 function processJumpingJack(
     data
 ) {
+    resetMovementStateIfLandmarksMissing(
+        jumpingJackAnalyzer,
+        data
+    );
+
     const result =
         jumpingJackAnalyzer.process(
             data,
@@ -1825,7 +1895,7 @@ function processJumpingJack(
     updateScore(result.score);
 
     setCoach(
-        result.feedback.title,
+        result.feedback.type,
         result.feedback.message
     );
 
@@ -1849,6 +1919,11 @@ function processJumpingJack(
 function processSquat(
     movement
 ) {
+    resetMovementStateIfLandmarksMissing(
+        squatAnalyzer,
+        movement
+    );
+
     const metrics = {
         leftArmAngle: Math.round(movement.leftKneeAngle),
         rightArmAngle: Math.round(movement.rightKneeAngle),
@@ -1864,11 +1939,193 @@ function processSquat(
     };
 
     currentMovementMetrics = metrics;
+    updateLiveMetricValues(metrics);
     sessionROMValues.push(metrics.legROM);
     sessionSymmetryValues.push(metrics.symmetry);
     updateMovementIntelligenceUI(metrics);
 
     const result = squatAnalyzer.process(
+        movement,
+        metrics
+    );
+
+    updateScore(result.score);
+    setCoach(
+        result.feedback.type,
+        result.feedback.message
+    );
+
+    if (
+        result.repCompleted &&
+        repElement
+    ) {
+        repElement.textContent =
+            result.repetitions;
+
+        console.log(
+            "MoveWise AI Rep:",
+            result.record
+        );
+    }
+
+    updateMovementState();
+}
+
+
+function processPushUp(
+    movement
+) {
+    resetMovementStateIfLandmarksMissing(
+        pushUpAnalyzer,
+        movement
+    );
+
+    const metrics = {
+        leftArmAngle: Math.round(movement.leftElbowAngle),
+        rightArmAngle: Math.round(movement.rightElbowAngle),
+        leftLegAngle: Math.round(movement.leftAlignment),
+        rightLegAngle: Math.round(movement.rightAlignment),
+        armROM: Math.round(movement.depth),
+        legROM: Math.round(movement.alignment),
+        symmetry: Math.round(movement.elbowSymmetry),
+        quality: Math.round(movement.quality),
+        depth: Math.round(movement.depth),
+        alignment: Math.round(movement.alignment),
+        elbowSymmetry: Math.round(movement.elbowSymmetry),
+        consistency: Math.round(movement.consistency)
+    };
+
+    currentMovementMetrics = metrics;
+    updateLiveMetricValues(metrics);
+    sessionROMValues.push(
+        Math.round((metrics.armROM + metrics.legROM) / 2)
+    );
+    sessionSymmetryValues.push(metrics.symmetry);
+    updateMovementIntelligenceUI(metrics);
+
+    const result = pushUpAnalyzer.process(
+        movement,
+        metrics
+    );
+
+    updateScore(result.score);
+    setCoach(
+        result.feedback.type,
+        result.feedback.message
+    );
+
+    if (
+        result.repCompleted &&
+        repElement
+    ) {
+        repElement.textContent =
+            result.repetitions;
+
+        console.log(
+            "MoveWise AI Rep:",
+            result.record
+        );
+    }
+
+    updateMovementState();
+}
+
+
+function processLunge(
+    movement
+) {
+    resetMovementStateIfLandmarksMissing(
+        lungeAnalyzer,
+        movement
+    );
+
+    const metrics = {
+        leftArmAngle: Math.round(movement.leftKneeAngle),
+        rightArmAngle: Math.round(movement.rightKneeAngle),
+        leftLegAngle: Math.round(movement.leftKneeAngle),
+        rightLegAngle: Math.round(movement.rightKneeAngle),
+        armROM: Math.round(movement.depth),
+        legROM: Math.round(movement.alignment),
+        symmetry: Math.round(movement.symmetry),
+        quality: Math.round(movement.movementQuality),
+        kneeAngle: Math.round(movement.kneeAngle),
+        depth: Math.round(movement.depth),
+        alignment: Math.round(movement.alignment),
+        stability: Math.round(movement.stability),
+        activeLeg: movement.activeLeg,
+        consistency: Math.round(movement.consistency)
+    };
+
+    currentMovementMetrics = metrics;
+    updateLiveMetricValues(metrics);
+    sessionROMValues.push(
+        Math.round((metrics.armROM + metrics.legROM) / 2)
+    );
+    sessionSymmetryValues.push(metrics.symmetry);
+    updateMovementIntelligenceUI(metrics);
+
+    const result = lungeAnalyzer.process(
+        movement,
+        metrics
+    );
+
+    updateScore(result.score);
+    setCoach(
+        result.feedback.type,
+        result.feedback.message
+    );
+
+    if (
+        result.repCompleted &&
+        repElement
+    ) {
+        repElement.textContent =
+            result.repetitions;
+
+        console.log(
+            "MoveWise AI Rep:",
+            result.record
+        );
+    }
+
+    updateMovementState();
+}
+
+
+function processBicepCurl(
+    movement
+) {
+    resetMovementStateIfLandmarksMissing(
+        bicepCurlAnalyzer,
+        movement
+    );
+
+    const metrics = {
+        leftArmAngle: Math.round(movement.leftElbowAngle),
+        rightArmAngle: Math.round(movement.rightElbowAngle),
+        leftLegAngle: Math.round(movement.leftElbowAngle),
+        rightLegAngle: Math.round(movement.rightElbowAngle),
+        armROM: Math.round(movement.rom),
+        legROM: Math.round(movement.stability),
+        symmetry: Math.round(movement.symmetry),
+        quality: Math.round(movement.movementQuality),
+        elbowAngle: Math.round(movement.elbowAngle),
+        rom: Math.round(movement.rom),
+        stability: Math.round(movement.stability),
+        activeArm: movement.activeArm,
+        consistency: Math.round(movement.consistency),
+        speed: movement.speed
+    };
+
+    currentMovementMetrics = metrics;
+    updateLiveMetricValues(metrics);
+    sessionROMValues.push(
+        Math.round((metrics.armROM + metrics.legROM) / 2)
+    );
+    sessionSymmetryValues.push(metrics.symmetry);
+    updateMovementIntelligenceUI(metrics);
+
+    const result = bicepCurlAnalyzer.process(
         movement,
         metrics
     );
@@ -2362,6 +2619,21 @@ function predict() {
                     squatAnalyzer.analyze(landmarks)
                 );
             }
+            else if (activeExerciseId === "push-up") {
+                processPushUp(
+                    pushUpAnalyzer.analyze(landmarks)
+                );
+            }
+            else if (activeExerciseId === "lunge") {
+                processLunge(
+                    lungeAnalyzer.analyze(landmarks)
+                );
+            }
+            else if (activeExerciseId === "bicep-curl") {
+                processBicepCurl(
+                    bicepCurlAnalyzer.analyze(landmarks)
+                );
+            }
             else {
                 const movement =
                     analyzeJumpingJack(
@@ -2586,6 +2858,11 @@ function averageMetric(
 function updateHomeProgress() {
     const summary =
         getProgressSummary();
+    const sessions =
+        getSessions();
+
+    renderTodayActivity(sessions);
+    renderRecentWorkouts(sessions);
 
     if (homeSessions) {
         homeSessions.textContent =
@@ -2603,6 +2880,187 @@ function updateHomeProgress() {
                 ? "--"
                 : `${summary.averageQuality}%`;
     }
+}
+
+
+function renderQuickStart() {
+    if (!homeQuickExercises) {
+        return;
+    }
+
+    const descriptions = {
+        "jumping-jack": "Full body cardio",
+        squat: "Lower body strength",
+        "push-up": "Upper body strength",
+        lunge: "Lower body & balance",
+        "bicep-curl": "Arm strength"
+    };
+
+    homeQuickExercises.textContent = "";
+
+    getAvailableExercises().forEach(exercise => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.id = `home-${exercise.id}`;
+        card.className = "quick-exercise-card active-exercise";
+        card.dataset.exercise = exercise.id;
+
+        const image = document.createElement("img");
+        image.className = "quick-card-image";
+        image.src = `./src/assets/exercises/${exercise.id}.png`;
+        image.alt = `${exercise.name} Exercise`;
+
+        const body = document.createElement("div");
+        body.className = "quick-card-body";
+
+        const category = document.createElement("span");
+        category.textContent = exercise.category.toUpperCase();
+
+        const name = document.createElement("h4");
+        name.textContent = exercise.name;
+
+        const description = document.createElement("p");
+        description.textContent = descriptions[exercise.id] || "Workout";
+
+        const action = document.createElement("strong");
+        action.textContent = "→";
+
+        body.append(category, name, description);
+        card.append(image, body, action);
+        homeQuickExercises.appendChild(card);
+    });
+}
+
+
+function formatActivityDuration(seconds) {
+    if (typeof seconds !== "number" || !Number.isFinite(seconds)) {
+        return "--";
+    }
+
+    return formatTime(Math.max(0, Math.round(seconds)));
+}
+
+
+function getExerciseDisplayName(exerciseId) {
+    const names = {
+        "jumping-jack": "Jumping Jack",
+        squat: "Squat",
+        "push-up": "Push-up",
+        lunge: "Lunge",
+        "bicep-curl": "Bicep Curl"
+    };
+
+    return names[exerciseId] || exerciseId || "Workout";
+}
+
+
+function getActivityDateKey(date) {
+    const value = new Date(date);
+
+    if (Number.isNaN(value.getTime())) {
+        return null;
+    }
+
+    return `${value.getFullYear()}-${value.getMonth()}-${value.getDate()}`;
+}
+
+
+function getActivityDateLabel(date) {
+    const value = new Date(date);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (getActivityDateKey(value) === getActivityDateKey(today)) {
+        return "Today";
+    }
+
+    if (getActivityDateKey(value) === getActivityDateKey(yesterday)) {
+        return "Yesterday";
+    }
+
+    return value.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric"
+    });
+}
+
+
+function sortSessionsByDate(sessions) {
+    return [...sessions].sort(
+        (left, right) => Date.parse(
+            right.completedAt || right.startedAt
+        ) - Date.parse(
+            left.completedAt || left.startedAt
+        )
+    );
+}
+
+
+function renderTodayActivity(sessions) {
+    const todayKey = getActivityDateKey(new Date());
+    const todaySessions = sortSessionsByDate(sessions).filter(session =>
+        getActivityDateKey(
+            session.completedAt || session.startedAt
+        ) === todayKey
+    );
+
+    if (!todaySessions.length) {
+        homeTodayEmpty.hidden = false;
+        homeTodayActivity.hidden = true;
+        return;
+    }
+
+    const totalReps = todaySessions.reduce(
+        (total, session) => total + session.repetitions,
+        0
+    );
+    const qualityValues = todaySessions
+        .map(session => session.quality)
+        .filter(value => typeof value === "number");
+    const duration = todaySessions.reduce(
+        (total, session) => total + session.duration,
+        0
+    );
+
+    homeTodayEmpty.hidden = true;
+    homeTodayActivity.hidden = false;
+    homeTodayWorkouts.textContent = todaySessions.length;
+    homeTodayReps.textContent = totalReps;
+    homeTodayQuality.textContent = qualityValues.length
+        ? `${Math.round(qualityValues.reduce((sum, value) => sum + value, 0) / qualityValues.length)}%`
+        : "--";
+    homeTodayDuration.textContent = formatActivityDuration(duration);
+}
+
+
+function renderRecentWorkouts(sessions) {
+    const recentSessions = sortSessionsByDate(sessions).slice(0, 5);
+
+    if (!recentSessions.length) {
+        homeRecentEmpty.hidden = false;
+        homeRecentWorkouts.hidden = true;
+        homeRecentWorkouts.textContent = "";
+        return;
+    }
+
+    homeRecentEmpty.hidden = true;
+    homeRecentWorkouts.hidden = false;
+    homeRecentWorkouts.textContent = "";
+
+    recentSessions.forEach(session => {
+        const card = document.createElement("article");
+        card.className = "activity-feed-card";
+        card.innerHTML = `
+            <div class="activity-feed-date">${getActivityDateLabel(session.completedAt || session.startedAt)}</div>
+            <div class="activity-feed-main">
+                <strong>${getExerciseDisplayName(session.exerciseId)}</strong>
+                <span>${session.repetitions} reps · ${typeof session.quality === "number" ? `${session.quality}% quality` : "Quality --"}</span>
+            </div>
+            <time>${formatActivityDuration(session.duration)}</time>
+        `;
+        homeRecentWorkouts.appendChild(card);
+    });
 }
 
 
@@ -3151,6 +3609,8 @@ showScreen(
 
 resetLiveUI();
 
+renderQuickStart();
+
 updateHomeProgress();
 
 
@@ -3182,10 +3642,32 @@ function openSquat() {
 }
 
 
+function openLunge() {
+    activeExerciseId = "lunge";
+    updateExerciseLabels();
+    showScreen(exerciseScreen);
+    prepareExercise();
+}
+
+
+function openBicepCurl() {
+    activeExerciseId = "bicep-curl";
+    updateExerciseLabels();
+    showScreen(exerciseScreen);
+    prepareExercise();
+}
+
+
 function updateExerciseLabels() {
-    const name = activeExerciseId === "squat"
-        ? "Squat"
-        : "Jumping Jack";
+    const names = {
+        "jumping-jack": "Jumping Jack",
+        squat: "Squat",
+        "push-up": "Push-up",
+        lunge: "Lunge",
+        "bicep-curl": "Bicep Curl"
+    };
+    const name = names[activeExerciseId]
+        || names["jumping-jack"];
 
     if (exerciseNameElement) {
         exerciseNameElement.textContent = name;
@@ -3197,25 +3679,175 @@ function updateExerciseLabels() {
     }
 
     if (liveLeftAngleLabel) {
-        liveLeftAngleLabel.textContent =
-            activeExerciseId === "squat"
-                ? "เข่าซ้าย"
+        liveLeftAngleLabel.textContent = activeExerciseId === "squat"
+            || activeExerciseId === "lunge"
+            ? "เข่าซ้าย"
+            : activeExerciseId === "push-up"
+                || activeExerciseId === "bicep-curl"
+                ? "ข้อศอกซ้าย"
                 : "แขนซ้าย";
     }
 
     if (liveRightAngleLabel) {
-        liveRightAngleLabel.textContent =
-            activeExerciseId === "squat"
-                ? "เข่าขวา"
+        liveRightAngleLabel.textContent = activeExerciseId === "squat"
+            || activeExerciseId === "lunge"
+            ? "เข่าขวา"
+            : activeExerciseId === "push-up"
+                || activeExerciseId === "bicep-curl"
+                ? "ข้อศอกขวา"
                 : "แขนขวา";
+    }
+
+    updateLiveMetricLabels();
+}
+
+
+function updateLiveMetricLabels() {
+    const metricLabels = {
+        "jumping-jack": ["Arm ROM", "Leg ROM", "Symmetry"],
+        squat: ["Depth", "Knee Angle", "Symmetry"],
+        "push-up": ["Depth", "Alignment", "Elbow Angle"],
+        lunge: ["Depth", "Knee Angle", "Balance"],
+        "bicep-curl": ["ROM", "Stability", "Speed"]
+    };
+    const labels = metricLabels[activeExerciseId]
+        || metricLabels["jumping-jack"];
+
+    if (liveMetricsExercise) {
+        liveMetricsExercise.textContent = getExerciseDisplayName(
+            activeExerciseId
+        );
+    }
+
+    if (liveMetricOneLabel) {
+        liveMetricOneLabel.textContent = labels[0];
+    }
+
+    if (liveMetricTwoLabel) {
+        liveMetricTwoLabel.textContent = labels[1];
+    }
+
+    if (liveMetricThreeLabel) {
+        liveMetricThreeLabel.textContent = labels[2];
     }
 }
 
 
-$("home-jumping-jack")?.addEventListener(
-    "click",
-    openJumpingJack
-);
+function updateLiveMetricValues(metrics) {
+    if (!metrics) {
+        return;
+    }
+
+    const values = {
+        "jumping-jack": [metrics.armROM, metrics.legROM, metrics.symmetry],
+        squat: [metrics.depth, metrics.kneeAngle, metrics.symmetry],
+        "push-up": [metrics.depth, metrics.alignment, metrics.elbowAngle],
+        lunge: [metrics.depth, metrics.kneeAngle, metrics.alignment],
+        "bicep-curl": [metrics.rom, metrics.stability, metrics.speed]
+    }[activeExerciseId] || [];
+
+    const elements = [liveMetricOne, liveMetricTwo, liveMetricThree];
+
+    elements.forEach((element, index) => {
+        if (!element) {
+            return;
+        }
+
+        const value = values[index];
+        element.textContent = formatLiveMetricValue(
+            value,
+            activeExerciseId,
+            index
+        );
+    });
+}
+
+
+function renderExerciseLibrary() {
+    if (!exerciseLibrary) {
+        return;
+    }
+
+    const descriptions = {
+        "jumping-jack": "Full body cardio",
+        squat: "Lower body strength",
+        "push-up": "Upper body strength",
+        lunge: "Lower body & balance",
+        "bicep-curl": "Arm strength"
+    };
+
+    exerciseLibrary.textContent = "";
+
+    getExercises().forEach(exercise => {
+        const card = document.createElement("article");
+        card.className = "library-card";
+        card.dataset.category = exercise.category;
+        card.dataset.name = exercise.name.toLowerCase();
+
+        const image = document.createElement("img");
+        image.className = "library-image";
+        image.src = `./src/assets/exercises/${exercise.id}.png`;
+        image.alt = `${exercise.name} Exercise`;
+
+        const content = document.createElement("div");
+        content.className = "library-content";
+
+        const top = document.createElement("div");
+        top.className = "library-top";
+
+        const category = document.createElement("span");
+        category.className = "library-category";
+        category.textContent = exercise.category.toUpperCase();
+
+        const status = document.createElement("span");
+        status.className = exercise.available
+            ? "available-badge"
+            : "coming-badge";
+        status.textContent = exercise.available
+            ? "● AVAILABLE"
+            : "COMING SOON";
+        top.append(category, status);
+
+        const title = document.createElement("h3");
+        title.textContent = exercise.name;
+
+        const description = document.createElement("p");
+        description.textContent = descriptions[exercise.id] || "Exercise";
+
+        content.append(top, title, description);
+
+        const action = document.createElement("button");
+        action.className = exercise.available
+            ? "library-start"
+            : "library-start disabled";
+        action.type = "button";
+        action.dataset.exercise = exercise.id;
+        action.disabled = !exercise.available;
+        action.textContent = exercise.available ? "เริ่ม →" : "เตรียมระบบ";
+
+        card.append(image, content, action);
+        exerciseLibrary.appendChild(card);
+    });
+
+}
+
+
+function formatLiveMetricValue(value, exerciseId, index) {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+        return "--";
+    }
+
+    const angleMetric =
+        (exerciseId === "squat" && index === 1) ||
+        (exerciseId === "push-up" && index === 2) ||
+        (exerciseId === "lunge" && index === 1);
+
+    if (exerciseId === "bicep-curl" && index === 2) {
+        return value.toFixed(2);
+    }
+
+    return `${Math.round(value)}${angleMetric ? "°" : "%"}`;
+}
 
 
 $("recommended-start")?.addEventListener(
@@ -3351,6 +3983,10 @@ function openAnalyzePage() {
 }
 
 
+renderExerciseLibrary();
+updateExerciseLabels();
+
+
 function openProgressPage() {
     showScreen(progressScreen);
     renderProgressPage();
@@ -3437,6 +4073,60 @@ document
                 () => {
                     setActiveNavigation("analyze");
                     openSquat();
+                }
+            );
+        }
+    );
+
+
+document
+    .querySelectorAll(
+        '[data-exercise="push-up"]'
+    )
+    .forEach(
+        button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    activeExerciseId = "push-up";
+                    updateExerciseLabels();
+                    showScreen(exerciseScreen);
+                    setActiveNavigation("analyze");
+                    prepareExercise();
+                }
+            );
+        }
+    );
+
+
+document
+    .querySelectorAll(
+        '[data-exercise="lunge"]'
+    )
+    .forEach(
+        button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    setActiveNavigation("analyze");
+                    openLunge();
+                }
+            );
+        }
+    );
+
+
+document
+    .querySelectorAll(
+        '[data-exercise="bicep-curl"]'
+    )
+    .forEach(
+        button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    setActiveNavigation("analyze");
+                    openBicepCurl();
                 }
             );
         }
@@ -3751,4 +4441,27 @@ $("view-all-exercises")?.addEventListener(
 $("home-squat")?.addEventListener(
     "click",
     openSquat
+);
+
+
+$("home-push-up")?.addEventListener(
+    "click",
+    () => {
+        activeExerciseId = "push-up";
+        updateExerciseLabels();
+        showScreen(exerciseScreen);
+        prepareExercise();
+    }
+);
+
+
+$("home-lunge")?.addEventListener(
+    "click",
+    openLunge
+);
+
+
+$("home-bicep-curl")?.addEventListener(
+    "click",
+    openBicepCurl
 );

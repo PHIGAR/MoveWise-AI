@@ -1,9 +1,24 @@
+import {
+    validateLandmarks
+} from "../ai/pose/landmarks.js";
+
+
 const DEFAULT_CONFIG = {
     handUpOffset: 0.03,
     footOpenRatio: 1.35,
     footClosedRatio: 1.10,
     repCooldown: 700
 };
+
+
+const REQUIRED_LANDMARKS = [
+    11,
+    12,
+    15,
+    16,
+    27,
+    28
+];
 
 
 function createInitialState() {
@@ -33,6 +48,27 @@ export function createJumpingJackAnalyzer(
     let exerciseState = createInitialState();
 
     function analyze(landmarks) {
+        const validation = validateLandmarks(
+            landmarks,
+            REQUIRED_LANDMARKS
+        );
+
+        if (!validation.valid) {
+            return {
+                hasRequiredLandmarks: false,
+                leftHandUp: false,
+                rightHandUp: false,
+                handsUp: false,
+                handsDown: false,
+                feetOpen: false,
+                feetClosed: false,
+                isOpen: false,
+                isClosed: false,
+                shoulderWidth: 0,
+                footWidth: 0
+            };
+        }
+
         const leftShoulder = landmarks[11];
         const rightShoulder = landmarks[12];
         const leftWrist = landmarks[15];
@@ -71,6 +107,7 @@ export function createJumpingJackAnalyzer(
             shoulderWidth * settings.footClosedRatio;
 
         return {
+            hasRequiredLandmarks: true,
             leftHandUp,
             rightHandUp,
             handsUp,
@@ -162,7 +199,7 @@ export function createJumpingJackAnalyzer(
         return record;
     }
 
-    function process(data, metrics, timestamp = performance.now()) {
+    function process(data, metrics = {}, timestamp = performance.now()) {
         let score = 0;
         let feedback = {
             title: "",
@@ -170,6 +207,26 @@ export function createJumpingJackAnalyzer(
         };
         let repCompleted = false;
         let record = null;
+
+        if (!data?.hasRequiredLandmarks) {
+            return {
+                state: exerciseState.state,
+                repCompleted: false,
+                repetitions: exerciseState.repetitions,
+                attempts: exerciseState.attempts,
+                validReps: exerciseState.validReps,
+                score: 0,
+                quality: 0,
+                feedback: {
+                    type: "form",
+                    severity: "warning",
+                    message: "ต้องเห็นร่างกายครบก่อนเริ่มวิเคราะห์"
+                },
+                metrics,
+                record: null,
+                valid: false
+            };
+        }
 
         if (exerciseState.state === "CLOSED") {
             score = 100;
@@ -243,14 +300,20 @@ export function createJumpingJackAnalyzer(
 
         return {
             state: exerciseState.state,
-            isValid: data.isOpen || data.isClosed,
+            valid: data.isOpen || data.isClosed,
             repCompleted,
             repetitions: exerciseState.repetitions,
             attempts: exerciseState.attempts,
             validReps: exerciseState.validReps,
             score,
-            quality: metrics.quality,
-            feedback,
+            quality: metrics.quality ?? 0,
+            feedback: {
+                type: feedback.title,
+                severity: feedback.title.includes("สำเร็จ")
+                    ? "success"
+                    : "info",
+                message: feedback.message
+            },
             metrics,
             record
         };

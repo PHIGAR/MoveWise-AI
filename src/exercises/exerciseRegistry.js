@@ -6,6 +6,18 @@ import {
     createSquatAnalyzer
 } from "./squat.js";
 
+import {
+    createPushUpAnalyzer
+} from "./pushUp.js";
+
+import {
+    createLungeAnalyzer
+} from "./lunge.js";
+
+import {
+    createBicepCurlAnalyzer
+} from "./bicepCurl.js";
+
 
 const exercises = [
     {
@@ -29,16 +41,24 @@ const exercises = [
         name: "Push-up",
         nameThai: "วิดพื้น",
         category: "strength",
-        analyzer: null,
-        available: false
+        analyzer: createPushUpAnalyzer,
+        available: true
     },
     {
         id: "lunge",
         name: "Lunge",
         nameThai: "ลันจ์",
         category: "strength",
-        analyzer: null,
-        available: false
+        analyzer: createLungeAnalyzer,
+        available: true
+    },
+    {
+        id: "bicep-curl",
+        name: "Bicep Curl",
+        nameThai: "ไบเซปเคิร์ล",
+        category: "strength",
+        analyzer: createBicepCurlAnalyzer,
+        available: true
     },
     {
         id: "shoulder-raise",

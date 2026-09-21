@@ -88,20 +88,16 @@
 
     <!-- GREETING -->
 
-    <section class="dashboard-greeting">
+    <section class="dashboard-greeting home-greeting">
 
         <div>
 
-            <span class="dashboard-eyebrow">
-                YOUR PERSONAL MOVEMENT AI
-            </span>
-
             <h2>
-                สวัสดี 👋
+                สวัสดี
             </h2>
 
             <p>
-                พร้อมขยับร่างกายให้ดีขึ้นหรือยัง?
+                พร้อมขยับร่างกายวันนี้หรือยัง?
             </p>
 
         </div>
@@ -110,45 +106,39 @@
 
 
 
-    <!-- MOVEMENT SCORE -->
+    <!-- TODAY'S ACTIVITY -->
 
-    <section class="movement-score-card">
+    <section class="dashboard-section today-activity-section">
 
-        <div class="movement-score-info">
-
-            <span>
-                YOUR MOVEMENT SCORE
-            </span>
-
-            <small>
-                คะแนนการเคลื่อนไหวล่าสุด
-            </small>
-
-            <strong id="home-movement-score">
-                92
-            </strong>
-
-            <div class="score-change">
-                ↑ 8% จาก Session ก่อน
+        <div class="dashboard-section-header">
+            <div>
+                <span>TODAY'S ACTIVITY</span>
+                <h3>ภาพรวมวันนี้</h3>
             </div>
-
         </div>
 
+        <div id="home-today-empty" class="activity-empty-state">
+            <strong>No activity yet</strong>
+            <span>Start your first workout</span>
+        </div>
 
-        <div class="score-circle">
-
-            <div>
-
-                <strong>
-                    92
-                </strong>
-
-                <span>
-                    /100
-                </span>
-
+        <div id="home-today-activity" class="activity-summary-grid" hidden>
+            <div class="activity-stat">
+                <span>Workouts</span>
+                <strong id="home-today-workouts">--</strong>
             </div>
-
+            <div class="activity-stat">
+                <span>Total Reps</span>
+                <strong id="home-today-reps">--</strong>
+            </div>
+            <div class="activity-stat">
+                <span>Avg Quality</span>
+                <strong id="home-today-quality">--</strong>
+            </div>
+            <div class="activity-stat">
+                <span>Duration</span>
+                <strong id="home-today-duration">--</strong>
+            </div>
         </div>
 
     </section>
@@ -185,7 +175,7 @@
         </div>
 
 
-        <div class="quick-exercise-grid">
+        <div id="home-quick-exercises" class="quick-exercise-grid">
 
 
             <!-- JUMPING JACK -->
@@ -197,7 +187,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/jumping-jack.svg"
+                    src="./src/assets/exercises/jumping-jack.png"
                     alt="Jumping Jack Exercise"
                     class="quick-card-image"
                 >
@@ -237,7 +227,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/squat.svg"
+                    src="./src/assets/exercises/squat.png"
                     alt="Squat Exercise"
                     class="quick-card-image"
                 >
@@ -271,14 +261,16 @@
             <!-- PUSH UP -->
 
             <button
-                class="quick-exercise-card"
+                id="home-push-up"
+                class="quick-exercise-card active-exercise"
                 type="button"
-                disabled
             >
 
-                <div class="quick-card-icon">
-                    💪
-                </div>
+                <img
+                    src="./src/assets/exercises/push-up.png"
+                    alt="Push-up Exercise"
+                    class="quick-card-image"
+                >
 
 
                 <div class="quick-card-body">
@@ -292,93 +284,50 @@
                     </h4>
 
                     <p>
-                        Coming Soon
+                        Full AI Analysis
                     </p>
 
                 </div>
 
 
                 <strong>
-                    —
+                    →
                 </strong>
 
             </button>
 
-        </div>
 
-    </section>
-
-
-
-    <!-- AI RECOMMENDED -->
-
-    <section class="dashboard-section">
-
-        <div class="dashboard-section-header">
-
-            <div>
-
-                <span>
-                    AI RECOMMENDED
-                </span>
-
-                <h3>
-                    เหมาะกับคุณ
-                </h3>
-
-            </div>
-
-        </div>
-
-
-        <div class="recommendation-home-card">
-
-            <div class="recommendation-home-icon">
-                ✦
-            </div>
-
-
-            <div class="recommendation-home-content">
-
-                <span>
-                    BASED ON YOUR MOVEMENT
-                </span>
-
-                <h3>
-                    Improve Full Body Mobility
-                </h3>
-
-                <p>
-                    ฝึกการเคลื่อนไหวของแขนและขา
-                    เพื่อเพิ่ม Range of Motion
-                </p>
-
-
-                <div class="recommendation-meta">
-
-                    <span>
-                        ⏱ 10 min
-                    </span>
-
-                    <span>
-                        • Beginner
-                    </span>
-
-                    <span>
-                        • Full Body
-                    </span>
-
-                </div>
-
-            </div>
-
+            <!-- LUNGE -->
 
             <button
-                id="recommended-start"
-                class="recommendation-start"
+                id="home-lunge"
+                class="quick-exercise-card active-exercise"
                 type="button"
             >
-                เริ่ม →
+                <img src="./src/assets/exercises/lunge.png" alt="Lunge Exercise" class="quick-card-image">
+                <div class="quick-card-body">
+                    <span>STRENGTH</span>
+                    <h4>Lunge</h4>
+                    <p>Lower body &amp; balance</p>
+                </div>
+                <strong>→</strong>
+            </button>
+
+
+            <!-- BICEP CURL -->
+
+            <button
+                id="home-bicep-curl"
+                class="quick-exercise-card active-exercise"
+                type="button"
+            >
+                <img src="./src/assets/exercises/bicep-curl.png" alt="Bicep Curl Exercise" class="quick-card-image">
+                <div class="quick-card-body">
+                    <span>STRENGTH</span>
+                    <h4>Bicep Curl</h4>
+                    <p>Arm strength</p>
+                </div>
+                <strong>→</strong>
             </button>
 
         </div>
@@ -387,20 +336,20 @@
 
 
 
-    <!-- WEEKLY ACTIVITY -->
+    <!-- RECENT WORKOUTS -->
 
-    <section class="dashboard-section">
+    <section class="dashboard-section recent-workouts-section">
 
         <div class="dashboard-section-header">
 
             <div>
 
                 <span>
-                    THIS WEEK
+                    RECENT WORKOUTS
                 </span>
 
                 <h3>
-                    Activity Overview
+                    การฝึกล่าสุด
                 </h3>
 
             </div>
@@ -408,7 +357,39 @@
         </div>
 
 
-        <div class="activity-card">
+        <div id="home-recent-empty" class="activity-empty-state">
+            <strong>No workouts yet</strong>
+            <span>Your completed workouts will appear here.</span>
+        </div>
+
+        <div id="home-recent-workouts" class="activity-feed" hidden></div>
+
+    </section>
+
+
+
+    <!-- PROGRESS SNAPSHOT -->
+
+    <section class="dashboard-section progress-snapshot-section">
+
+        <div class="dashboard-section-header">
+
+            <div>
+
+                <span>
+                    PROGRESS SNAPSHOT
+                </span>
+
+                <h3>
+                    ความก้าวหน้าของคุณ
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <div class="activity-card progress-snapshot-card">
 
 
             <div class="activity-stat">
@@ -417,8 +398,8 @@
                     Sessions
                 </span>
 
-                <strong id="home-sessions">
-                    4
+                    <strong id="home-sessions">
+                    --
                 </strong>
 
             </div>
@@ -430,8 +411,8 @@
                     Total Reps
                 </span>
 
-                <strong id="home-total-reps">
-                    86
+                    <strong id="home-total-reps">
+                    --
                 </strong>
 
             </div>
@@ -443,24 +424,12 @@
                     Avg Quality
                 </span>
 
-                <strong id="home-average-quality">
-                    91%
+                    <strong id="home-average-quality">
+                    --
                 </strong>
 
             </div>
 
-
-            <div class="activity-mini-chart">
-
-                <div style="height:35%"></div>
-                <div style="height:55%"></div>
-                <div style="height:45%"></div>
-                <div style="height:70%"></div>
-                <div style="height:62%"></div>
-                <div style="height:85%"></div>
-                <div style="height:75%"></div>
-
-            </div>
 
         </div>
 
@@ -478,9 +447,13 @@
             type="button"
         >
 
-            <span>
-                🏠
-            </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5 12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+    </svg>
+</span>
 
             <small>
                 Home
@@ -495,12 +468,15 @@
             type="button"
         >
 
-            <span>
-                🎯
-            </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="m10 8 6 4-6 4V8z"></path>
+    </svg>
+</span>
 
             <small>
-                Analyze
+                Record
             </small>
 
         </button>
@@ -512,12 +488,16 @@
             type="button"
         >
 
-            <span>
-                📊
-            </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19V5"></path>
+        <path d="M4 19h16"></path>
+        <path d="m7 15 3-4 3 2 4-6"></path>
+    </svg>
+</span>
 
             <small>
-                Progress
+                Activity
             </small>
 
         </button>
@@ -529,9 +509,12 @@
             type="button"
         >
 
-            <span>
-                👤
-            </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+    </svg>
+</span>
 
             <small>
                 Profile
@@ -667,7 +650,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/jumping-jack.svg"
+                    src="./src/assets/exercises/jumping-jack.png"
                     alt="Jumping Jack Exercise"
                     class="library-image"
                 />
@@ -747,7 +730,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/squat.svg"
+                    src="./src/assets/exercises/squat.png"
                     alt="Squat Exercise"
                     class="library-image"
                 />
@@ -761,8 +744,8 @@
                             STRENGTH
                         </span>
 
-                        <span class="coming-badge">
-                            COMING SOON
+                        <span class="available-badge">
+                            ● AVAILABLE
                         </span>
 
                     </div>
@@ -826,9 +809,11 @@
                 data-name="push up"
             >
 
-                <div class="library-icon">
-                    💪
-                </div>
+                <img
+                    src="./src/assets/exercises/push-up.png"
+                    alt="Push-up Exercise"
+                    class="library-image"
+                />
 
 
                 <div class="library-content">
@@ -839,8 +824,8 @@
                             STRENGTH
                         </span>
 
-                        <span class="coming-badge">
-                            COMING SOON
+                        <span class="available-badge">
+                            ● AVAILABLE
                         </span>
 
                     </div>
@@ -877,11 +862,11 @@
 
 
                 <button
-                    class="library-start disabled"
+                    class="library-start"
+                    data-exercise="push-up"
                     type="button"
-                    disabled
                 >
-                    เตรียมระบบ
+                    เริ่ม →
                 </button>
 
             </article>
@@ -896,9 +881,11 @@
                 data-name="lunge"
             >
 
-                <div class="library-icon">
-                    🦵
-                </div>
+                <img
+                    src="./src/assets/exercises/lunge.png"
+                    alt="Lunge Exercise"
+                    class="library-image"
+                />
 
 
                 <div class="library-content">
@@ -909,8 +896,8 @@
                             STRENGTH
                         </span>
 
-                        <span class="coming-badge">
-                            COMING SOON
+                        <span class="available-badge">
+                            ● AVAILABLE
                         </span>
 
                     </div>
@@ -947,11 +934,83 @@
 
 
                 <button
-                    class="library-start disabled"
+                    class="library-start"
+                    data-exercise="lunge"
                     type="button"
-                    disabled
                 >
-                    เตรียมระบบ
+                    เริ่ม →
+                </button>
+
+            </article>
+
+
+
+            <!-- BICEP CURL -->
+
+            <article
+                class="library-card"
+                data-category="strength"
+                data-name="bicep curl"
+            >
+
+                <img
+                    src="./src/assets/exercises/bicep-curl.png"
+                    alt="Bicep Curl Exercise"
+                    class="library-image"
+                />
+
+
+                <div class="library-content">
+
+                    <div class="library-top">
+
+                        <span class="library-category">
+                            STRENGTH
+                        </span>
+
+                        <span class="available-badge">
+                            ● AVAILABLE
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Bicep Curl
+                    </h3>
+
+
+                    <p>
+                        Elbow Angle, ROM,
+                        Symmetry และ Movement Quality
+                    </p>
+
+
+                    <div class="library-meta">
+
+                        <span>
+                            Beginner
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            Upper Body
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="library-start"
+                    data-exercise="bicep-curl"
+                    type="button"
+                >
+                    เริ่ม →
                 </button>
 
             </article>
@@ -1119,9 +1178,13 @@
                 type="button"
             >
 
-                <span>
-                    🏠
-                </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5 12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+    </svg>
+</span>
 
                 <small>
                     Home
@@ -1136,12 +1199,15 @@
                 type="button"
             >
 
-                <span>
-                    🎯
-                </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="m10 8 6 4-6 4V8z"></path>
+    </svg>
+</span>
 
                 <small>
-                    Analyze
+                    Record
                 </small>
 
             </button>
@@ -1153,12 +1219,16 @@
                 type="button"
             >
 
-                <span>
-                    📊
-                </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19V5"></path>
+        <path d="M4 19h16"></path>
+        <path d="m7 15 3-4 3 2 4-6"></path>
+    </svg>
+</span>
 
                 <small>
-                    Progress
+                    Activity
                 </small>
 
             </button>
@@ -1170,9 +1240,12 @@
                 type="button"
             >
 
-                <span>
-                    👤
-                </span>
+<span class="nav-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+    </svg>
+</span>
 
                 <small>
                     Profile
@@ -1460,7 +1533,32 @@
 
             <!-- MOVEMENT INTELLIGENCE -->
 
-            <div class="movement-intelligence">
+            <div class="live-metrics" id="live-metrics">
+
+                <div class="live-metrics-header">
+                    <span>LIVE METRICS</span>
+                    <strong id="live-metrics-exercise">Jumping Jack</strong>
+                </div>
+
+                <div class="live-metric-list">
+                    <div class="live-metric-item">
+                        <span id="live-metric-one-label">Arm ROM</span>
+                        <strong id="live-metric-one">--</strong>
+                    </div>
+                    <div class="live-metric-item">
+                        <span id="live-metric-two-label">Leg ROM</span>
+                        <strong id="live-metric-two">--</strong>
+                    </div>
+                    <div class="live-metric-item">
+                        <span id="live-metric-three-label">Symmetry</span>
+                        <strong id="live-metric-three">--</strong>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="movement-intelligence" aria-hidden="true">
 
                 <div class="mi-header">
 
@@ -1759,24 +1857,53 @@
             </div>
         </div>
 
-        <nav class="bottom-navigation">
-            <button class="bottom-nav-item" data-nav="home" type="button">
-                <span>🏠</span>
-                <small>Home</small>
-            </button>
-            <button class="bottom-nav-item" data-nav="analyze" type="button">
-                <span>🎯</span>
-                <small>Analyze</small>
-            </button>
-            <button class="bottom-nav-item active" data-nav="progress" type="button">
-                <span>📊</span>
-                <small>Progress</small>
-            </button>
-            <button class="bottom-nav-item" data-nav="profile" type="button">
-                <span>👤</span>
-                <small>Profile</small>
-            </button>
-        </nav>
+ <nav class="bottom-navigation">
+    <button class="bottom-nav-item" data-nav="home" type="button">
+        <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10.5 12 3l9 7.5"></path>
+                <path d="M5 9.5V21h14V9.5"></path>
+                <path d="M9 21v-6h6v6"></path>
+            </svg>
+        </span>
+        <small>Home</small>
+    </button>
+
+    <button class="bottom-nav-item" data-nav="analyze" type="button">
+        <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="m10 8 6 4-6 4V8z"></path>
+            </svg>
+        </span>
+        <small>Record</small>
+    </button>
+
+    <button class="bottom-nav-item active" data-nav="progress" type="button">
+        <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19V5"></path>
+                <path d="M4 19h16"></path>
+                <path d="m7 15 3-4 3 2 4-6"></path>
+            </svg>
+        </span>
+        <small>Activity</small>
+    </button>
+
+    <button class="bottom-nav-item" data-nav="profile" type="button">
+        <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+            </svg>
+        </span>
+        <small>Profile</small>
+    </button>
+</nav>
 
     </div>
 
