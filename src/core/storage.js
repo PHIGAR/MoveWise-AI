@@ -1,6 +1,9 @@
 import {
     validateSession
 } from "./session.js";
+import {
+    isValidMovementVisual
+} from "./movementVisual.js";
 
 
 export const SESSION_STORAGE_KEY =
@@ -77,6 +80,51 @@ function writeSessions(
     }
 }
 
+function cloneSession(
+    session
+) {
+    const copy = {
+        ...session,
+        repRecords: Array.isArray(session.repRecords)
+            ? session.repRecords.map(record => ({ ...record }))
+            : []
+    };
+
+    if (
+        session.movementMetrics &&
+        typeof session.movementMetrics === "object" &&
+        !Array.isArray(session.movementMetrics)
+    ) {
+        copy.movementMetrics = { ...session.movementMetrics };
+    }
+
+    if (
+        isValidMovementVisual(
+            session.movementVisual,
+            session.exerciseId,
+            session.repetitions
+        )
+    ) {
+        copy.movementVisual = {
+            ...session.movementVisual,
+            reps: session.movementVisual.reps.map(rep => ({
+                ...rep,
+                representativePose: rep.representativePose.map(point =>
+                    point ? { ...point } : null
+                ),
+                trail: rep.trail.map(pose =>
+                    pose.map(point => point ? { ...point } : null)
+                )
+            }))
+        };
+    }
+    else if (session.movementVisual !== undefined) {
+        copy.movementVisual = null;
+    }
+
+    return copy;
+}
+
 
 export function saveSession(
     session,
@@ -92,20 +140,10 @@ export function saveSession(
     );
 
     if (existingIndex >= 0) {
-        sessions[existingIndex] = {
-            ...session,
-            repRecords: Array.isArray(session.repRecords)
-                ? session.repRecords.map(record => ({ ...record }))
-                : []
-        };
+        sessions[existingIndex] = cloneSession(session);
     }
     else {
-        sessions.push({
-            ...session,
-            repRecords: Array.isArray(session.repRecords)
-                ? session.repRecords.map(record => ({ ...record }))
-                : []
-        });
+        sessions.push(cloneSession(session));
     }
 
     return writeSessions(sessions, storage);
@@ -115,10 +153,7 @@ export function saveSession(
 export function getSessions(
     storage
 ) {
-    return readSessions(storage).map(session => ({
-        ...session,
-        repRecords: session.repRecords.map(record => ({ ...record }))
-    }));
+    return readSessions(storage).map(cloneSession);
 }
 
 

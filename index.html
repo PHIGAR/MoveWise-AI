@@ -12,12 +12,12 @@
 
     <meta
         name="theme-color"
-        content="#0b1220"
+        content="#0b1f3a"
     >
 
     <meta
         name="description"
-        content="MoveWise AI - AI Movement Intelligence Platform"
+        content="MoveWise — build strength with movement coaching that moves with you."
     >
 
     <title>
@@ -61,7 +61,7 @@
                 </h1>
 
                 <p>
-                    AI Movement Intelligence
+                    ขยับอย่างเข้าใจ · แข็งแรงอย่างมั่นใจ
                 </p>
 
             </div>
@@ -73,7 +73,7 @@
             id="home-profile-button"
             class="profile-button"
             type="button"
-            aria-label="Profile"
+            aria-label="เปิดโปรไฟล์"
         >
 
             <span>
@@ -90,16 +90,25 @@
 
     <section class="dashboard-greeting home-greeting">
 
-        <div>
+        <div class="home-hero-copy">
 
-            <h2>
-                สวัสดี
-            </h2>
+            <span class="dashboard-eyebrow">สวัสดีครับ 👋</span>
 
-            <p>
-                พร้อมขยับร่างกายวันนี้หรือยัง?
-            </p>
+            <h2>พร้อมขยับร่างกาย<br><span>วันนี้ไหม?</span></h2>
 
+            <p>ฝึกอย่างมั่นใจ ให้ MoveWise ช่วยดูแลทุกการเคลื่อนไหว</p>
+
+            <button id="recommended-start" class="start-button" type="button">
+                เริ่มออกกำลังกาย <span aria-hidden="true">→</span>
+            </button>
+
+        </div>
+
+        <div class="home-hero-art" aria-hidden="true">
+            <span class="hero-orbit hero-orbit-one"></span>
+            <span class="hero-orbit hero-orbit-two"></span>
+            <img src="./src/assets/exercises/jumping-jack.svg" alt="">
+            <span class="hero-art-label">MOVE<br>BETTER</span>
         </div>
 
     </section>
@@ -112,31 +121,31 @@
 
         <div class="dashboard-section-header">
             <div>
-                <span>TODAY'S ACTIVITY</span>
+                <span>กิจกรรมวันนี้</span>
                 <h3>ภาพรวมวันนี้</h3>
             </div>
         </div>
 
         <div id="home-today-empty" class="activity-empty-state">
-            <strong>No activity yet</strong>
-            <span>Start your first workout</span>
+            <strong>วันนี้ยังไม่มีการฝึก</strong>
+            <span>เริ่มขยับสักนิด แล้วกิจกรรมวันนี้จะแสดงที่นี่</span>
         </div>
 
         <div id="home-today-activity" class="activity-summary-grid" hidden>
             <div class="activity-stat">
-                <span>Workouts</span>
+                <span>การฝึก</span>
                 <strong id="home-today-workouts">--</strong>
             </div>
             <div class="activity-stat">
-                <span>Total Reps</span>
+                <span>จำนวนครั้ง</span>
                 <strong id="home-today-reps">--</strong>
             </div>
             <div class="activity-stat">
-                <span>Avg Quality</span>
+                <span>คุณภาพเฉลี่ย</span>
                 <strong id="home-today-quality">--</strong>
             </div>
             <div class="activity-stat">
-                <span>Duration</span>
+                <span>เวลา</span>
                 <strong id="home-today-duration">--</strong>
             </div>
         </div>
@@ -154,7 +163,7 @@
             <div>
 
                 <span>
-                    QUICK START
+                    เริ่มต้น
                 </span>
 
                 <h3>
@@ -187,7 +196,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/jumping-jack.png"
+                    src="./src/assets/exercises/jumping-jack.svg"
                     alt="Jumping Jack Exercise"
                     class="quick-card-image"
                 >
@@ -204,7 +213,7 @@
                     </h4>
 
                     <p>
-                        Full AI Analysis
+                        AI ดูแลการเคลื่อนไหว
                     </p>
 
                 </div>
@@ -227,7 +236,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/squat.png"
+                    src="./src/assets/exercises/squat.svg"
                     alt="Squat Exercise"
                     class="quick-card-image"
                 >
@@ -244,7 +253,7 @@
                     </h4>
 
                     <p>
-                        Full AI Analysis
+                        AI ดูแลการเคลื่อนไหว
                     </p>
 
                 </div>
@@ -267,7 +276,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/push-up.png"
+                    src="./src/assets/exercises/push-up.svg"
                     alt="Push-up Exercise"
                     class="quick-card-image"
                 >
@@ -284,7 +293,7 @@
                     </h4>
 
                     <p>
-                        Full AI Analysis
+                        AI ดูแลการเคลื่อนไหว
                     </p>
 
                 </div>
@@ -304,11 +313,11 @@
                 class="quick-exercise-card active-exercise"
                 type="button"
             >
-                <img src="./src/assets/exercises/lunge.png" alt="Lunge Exercise" class="quick-card-image">
+                <img src="./src/assets/exercises/lunge.svg" alt="Lunge Exercise" class="quick-card-image">
                 <div class="quick-card-body">
                     <span>STRENGTH</span>
                     <h4>Lunge</h4>
-                    <p>Lower body &amp; balance</p>
+                    <p>ช่วงล่างและการทรงตัว</p>
                 </div>
                 <strong>→</strong>
             </button>
@@ -321,11 +330,11 @@
                 class="quick-exercise-card active-exercise"
                 type="button"
             >
-                <img src="./src/assets/exercises/bicep-curl.png" alt="Bicep Curl Exercise" class="quick-card-image">
+                <img src="./src/assets/exercises/bicep-curl.svg" alt="Bicep Curl Exercise" class="quick-card-image">
                 <div class="quick-card-body">
                     <span>STRENGTH</span>
                     <h4>Bicep Curl</h4>
-                    <p>Arm strength</p>
+                    <p>เสริมความแข็งแรงแขน</p>
                 </div>
                 <strong>→</strong>
             </button>
@@ -345,7 +354,7 @@
             <div>
 
                 <span>
-                    RECENT WORKOUTS
+                    การฝึกล่าสุด
                 </span>
 
                 <h3>
@@ -358,8 +367,8 @@
 
 
         <div id="home-recent-empty" class="activity-empty-state">
-            <strong>No workouts yet</strong>
-            <span>Your completed workouts will appear here.</span>
+            <strong>ยังไม่มีประวัติการฝึก</strong>
+            <span>การฝึกที่ทำเสร็จแล้วจะแสดงที่นี่</span>
         </div>
 
         <div id="home-recent-workouts" class="activity-feed" hidden></div>
@@ -377,7 +386,7 @@
             <div>
 
                 <span>
-                    PROGRESS SNAPSHOT
+                    ภาพรวมความก้าวหน้า
                 </span>
 
                 <h3>
@@ -394,9 +403,7 @@
 
             <div class="activity-stat">
 
-                <span>
-                    Sessions
-                </span>
+                <span>จำนวนเซสชัน</span>
 
                     <strong id="home-sessions">
                     --
@@ -407,9 +414,7 @@
 
             <div class="activity-stat">
 
-                <span>
-                    Total Reps
-                </span>
+                <span>จำนวนครั้งทั้งหมด</span>
 
                     <strong id="home-total-reps">
                     --
@@ -420,9 +425,7 @@
 
             <div class="activity-stat">
 
-                <span>
-                    Avg Quality
-                </span>
+                <span>คุณภาพเฉลี่ย</span>
 
                     <strong id="home-average-quality">
                     --
@@ -439,7 +442,7 @@
 
     <!-- HOME NAVIGATION -->
 
-    <nav class="bottom-navigation">
+    <nav class="bottom-navigation" aria-label="เมนูหลัก">
 
         <button
             class="bottom-nav-item active"
@@ -456,7 +459,7 @@
 </span>
 
             <small>
-                Home
+                หน้าแรก
             </small>
 
         </button>
@@ -476,7 +479,7 @@
 </span>
 
             <small>
-                Record
+                ฝึก
             </small>
 
         </button>
@@ -497,7 +500,7 @@
 </span>
 
             <small>
-                Activity
+                กิจกรรม
             </small>
 
         </button>
@@ -517,7 +520,7 @@
 </span>
 
             <small>
-                Profile
+                โปรไฟล์
             </small>
 
         </button>
@@ -545,15 +548,15 @@
             <div>
 
                 <span class="dashboard-eyebrow">
-                    AI MOVEMENT LIBRARY
+                    คลังท่าออกกำลังกาย
                 </span>
 
                 <h2>
-                    วิเคราะห์การเคลื่อนไหว
+                    เลือกท่าออกกำลังกาย
                 </h2>
 
                 <p>
-                    เลือกท่าที่ต้องการให้ MoveWise AI วิเคราะห์
+                    เลือกท่าที่เหมาะกับคุณ แล้วเริ่มฝึกได้เลย
                 </p>
 
             </div>
@@ -564,7 +567,7 @@
                 class="back-button"
                 type="button"
             >
-                ← Home
+                ← หน้าแรก
             </button>
 
         </header>
@@ -582,6 +585,7 @@
             <input
                 id="exercise-search-input"
                 type="text"
+                aria-label="ค้นหาท่าออกกำลังกาย"
                 placeholder="ค้นหาท่าออกกำลังกาย..."
                 autocomplete="off"
             >
@@ -620,15 +624,6 @@
                 Strength
             </button>
 
-
-            <button
-                class="exercise-filter"
-                data-filter="mobility"
-                type="button"
-            >
-                Mobility
-            </button>
-
         </div>
 
 
@@ -650,7 +645,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/jumping-jack.png"
+                    src="./src/assets/exercises/jumping-jack.svg"
                     alt="Jumping Jack Exercise"
                     class="library-image"
                 />
@@ -677,8 +672,7 @@
 
 
                     <p>
-                        วิเคราะห์ Full Body Movement,
-                        ROM, Symmetry และ Movement Quality
+                        คาร์ดิโอทั่วร่างกาย พร้อมดูช่วงการเคลื่อนไหวและความสมดุล
                     </p>
 
 
@@ -730,7 +724,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/squat.png"
+                    src="./src/assets/exercises/squat.svg"
                     alt="Squat Exercise"
                     class="library-image"
                 />
@@ -757,8 +751,7 @@
 
 
                     <p>
-                        Knee Angle, Hip Angle,
-                        Squat Depth และ Body Alignment
+                        ฝึกช่วงล่าง พร้อมสังเกตความลึกและแนวเข่า
                     </p>
 
 
@@ -810,7 +803,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/push-up.png"
+                    src="./src/assets/exercises/push-up.svg"
                     alt="Push-up Exercise"
                     class="library-image"
                 />
@@ -837,8 +830,7 @@
 
 
                     <p>
-                        Elbow Angle, Body Alignment
-                        และ Rep Quality
+                        ฝึกช่วงบน พร้อมดูแนวลำตัวและช่วงการเคลื่อนไหว
                     </p>
 
 
@@ -882,7 +874,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/lunge.png"
+                    src="./src/assets/exercises/lunge.svg"
                     alt="Lunge Exercise"
                     class="library-image"
                 />
@@ -909,8 +901,7 @@
 
 
                     <p>
-                        Knee Angle, Balance,
-                        Symmetry และ Stability
+                        ฝึกช่วงล่าง พร้อมพัฒนาการทรงตัวและความสมดุล
                     </p>
 
 
@@ -954,7 +945,7 @@
             >
 
                 <img
-                    src="./src/assets/exercises/bicep-curl.png"
+                    src="./src/assets/exercises/bicep-curl.svg"
                     alt="Bicep Curl Exercise"
                     class="library-image"
                 />
@@ -981,8 +972,7 @@
 
 
                     <p>
-                        Elbow Angle, ROM,
-                        Symmetry และ Movement Quality
+                        ฝึกแขน พร้อมดูช่วงข้อศอกและความมั่นคง
                     </p>
 
 
@@ -1020,6 +1010,7 @@
             <!-- SHOULDER RAISE -->
 
             <article
+                hidden
                 class="library-card"
                 data-category="mobility"
                 data-name="shoulder raise"
@@ -1090,6 +1081,7 @@
             <!-- SIDE BEND -->
 
             <article
+                hidden
                 class="library-card"
                 data-category="mobility"
                 data-name="side bend"
@@ -1170,7 +1162,7 @@
 
         <!-- ANALYZE NAV -->
 
-        <nav class="bottom-navigation">
+        <nav class="bottom-navigation" aria-label="เมนูหลัก">
 
             <button
                 class="bottom-nav-item"
@@ -1187,7 +1179,7 @@
 </span>
 
                 <small>
-                    Home
+                    หน้าแรก
                 </small>
 
             </button>
@@ -1207,7 +1199,7 @@
 </span>
 
                 <small>
-                    Record
+                    ฝึก
                 </small>
 
             </button>
@@ -1228,7 +1220,7 @@
 </span>
 
                 <small>
-                    Activity
+                    กิจกรรม
                 </small>
 
             </button>
@@ -1248,7 +1240,7 @@
 </span>
 
                 <small>
-                    Profile
+                    โปรไฟล์
                 </small>
 
             </button>
@@ -1277,7 +1269,7 @@
             class="back-button"
             type="button"
         >
-            ← กลับ
+            กลับ
         </button>
 
 
@@ -1306,7 +1298,62 @@
 
         </div>
 
+        <button
+            id="camera-mode-toggle"
+            class="camera-mode-toggle"
+            type="button"
+            aria-label="เลือกมุมมองกล้อง"
+            title="เลือกมุมมองกล้อง"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+        >
+            <span aria-hidden="true">▣</span>
+            <span class="camera-mode-label">มุมมอง</span>
+        </button>
+
+
     </div>
+
+    <dialog
+        id="camera-mode-sheet"
+        class="camera-mode-sheet"
+        aria-labelledby="camera-mode-title"
+    >
+        <div class="camera-mode-sheet-header">
+            <div>
+                <span>WORKOUT DISPLAY</span>
+                <h2 id="camera-mode-title">Camera View</h2>
+            </div>
+            <button
+                id="camera-mode-close"
+                class="camera-mode-close"
+                type="button"
+                aria-label="ปิดตัวเลือกมุมมองกล้อง"
+            >×</button>
+        </div>
+        <div
+            id="camera-mode-options"
+            class="camera-mode-options"
+            role="radiogroup"
+            aria-labelledby="camera-mode-title"
+        >
+            <button type="button" role="radio" aria-checked="true" data-camera-mode="standard">
+                <span class="camera-mode-option-icon" aria-hidden="true">▤</span>
+                <span><strong>Standard</strong><small>กล้องและข้อมูลการฝึก</small></span>
+                <span class="camera-mode-option-check" aria-hidden="true">✓</span>
+            </button>
+            <button type="button" role="radio" aria-checked="false" data-camera-mode="focus">
+                <span class="camera-mode-option-icon" aria-hidden="true">◫</span>
+                <span><strong>Focus</strong><small>กล้องขนาดใหญ่ พร้อมข้อมูลย่อ</small></span>
+                <span class="camera-mode-option-check" aria-hidden="true">✓</span>
+            </button>
+            <button type="button" role="radio" aria-checked="false" data-camera-mode="fullscreen">
+                <span class="camera-mode-option-icon" aria-hidden="true">⛶</span>
+                <span><strong>Full Screen</strong><small>กล้องเต็มหน้าจอ</small></span>
+                <span class="camera-mode-option-check" aria-hidden="true">✓</span>
+            </button>
+        </div>
+    </dialog>
 
 
 
@@ -1324,6 +1371,7 @@
                     autoplay
                     playsinline
                     muted
+                    aria-label="กล้องสำหรับดูท่าทางการออกกำลังกาย"
                 ></video>
 
 
@@ -1399,7 +1447,7 @@
 
                 <div class="camera-hint">
 
-                    💡
+                    <span aria-hidden="true">💡</span>
                     ยืนให้เห็นศีรษะถึงเท้า
 
                 </div>
@@ -1422,11 +1470,11 @@
                 <div class="rep-header">
 
                     <span>
-                        CURRENT REP
+                        REP
                     </span>
 
-                    <span>
-                        JUMPING JACK
+                    <span id="rep-exercise-label">
+                        Jumping Jack
                     </span>
 
                 </div>
@@ -1440,9 +1488,7 @@
                 </div>
 
 
-                <div class="rep-subtitle">
-                    COMPLETED REPETITIONS
-                </div>
+                <div class="rep-subtitle">ครั้งที่ทำสำเร็จ</div>
 
             </div>
 
@@ -1466,7 +1512,7 @@
                         </span>
 
                         <small>
-                            Real-time feedback
+                            โค้ชของคุณ
                         </small>
 
                     </div>
@@ -1502,11 +1548,11 @@
                     <div>
 
                         <span class="score-label">
-                            Movement Quality
+                            คุณภาพการเคลื่อนไหว
                         </span>
 
                         <small>
-                            Real-time movement score
+                            คะแนนการเคลื่อนไหวขณะฝึก
                         </small>
 
                     </div>
@@ -1536,7 +1582,7 @@
             <div class="live-metrics" id="live-metrics">
 
                 <div class="live-metrics-header">
-                    <span>LIVE METRICS</span>
+                    <span>ระหว่างฝึก</span>
                     <strong id="live-metrics-exercise">Jumping Jack</strong>
                 </div>
 
@@ -1771,6 +1817,7 @@
 <section
     id="progress-screen"
     class="screen"
+    hidden
 >
 
     <div class="result-container">
@@ -1792,7 +1839,7 @@
         </div>
 
         <div
-            id="progress-empty-state"
+            id="legacy-progress-empty-state"
             class="insight-card"
             style="display:none"
         >
@@ -1839,7 +1886,7 @@
         <div class="insight-card">
             <div>
                 <span class="mi-eyebrow">RECENT SESSIONS</span>
-                <ul id="progress-recent-sessions"></ul>
+                <ul id="legacy-progress-recent-sessions"></ul>
             </div>
         </div>
 
@@ -1857,7 +1904,7 @@
             </div>
         </div>
 
- <nav class="bottom-navigation">
+ <nav class="bottom-navigation" aria-label="เมนูหลัก">
     <button class="bottom-nav-item" data-nav="home" type="button">
         <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -1867,7 +1914,7 @@
                 <path d="M9 21v-6h6v6"></path>
             </svg>
         </span>
-        <small>Home</small>
+        <small>หน้าแรก</small>
     </button>
 
     <button class="bottom-nav-item" data-nav="analyze" type="button">
@@ -1878,7 +1925,7 @@
                 <path d="m10 8 6 4-6 4V8z"></path>
             </svg>
         </span>
-        <small>Record</small>
+        <small>ฝึก</small>
     </button>
 
     <button class="bottom-nav-item active" data-nav="progress" type="button">
@@ -1890,7 +1937,7 @@
                 <path d="m7 15 3-4 3 2 4-6"></path>
             </svg>
         </span>
-        <small>Activity</small>
+        <small>กิจกรรม</small>
     </button>
 
     <button class="bottom-nav-item" data-nav="profile" type="button">
@@ -1901,7 +1948,7 @@
                 <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
             </svg>
         </span>
-        <small>Profile</small>
+        <small>โปรไฟล์</small>
     </button>
 </nav>
 
@@ -1914,6 +1961,93 @@
 <!-- =========================================================
      RESULT
 ========================================================= -->
+
+<section id="activity-screen" class="screen">
+    <div class="product-page">
+        <header class="page-heading">
+            <span class="dashboard-eyebrow">บันทึกการฝึก</span>
+            <h2>กิจกรรมของคุณ</h2>
+            <p>ทุกครั้งที่ขยับ คือความก้าวหน้าที่น่าภูมิใจ</p>
+        </header>
+
+        <div id="activity-empty-state" class="activity-empty-state" hidden>
+            <strong>ประวัติการฝึกของคุณจะอยู่ที่นี่</strong>
+            <span>จบการออกกำลังกายครั้งแรก แล้วกลับมาดูพัฒนาการได้เลย</span>
+        </div>
+        <div id="progress-recent-sessions" class="workout-history"></div>
+    </div>
+
+    <nav class="bottom-navigation" aria-label="เมนูหลัก">
+        <button class="bottom-nav-item" data-nav="home" type="button"><span class="nav-icon" aria-hidden="true">⌂</span><small>หน้าแรก</small></button>
+        <button class="bottom-nav-item" data-nav="analyze" type="button"><span class="nav-icon" aria-hidden="true">＋</span><small>ฝึก</small></button>
+        <button class="bottom-nav-item active" data-nav="progress" type="button"><span class="nav-icon" aria-hidden="true">↗</span><small>กิจกรรม</small></button>
+        <button class="bottom-nav-item" data-nav="profile" type="button"><span class="nav-icon" aria-hidden="true">○</span><small>โปรไฟล์</small></button>
+    </nav>
+</section>
+
+<section id="profile-screen" class="screen">
+    <div class="product-page">
+        <header class="page-heading">
+            <span class="dashboard-eyebrow">โปรไฟล์ MoveWise</span>
+            <h2>การเดินทางของคุณ</h2>
+            <p>ความสม่ำเสมอเล็ก ๆ สร้างความแข็งแรงได้ทุกวัน</p>
+        </header>
+
+        <article class="profile-hero">
+            <div class="profile-avatar" aria-hidden="true">M</div>
+            <div>
+                <span class="dashboard-eyebrow">MOVEWISE</span>
+                <h3>การเดินทางของคุณ</h3>
+                <p>ฝึกในแบบของคุณ เติบโตในจังหวะของคุณ</p>
+            </div>
+        </article>
+
+        <div class="profile-stat-grid">
+            <article class="profile-stat"><span>จำนวนเซสชัน</span><strong id="profile-workouts">0</strong></article>
+            <article class="profile-stat"><span>จำนวนครั้ง</span><strong id="profile-reps">0</strong></article>
+            <article class="profile-stat"><span>คุณภาพเฉลี่ย</span><strong id="profile-quality">--</strong></article>
+        </div>
+
+        <section id="profile-progress" class="profile-progress"></section>
+    </div>
+
+    <nav class="bottom-navigation" aria-label="เมนูหลัก">
+        <button class="bottom-nav-item" data-nav="home" type="button"><span class="nav-icon" aria-hidden="true">⌂</span><small>หน้าแรก</small></button>
+        <button class="bottom-nav-item" data-nav="analyze" type="button"><span class="nav-icon" aria-hidden="true">＋</span><small>ฝึก</small></button>
+        <button class="bottom-nav-item" data-nav="progress" type="button"><span class="nav-icon" aria-hidden="true">↗</span><small>กิจกรรม</small></button>
+        <button class="bottom-nav-item active" data-nav="profile" type="button"><span class="nav-icon" aria-hidden="true">○</span><small>โปรไฟล์</small></button>
+    </nav>
+</section>
+
+<section id="movement-report-screen" class="screen">
+    <div class="product-page">
+        <button id="session-report-back" class="back-button report-back" type="button">← กลับไปกิจกรรม</button>
+        <header class="page-heading">
+            <span class="dashboard-eyebrow">MOVEMENT INTELLIGENCE</span>
+            <h2 id="session-report-title">การเคลื่อนไหวของคุณ</h2>
+            <p id="session-report-date"></p>
+        </header>
+
+        <section class="report-summary">
+            <div><span>จำนวนครั้ง</span><strong id="session-report-reps">0</strong></div>
+            <div><span>คุณภาพการเคลื่อนไหว</span><strong id="session-report-quality">--</strong></div>
+        </section>
+
+        <section class="report-card">
+            <div class="report-card-heading">
+                <span class="dashboard-eyebrow">MOVEMENT PATTERN</span>
+                <h3>การเคลื่อนไหวของคุณ</h3>
+                <p>รูปแบบการเคลื่อนไหวจากข้อมูลจริงระหว่างการฝึก</p>
+            </div>
+            <div id="session-movement-visual" class="movement-visual" hidden></div>
+        </section>
+
+        <section class="report-metrics-section">
+            <h3>ข้อมูลสำคัญของท่า</h3>
+            <div id="session-movement-metrics" class="movement-metrics-grid" hidden></div>
+        </section>
+    </div>
+</section>
 
 <section
     id="result-screen"
@@ -1930,12 +2064,11 @@
             </div>
 
             <h2>
-                ผลการฝึก
+                จบการฝึกแล้ว
             </h2>
 
             <p>
-                MoveWise AI วิเคราะห์ Session
-                ของคุณเสร็จแล้ว
+                นี่คือผลการเคลื่อนไหวของคุณในครั้งนี้
             </p>
 
         </div>
@@ -1947,12 +2080,14 @@
         <div class="result-main-score">
 
             <span>
-                TOTAL REPETITIONS
+                จำนวนครั้งที่ทำสำเร็จ
             </span>
 
             <strong id="result-reps">
                 0
             </strong>
+
+            <span class="result-rep-unit">ครั้ง</span>
 
             <small id="result-exercise-name">
                 JUMPING JACK
@@ -1972,7 +2107,7 @@
             <div class="result-card">
 
                 <span>
-                    Movement Quality
+                    คุณภาพการเคลื่อนไหว
                 </span>
 
                 <strong id="result-quality">
@@ -1980,7 +2115,7 @@
                 </strong>
 
                 <small>
-                    คุณภาพการเคลื่อนไหว
+                    ประเมินจากท่าที่คุณทำ
                 </small>
 
 
@@ -1996,41 +2131,12 @@
 
 
 
-            <!-- ACCURACY -->
-
-            <div class="result-card">
-
-                <span>
-                    Accuracy
-                </span>
-
-                <strong id="result-accuracy">
-                    0%
-                </strong>
-
-                <small>
-                    ความแม่นยำของ Rep
-                </small>
-
-
-                <div class="result-progress">
-
-                    <div
-                        id="result-accuracy-bar"
-                    ></div>
-
-                </div>
-
-            </div>
-
-
-
             <!-- TIME -->
 
             <div class="result-card">
 
                 <span>
-                    Session Time
+                    เวลาในการฝึก
                 </span>
 
                 <strong id="result-time">
@@ -2044,6 +2150,20 @@
             </div>
 
         </div>
+
+        <p id="session-save-warning" class="session-save-warning" role="status" hidden>
+            เซสชันนี้ยังไม่ถูกบันทึกลงในประวัติ กรุณาตรวจสอบพื้นที่จัดเก็บของเบราว์เซอร์
+        </p>
+
+        <section id="result-movement-report" class="report-card result-movement-report" hidden>
+            <div class="report-card-heading">
+                <span class="dashboard-eyebrow">MOVEMENT INTELLIGENCE</span>
+                <h3>การเคลื่อนไหวของคุณ</h3>
+                <p>โครงร่างและเส้นทางการเคลื่อนไหวจาก rep ที่ทำสำเร็จ</p>
+            </div>
+            <div id="movement-visual-result" class="movement-visual" hidden></div>
+            <div id="movement-metrics-result" class="movement-metrics-grid" hidden></div>
+        </section>
 
 
 
@@ -2144,8 +2264,6 @@
     type="module"
     src="./app.js"
 ></script>
-ฺ
-
 </body>
 
 </html>

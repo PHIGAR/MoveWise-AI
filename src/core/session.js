@@ -18,6 +18,11 @@ export function createSession(
         accuracy: data.accuracy ?? null,
         rom: data.rom ?? null,
         symmetry: data.symmetry ?? null,
+        movementMetrics: data.movementMetrics &&
+            typeof data.movementMetrics === "object"
+            ? { ...data.movementMetrics }
+            : null,
+        movementVisual: data.movementVisual ?? null,
         repRecords: Array.isArray(data.repRecords)
             ? data.repRecords.map(record => ({ ...record }))
             : []
