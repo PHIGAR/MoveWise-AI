@@ -1,0 +1,12 @@
+{
+  "name": "movewise-ai",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "start": "node --env-file=.env server.mjs",
+    "test": "node --test tests/*.test.js"
+  }
+}

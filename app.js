@@ -53,6 +53,14 @@ import {
 } from "./src/ai/visualization/movementVisualizer.js";
 
 import {
+    mediaAssets
+} from "./src/assets/mediaAssets.js";
+
+import {
+    getOptionalAICoaching
+} from "./src/api/aiCoach.js";
+
+import {
     resetWorkout
 } from "./src/core/workout.js";
 
@@ -211,6 +219,24 @@ const aiInsight =
 const aiRecommendation =
     $("ai-recommendation");
 
+const remoteAICoach =
+    $("remote-ai-coach");
+
+const remoteAISummary =
+    $("remote-ai-summary");
+
+const remoteAIStrengths =
+    $("remote-ai-strengths");
+
+const remoteAIImprovement =
+    $("remote-ai-improvement");
+
+const remoteAINextTip =
+    $("remote-ai-next-tip");
+
+const remoteAIUnavailable =
+    $("remote-ai-unavailable");
+
 
 /* Real-time */
 
@@ -273,6 +299,9 @@ const liveMetricThree =
 
 const exerciseLibrary =
     $("exercise-library");
+
+const homeHeroImage =
+    document.querySelector(".home-hero-art img");
 
 const homeSessions =
     $("home-sessions");
@@ -423,6 +452,8 @@ let currentMovementPose = null;
 let lastMovementPoseCapture = 0;
 
 let currentResultSession = null;
+
+let resultCoachRequestId = 0;
 
 
 let currentMovementMetrics = {
@@ -3771,6 +3802,13 @@ function generateResult(
     duration
 ) {
 
+    if (remoteAICoach) {
+        remoteAICoach.hidden = true;
+    }
+    if (remoteAIUnavailable) {
+        remoteAIUnavailable.hidden = true;
+    }
+
     const exerciseState =
         getActiveExerciseAnalyzer().getState();
 
@@ -3941,6 +3979,28 @@ function generateResult(
 
     );
 
+    const coachRequestId = ++resultCoachRequestId;
+    if (exerciseState.repetitions > 0) {
+        requestRemoteAICoaching({
+            exercise: exerciseNameElement?.textContent.trim()
+                || activeExerciseId,
+            repetitions: exerciseState.repetitions,
+            quality,
+            accuracy,
+            metrics: {
+                ...movementMetrics,
+                accuracy,
+                armROM: currentMovementMetrics.armROM,
+                legROM: currentMovementMetrics.legROM,
+                symmetry: currentMovementMetrics.symmetry
+            },
+            feedback: [
+                aiInsight?.textContent,
+                aiRecommendation?.textContent
+            ].filter(Boolean)
+        }, coachRequestId);
+    }
+
 
     console.log(
         "========== MOVEWISE AI =========="
@@ -3988,6 +4048,51 @@ function generateResult(
         exerciseState.repMovementMetrics
     );
 
+}
+
+
+async function requestRemoteAICoaching(
+    payload,
+    requestId
+) {
+    const result = await getOptionalAICoaching(
+        payload,
+        null
+    );
+
+    if (
+        requestId !== resultCoachRequestId ||
+        !resultScreen?.classList.contains("active")
+    ) {
+        return;
+    }
+
+    if (!result.available) {
+        if (remoteAIUnavailable) {
+            remoteAIUnavailable.hidden = false;
+        }
+        return;
+    }
+
+    if (
+        !result.coaching ||
+        !remoteAICoach ||
+        !remoteAISummary ||
+        !remoteAIStrengths ||
+        !remoteAIImprovement ||
+        !remoteAINextTip
+    ) {
+        return;
+    }
+
+    remoteAISummary.textContent = result.coaching.summary;
+    remoteAIStrengths.textContent =
+        result.coaching.strengths.join(" · ");
+    remoteAIImprovement.textContent =
+        result.coaching.improvement.join(" · ");
+    remoteAINextTip.textContent =
+        result.coaching.next_tip;
+    remoteAICoach.hidden = false;
 }
 
 
@@ -4418,8 +4523,10 @@ function renderExerciseLibrary() {
 
         const image = document.createElement("img");
         image.className = "library-image";
-        image.src = `./src/assets/exercises/${exercise.id}.svg`;
         image.alt = `${exercise.name} Exercise`;
+        image.loading = "lazy";
+        image.decoding = "async";
+        setImageWithFallback(image, mediaAssets.exercises[exercise.id]);
 
         const content = document.createElement("div");
         content.className = "library-content";
@@ -4461,6 +4568,26 @@ function renderExerciseLibrary() {
         exerciseLibrary.appendChild(card);
     });
 
+}
+
+
+function setImageWithFallback(image, asset) {
+    if (!asset) {
+        image.hidden = true;
+        return;
+    }
+
+    let fallbackApplied = false;
+    image.addEventListener("error", () => {
+        if (fallbackApplied || !asset.fallback) {
+            image.hidden = true;
+            return;
+        }
+
+        fallbackApplied = true;
+        image.src = asset.fallback;
+    });
+    image.src = asset.image || asset.fallback;
 }
 
 
@@ -4601,6 +4728,13 @@ function openAnalyzePage() {
 
 }
 
+
+if (homeHeroImage) {
+    homeHeroImage.loading = "eager";
+    homeHeroImage.fetchPriority = "high";
+    homeHeroImage.decoding = "async";
+    setImageWithFallback(homeHeroImage, mediaAssets.hero);
+}
 
 renderExerciseLibrary();
 updateExerciseLabels();
