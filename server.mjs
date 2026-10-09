@@ -83,6 +83,15 @@ export function createMoveWiseServer(options = {}) {
 }
 
 
+export async function handleMoveWiseAIFeedback(request, response) {
+    await handleFeedbackRequest(request, response, {
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+        fetchImpl: globalThis.fetch
+    });
+}
+
+
 async function handleBattleRequest(
     request,
     response,
