@@ -6,8 +6,8 @@ const exerciseFallback = (exerciseId) =>
 
 export const mediaAssets = {
     hero: {
-        image: mediaUrl("hero/movewise-hero.webp"),
-        fallback: exerciseFallback("jumping-jack")
+        image: mediaUrl("hero/movewise-runner.jpg"),
+        fallback: null
     },
     exercises: {
         "jumping-jack": {

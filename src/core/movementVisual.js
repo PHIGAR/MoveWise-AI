@@ -3,7 +3,8 @@ const SUPPORTED_EXERCISES = new Set([
     "squat",
     "push-up",
     "lunge",
-    "bicep-curl"
+    "bicep-curl",
+    "six-seven"
 ]);
 
 const MIN_VISIBLE_LANDMARKS = 8;
@@ -47,6 +48,12 @@ const MOVEMENT_METRICS = {
         { key: "rom", label: "ROM", unit: "%" },
         { key: "stability", label: "Stability", unit: "%" },
         { key: "speed", label: "Speed", unit: "%/s" },
+        { key: "symmetry", label: "Symmetry", unit: "%" },
+        { key: "quality", label: "Quality", unit: "%" }
+    ],
+    "six-seven": [
+        { key: "alternation", label: "Alternation", unit: "%" },
+        { key: "rhythm", label: "Rhythm", unit: "%" },
         { key: "symmetry", label: "Symmetry", unit: "%" },
         { key: "quality", label: "Quality", unit: "%" }
     ]

@@ -4,6 +4,7 @@ import { createSquatAnalyzer } from "../src/exercises/squat.js";
 import { createPushUpAnalyzer } from "../src/exercises/pushUp.js";
 import { createLungeAnalyzer } from "../src/exercises/lunge.js";
 import { createBicepCurlAnalyzer } from "../src/exercises/bicepCurl.js";
+import { createSixSevenAnalyzer } from "../src/exercises/sixSeven.js";
 
 
 const ANALYZER_METHODS = [
@@ -44,6 +45,12 @@ const analyzers = [
         name: "Bicep Curl",
         create: createBicepCurlAnalyzer,
         initialState: "EXTENDED",
+        required: [11, 12, 13, 14, 15, 16]
+    },
+    {
+        name: "Six Seven",
+        create: createSixSevenAnalyzer,
+        initialState: "READY",
         required: [11, 12, 13, 14, 15, 16]
     }
 ];

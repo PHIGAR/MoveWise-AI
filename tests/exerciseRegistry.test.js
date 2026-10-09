@@ -3,6 +3,7 @@ import {
     getExercises,
     getExerciseById,
     getAvailableExercises,
+    getAvailableWorkoutExercises,
     isExerciseAvailable,
     createExerciseAnalyzer
 } from "../src/exercises/exerciseRegistry.js";
@@ -12,7 +13,7 @@ const allExercises = getExercises();
 
 assert.equal(
     allExercises.length,
-    6
+    7
 );
 
 assert.equal(
@@ -23,6 +24,11 @@ assert.equal(
 assert.equal(
     getAvailableExercises().length,
     5
+);
+
+assert.equal(
+    getAvailableWorkoutExercises().length,
+    6
 );
 
 assert.equal(
@@ -55,6 +61,24 @@ assert.equal(
     true
 );
 
+assert.equal(
+    getExerciseById("six-seven").name,
+    "Six Seven (67) Challenge"
+);
+
+assert.equal(
+    isExerciseAvailable("six-seven"),
+    true
+);
+
+assert.equal(
+    getAvailableExercises().some(exercise => exercise.id === "six-seven"),
+    false
+);
+
+const sixSevenAnalyzer =
+    createExerciseAnalyzer("six-seven");
+
 const pushUpAnalyzer =
     createExerciseAnalyzer("push-up");
 
@@ -81,6 +105,10 @@ for (const method of [
     );
     assert.equal(
         typeof bicepCurlAnalyzer[method],
+        "function"
+    );
+    assert.equal(
+        typeof sixSevenAnalyzer[method],
         "function"
     );
 }

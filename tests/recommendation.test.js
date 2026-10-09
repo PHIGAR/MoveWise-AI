@@ -18,7 +18,7 @@ function session(overrides = {}) {
 
 
 assert.equal(
-    generateRecommendation(session({ quality: 95 })).strengths.includes("คุณภาพการเคลื่อนไหวอยู่ในระดับดีมาก"),
+    generateRecommendation(session({ quality: 95 })).strengths.includes("คุณภาพการเคลื่อนไหวอยู่ในระดับดี"),
     true
 );
 assert.equal(

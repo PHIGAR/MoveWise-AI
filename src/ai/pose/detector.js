@@ -14,6 +14,8 @@ const DEFAULT_MODEL_PATH =
 let poseLandmarker = null;
 let detectorStatus = "idle";
 let detectorError = null;
+let configuredPoseCount = 1;
+let poseCountTransition = Promise.resolve();
 
 
 export async function initializePoseDetector(
@@ -37,7 +39,7 @@ export async function initializePoseDetector(
                             options.modelPath || DEFAULT_MODEL_PATH
                     },
                     runningMode: "VIDEO",
-                    numPoses: 1,
+                    numPoses: configuredPoseCount,
                     minPoseDetectionConfidence: 0.5,
                     minPosePresenceConfidence: 0.5,
                     minTrackingConfidence: 0.5
@@ -52,6 +54,31 @@ export async function initializePoseDetector(
         detectorError = error;
         throw error;
     }
+}
+
+
+export function setPoseCount(count) {
+    if (!Number.isSafeInteger(count) || count < 1) {
+        throw new RangeError("Pose count must be a positive integer");
+    }
+    if (!poseLandmarker) {
+        if (detectorStatus === "error") {
+            throw new Error("Pose detector initialization failed");
+        }
+        configuredPoseCount = count;
+        return Promise.resolve();
+    }
+
+    const update = async () => {
+        if (count === configuredPoseCount) {
+            return;
+        }
+
+        await poseLandmarker.setOptions({ numPoses: count });
+        configuredPoseCount = count;
+    };
+    poseCountTransition = poseCountTransition.then(update, update);
+    return poseCountTransition;
 }
 
 

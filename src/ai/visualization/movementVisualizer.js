@@ -31,6 +31,10 @@ const EXERCISE_EMPHASIS = {
     "bicep-curl": {
         joints: [11, 12, 13, 14, 15, 16],
         trail: [15, 16]
+    },
+    "six-seven": {
+        joints: [11, 12, 13, 14, 15, 16],
+        trail: [15, 16]
     }
 };
 

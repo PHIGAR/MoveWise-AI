@@ -18,6 +18,10 @@ import {
     createBicepCurlAnalyzer
 } from "./bicepCurl.js";
 
+import {
+    createSixSevenAnalyzer
+} from "./sixSeven.js";
+
 
 const exercises = [
     {
@@ -61,6 +65,15 @@ const exercises = [
         available: true
     },
     {
+        id: "six-seven",
+        name: "Six Seven (67) Challenge",
+        nameThai: "ชาเลนจ์ Six Seven",
+        category: "cardio",
+        analyzer: createSixSevenAnalyzer,
+        available: true,
+        battleAvailable: false
+    },
+    {
         id: "shoulder-raise",
         name: "Shoulder Raise",
         nameThai: "ยกไหล่",
@@ -88,6 +101,18 @@ export function getExerciseById(
 
 
 export function getAvailableExercises() {
+    return exercises
+        .filter(exercise =>
+            exercise.available &&
+            exercise.battleAvailable !== false
+        )
+        .map(exercise => ({
+            ...exercise
+        }));
+}
+
+
+export function getAvailableWorkoutExercises() {
     return exercises
         .filter(exercise => exercise.available)
         .map(exercise => ({

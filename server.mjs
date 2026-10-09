@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createBattleService } from "./src/core/battle/battleService.js";
 
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 const maxRequestBytes = 16 * 1024;
@@ -50,9 +51,21 @@ export function createMoveWiseServer(options = {}) {
     const model = options.model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
     const fetchImpl = options.fetchImpl ?? globalThis.fetch;
     const root = options.projectRoot ?? projectRoot;
+    const battleService =
+        options.battleService ?? createBattleService(options.battleOptions);
 
-    return createServer(async (request, response) => {
+    const server = createServer(async (request, response) => {
         const requestUrl = new URL(request.url, "http://localhost");
+
+        if (requestUrl.pathname.startsWith("/api/battle/")) {
+            await handleBattleRequest(
+                request,
+                response,
+                requestUrl,
+                battleService
+            );
+            return;
+        }
 
         if (requestUrl.pathname === "/api/ai/feedback") {
             await handleFeedbackRequest(request, response, {
@@ -65,6 +78,143 @@ export function createMoveWiseServer(options = {}) {
 
         await serveStaticFile(request, response, requestUrl.pathname, root);
     });
+    server.on("close", () => battleService.close());
+    return server;
+}
+
+
+async function handleBattleRequest(
+    request,
+    response,
+    requestUrl,
+    battleService
+) {
+    try {
+        const pathname = requestUrl.pathname;
+        if (pathname === "/api/battle/rooms" && request.method === "POST") {
+            sendJson(response, 201, battleService.createRoom());
+            return;
+        }
+
+        const eventsMatch = pathname.match(
+            /^\/api\/battle\/rooms\/([A-Z0-9]+)\/events$/i
+        );
+        if (eventsMatch && request.method === "GET") {
+            const playerId = requestUrl.searchParams.get("playerId");
+            const token = requestUrl.searchParams.get("token");
+            battleService.getSnapshot(eventsMatch[1], playerId, token);
+            response.writeHead(200, {
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream; charset=utf-8",
+                "X-Accel-Buffering": "no"
+            });
+            const unsubscribe = battleService.subscribe(
+                eventsMatch[1],
+                playerId,
+                token,
+                response
+            );
+            const heartbeat = setInterval(() => {
+                if (!response.destroyed && !response.writableEnded) {
+                    response.write(": keepalive\n\n");
+                }
+            }, 15_000);
+            heartbeat.unref?.();
+            response.on("close", () => {
+                clearInterval(heartbeat);
+                unsubscribe();
+            });
+            return;
+        }
+
+        const roomMatch = pathname.match(
+            /^\/api\/battle\/rooms\/([A-Z0-9]+)(?:\/(join|exercise|ready|metrics))?$/i
+        );
+        if (!roomMatch) {
+            sendJson(response, 404, { error: "Battle endpoint was not found" });
+            return;
+        }
+
+        const [, roomCode, action] = roomMatch;
+        if (action === "join" && request.method === "POST") {
+            sendJson(response, 201, battleService.joinRoom(roomCode));
+            return;
+        }
+
+        if (!action && request.method === "GET") {
+            const { playerId, token } = readBattleCredentials(request);
+            sendJson(
+                response,
+                200,
+                battleService.getSnapshot(roomCode, playerId, token)
+            );
+            return;
+        }
+
+        if (
+            ["exercise", "ready", "metrics"].includes(action) &&
+            request.method === "POST"
+        ) {
+            const { playerId, token } = readBattleCredentials(request);
+            let input;
+            try {
+                input = await readJsonBody(request);
+            }
+            catch (error) {
+                const status = error.statusCode ?? 400;
+                sendJson(response, status, {
+                    error: status === 413
+                        ? "Request body is too large"
+                        : "Request body must be valid JSON"
+                });
+                return;
+            }
+
+            const snapshot = action === "exercise"
+                ? battleService.selectExercise(
+                    roomCode,
+                    playerId,
+                    token,
+                    input.exerciseId
+                )
+                : action === "ready"
+                    ? battleService.setReady(
+                        roomCode,
+                        playerId,
+                        token,
+                        input.ready
+                    )
+                    : battleService.submitMetrics(
+                        roomCode,
+                        playerId,
+                        token,
+                        input
+                    );
+            sendJson(response, 200, snapshot);
+            return;
+        }
+
+        sendJson(response, 405, { error: "Method not allowed" });
+    }
+    catch (error) {
+        const status = error.statusCode ?? 400;
+        sendJson(response, status, {
+            error: status >= 500
+                ? "Battle request failed"
+                : error.message
+        });
+    }
+}
+
+
+function readBattleCredentials(request) {
+    const authorization = request.headers.authorization ?? "";
+    const match = authorization.match(/^Bearer ([a-f0-9]+)$/i);
+    return {
+        playerId: request.headers["x-battle-player"],
+        token: match?.[1] ?? null
+    };
 }
 
 

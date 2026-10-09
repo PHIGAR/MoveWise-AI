@@ -7,7 +7,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <meta
@@ -18,6 +18,13 @@
     <meta
         name="description"
         content="MoveWise — build strength with movement coaching that moves with you."
+    >
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700;800&family=Inter:wght@400..800&display=swap"
+        rel="stylesheet"
     >
 
     <title>
@@ -36,6 +43,63 @@
 
 <div class="app">
 
+    <aside class="desktop-sidebar" aria-label="เมนูหลัก">
+        <a class="sidebar-brand" href="#home-screen" aria-label="MoveWise AI หน้าแรก">
+            <span class="brand-mark">M</span>
+            <span><strong>Move<span>Wise</span></strong><small>BETTER MOVEMENT. HEALTHIER YOU.</small></span>
+        </a>
+
+        <span class="sidebar-label">เมนู</span>
+        <nav class="sidebar-navigation" aria-label="เมนูแอป">
+            <button class="sidebar-nav-item active" data-nav="home" type="button">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"></path><path d="M5 9v12h14V9M9 21v-6h6v6"></path></svg></span> หน้าหลัก
+            </button>
+            <button class="sidebar-nav-item" data-nav="analyze" type="button">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m10 8 6 4-6 4V8z"></path></svg></span> บันทึกการฝึก
+            </button>
+            <button class="sidebar-nav-item" data-nav="analyze" type="button">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22z"></path><path d="M4 4.5V22M8 6h8M8 10h8"></path></svg></span> คลังท่าออกกำลังกาย
+            </button>
+            <button class="sidebar-nav-item" data-nav="progress" type="button">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10h4v10zM10 20V4h4v16zM16 20v-7h4v7z"></path></svg></span> กิจกรรม
+            </button>
+            <button class="sidebar-nav-item" data-nav="battle" type="button">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 21v-1.5A5.5 5.5 0 0 1 8 14h2a5.5 5.5 0 0 1 5.5 5.5V21zM16 4.7a3.5 3.5 0 0 1 0 6.6M17 14h.5a4 4 0 0 1 4 4v3"></path></svg></span> Battle
+            </button>
+            <button class="sidebar-nav-item" data-nav="profile" type="button">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path></svg></span> โปรไฟล์
+            </button>
+        </nav>
+
+        <span class="sidebar-label sidebar-library-label">ออกกำลังกาย</span>
+        <nav class="sidebar-navigation sidebar-exercises" aria-label="คลังท่าออกกำลังกาย">
+            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m8 22 2-7-3-3 2-5h6l2 5-3 3 2 7M7 11l-4-3m14 3 4-3M9 9 6 5m9 4 3-4"></path></svg></span> Jumping Jack</button>
+            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m9 8-2 6 2 2 1 6m5-14 2 6-2 2-1 6m-6-8h8"></path></svg></span> Squat</button>
+            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="2"></circle><path d="m7 7 5 3 5-1 3 2m-13-3-3 6m8-4-2 5-5 2m10-8 2 6 4 2"></path></svg></span> Push-up</button>
+            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m10 7-3 5 4 3 1 7m2-15 3 4 3 2m-10-1-5 5-3 1m12-7-4 6 5 3"></path></svg></span> Lunge</button>
+            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="M12 6v7m0-4 5-2 2 3m-7 3-4 4-1 5m5-9 4 4 1 5"></path></svg></span> Bicep Curl</button>
+        </nav>
+
+        <div class="sidebar-upgrade">
+            <strong>MoveWise Pro</strong>
+            <p>ก้าวต่อไปของการเคลื่อนไหวที่ดีกว่า</p>
+            <span>ดูเพิ่มเติม <b aria-hidden="true">→</b></span>
+        </div>
+    </aside>
+
+    <div class="desktop-workspace-bar">
+        <label class="workspace-search">
+            <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></span>
+            <input type="search" id="workspace-search-input" placeholder="ค้นหาท่าออกกำลังกาย..." aria-label="ค้นหาท่าออกกำลังกาย">
+            <kbd>/</kbd>
+        </label>
+        <div class="workspace-user">
+            <button type="button" class="workspace-notification" aria-label="การแจ้งเตือน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg><i></i></button>
+            <span class="workspace-avatar" aria-hidden="true">MW</span>
+            <span><strong>MoveWise Member</strong><small>Movement journey</small></span>
+            <button type="button" class="workspace-profile" id="workspace-profile-button" aria-label="เปิดโปรไฟล์">⌄</button>
+        </div>
+    </div>
 
 <!-- =========================================================
      HOME
@@ -61,7 +125,7 @@
                 </h1>
 
                 <p>
-                    ขยับอย่างเข้าใจ · แข็งแรงอย่างมั่นใจ
+                    Better Movement. Healthier You.
                 </p>
 
             </div>
@@ -75,11 +139,10 @@
             type="button"
             aria-label="เปิดโปรไฟล์"
         >
-
-            <span>
-                👤
-            </span>
-
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+            </svg>
         </button>
 
     </header>
@@ -92,14 +155,17 @@
 
         <div class="home-hero-copy">
 
-            <span class="dashboard-eyebrow">สวัสดีครับ 👋</span>
+            <span class="dashboard-eyebrow">สวัสดีครับ</span>
 
-            <h2>พร้อมขยับร่างกาย<br><span>วันนี้ไหม?</span></h2>
+            <h2>พร้อมขยับร่างกายวันนี้ไหม?</h2>
 
-            <p>ฝึกอย่างมั่นใจ ให้ MoveWise ช่วยดูแลทุกการเคลื่อนไหว</p>
+            <p>ให้ MoveWise AI ช่วยดูแลการเคลื่อนไหวและพัฒนาการของคุณ</p>
 
             <button id="recommended-start" class="start-button" type="button">
                 เริ่มออกกำลังกาย <span aria-hidden="true">→</span>
+            </button>
+            <button id="home-battle-button" class="battle-entry-button" type="button">
+                แข่งขันกับเพื่อน <span aria-hidden="true">↗</span>
             </button>
 
         </div>
@@ -113,62 +179,32 @@
 
     </section>
 
-
-
-    <!-- TODAY'S ACTIVITY -->
-
-    <section class="dashboard-section today-activity-section">
-
-        <div class="dashboard-section-header">
-            <div>
-                <span>กิจกรรมวันนี้</span>
-                <h3>ภาพรวมวันนี้</h3>
-            </div>
-        </div>
-
-        <div id="home-today-empty" class="activity-empty-state">
-            <strong>วันนี้ยังไม่มีการฝึก</strong>
-            <span>เริ่มขยับสักนิด แล้วกิจกรรมวันนี้จะแสดงที่นี่</span>
-        </div>
-
-        <div id="home-today-activity" class="activity-summary-grid" hidden>
-            <div class="activity-stat">
-                <span>การฝึก</span>
-                <strong id="home-today-workouts">--</strong>
-            </div>
-            <div class="activity-stat">
-                <span>จำนวนครั้ง</span>
-                <strong id="home-today-reps">--</strong>
-            </div>
-            <div class="activity-stat">
-                <span>คุณภาพเฉลี่ย</span>
-                <strong id="home-today-quality">--</strong>
-            </div>
-            <div class="activity-stat">
-                <span>เวลา</span>
-                <strong id="home-today-duration">--</strong>
-            </div>
-        </div>
-
+    <section class="dashboard-section progress-feature-section daily-goal-section">
+        <div id="home-daily-goal"></div>
     </section>
 
+    <section class="dashboard-section progress-feature-section next-workout-section">
+        <div id="home-next-workout"></div>
+    </section>
 
+    <section class="dashboard-section progress-feature-section weekly-progress-section">
+        <div id="home-weekly-progress"></div>
+    </section>
+
+    <section class="dashboard-section progress-feature-section personal-best-section">
+        <div id="home-personal-bests"></div>
+    </section>
 
     <!-- QUICK START -->
 
-    <section class="dashboard-section">
+    <section class="dashboard-section recommended-exercises-section">
 
         <div class="dashboard-section-header">
 
             <div>
 
-                <span>
-                    เริ่มต้น
-                </span>
-
-                <h3>
-                    เริ่มการฝึก
-                </h3>
+                <span>เริ่มต้น</span>
+                <h3>อยากฝึกอะไรวันนี้?</h3>
 
             </div>
 
@@ -192,6 +228,7 @@
             <button
                 id="home-jumping-jack"
                 class="quick-exercise-card active-exercise"
+                data-home-exercise="jumping-jack"
                 type="button"
             >
 
@@ -213,7 +250,7 @@
                     </h4>
 
                     <p>
-                        AI ดูแลการเคลื่อนไหว
+                        เริ่มฝึก
                     </p>
 
                 </div>
@@ -232,6 +269,7 @@
             <button
                 id="home-squat"
                 class="quick-exercise-card active-exercise"
+                data-home-exercise="squat"
                 type="button"
             >
 
@@ -252,9 +290,7 @@
                         Squat
                     </h4>
 
-                    <p>
-                        AI ดูแลการเคลื่อนไหว
-                    </p>
+                    <p>เริ่มฝึก</p>
 
                 </div>
 
@@ -272,6 +308,7 @@
             <button
                 id="home-push-up"
                 class="quick-exercise-card active-exercise"
+                data-home-exercise="push-up"
                 type="button"
             >
 
@@ -292,9 +329,7 @@
                         Push-up
                     </h4>
 
-                    <p>
-                        AI ดูแลการเคลื่อนไหว
-                    </p>
+                    <p>เริ่มฝึก</p>
 
                 </div>
 
@@ -311,6 +346,7 @@
             <button
                 id="home-lunge"
                 class="quick-exercise-card active-exercise"
+                data-home-exercise="lunge"
                 type="button"
             >
                 <img src="./src/assets/exercises/lunge.svg" alt="Lunge Exercise" class="quick-card-image">
@@ -328,6 +364,7 @@
             <button
                 id="home-bicep-curl"
                 class="quick-exercise-card active-exercise"
+                data-home-exercise="bicep-curl"
                 type="button"
             >
                 <img src="./src/assets/exercises/bicep-curl.svg" alt="Bicep Curl Exercise" class="quick-card-image">
@@ -345,99 +382,64 @@
 
 
 
-    <!-- RECENT WORKOUTS -->
-
-    <section class="dashboard-section recent-workouts-section">
-
+    <section id="home-recent-activity" class="dashboard-section recent-workouts-section" hidden>
         <div class="dashboard-section-header">
-
             <div>
-
-                <span>
-                    การฝึกล่าสุด
-                </span>
-
-                <h3>
-                    การฝึกล่าสุด
-                </h3>
-
+                <span>YOUR JOURNEY</span>
+                <h3>การฝึกล่าสุด</h3>
             </div>
-
         </div>
 
+        <section id="home-today-activity-section" class="home-today-activity-section" hidden>
+            <div class="home-today-heading">
+                <span>วันนี้</span>
+                <strong id="home-today-workouts">0</strong>
+                <span>workouts</span>
+            </div>
+            <div id="home-today-activity" class="activity-summary-grid">
+                <div class="activity-stat">
+                    <span>จำนวนครั้ง</span>
+                    <strong id="home-today-reps">0</strong>
+                </div>
+                <div class="activity-stat">
+                    <span>คุณภาพเฉลี่ย</span>
+                    <strong id="home-today-quality">--</strong>
+                </div>
+                <div class="activity-stat">
+                    <span>เวลา</span>
+                    <strong id="home-today-duration">--</strong>
+                </div>
+            </div>
+        </section>
 
-        <div id="home-recent-empty" class="activity-empty-state">
-            <strong>ยังไม่มีประวัติการฝึก</strong>
-            <span>การฝึกที่ทำเสร็จแล้วจะแสดงที่นี่</span>
-        </div>
-
-        <div id="home-recent-workouts" class="activity-feed" hidden></div>
-
+        <div id="home-recent-workouts" class="activity-feed"></div>
     </section>
 
-
-
-    <!-- PROGRESS SNAPSHOT -->
-
-    <section class="dashboard-section progress-snapshot-section">
-
-        <div class="dashboard-section-header">
-
-            <div>
-
-                <span>
-                    ภาพรวมความก้าวหน้า
-                </span>
-
-                <h3>
-                    ความก้าวหน้าของคุณ
-                </h3>
-
+    <aside class="home-insight-rail" aria-label="ภาพรวมและคำแนะนำ">
+        <section class="rail-profile-card">
+            <div class="rail-profile-avatar" aria-hidden="true">MW</div>
+            <div><strong>MoveWise Member</strong><span>เส้นทางการเคลื่อนไหวของคุณ</span></div>
+            <button type="button" id="rail-profile-button" aria-label="ดูโปรไฟล์">↗</button>
+            <div class="rail-profile-stats">
+                <span><strong id="rail-workout-count">0</strong><small>workouts</small></span>
+                <span><strong id="rail-repetition-count">0</strong><small>ครั้งทั้งหมด</small></span>
+                <span><strong id="rail-quality-average">--</strong><small>คุณภาพเฉลี่ย</small></span>
             </div>
+        </section>
 
-        </div>
+        <section class="rail-card calendar-card">
+            <div class="rail-card-heading"><h3>กิจกรรมประจำสัปดาห์</h3><span aria-hidden="true">↗</span></div>
+            <div class="calendar-month" id="desktop-calendar-month"></div>
+            <div class="calendar-week" id="desktop-calendar-week" aria-label="ปฏิทินประจำสัปดาห์"></div>
+            <p class="calendar-legend"><i></i> วันที่ออกกำลังกาย <span><i></i> วันนี้</span></p>
+        </section>
 
-
-        <div class="activity-card progress-snapshot-card">
-
-
-            <div class="activity-stat">
-
-                <span>จำนวนเซสชัน</span>
-
-                    <strong id="home-sessions">
-                    --
-                </strong>
-
-            </div>
-
-
-            <div class="activity-stat">
-
-                <span>จำนวนครั้งทั้งหมด</span>
-
-                    <strong id="home-total-reps">
-                    --
-                </strong>
-
-            </div>
-
-
-            <div class="activity-stat">
-
-                <span>คุณภาพเฉลี่ย</span>
-
-                    <strong id="home-average-quality">
-                    --
-                </strong>
-
-            </div>
-
-
-        </div>
-
-    </section>
-
+        <section class="rail-card coach-rail-card">
+            <div class="rail-card-heading"><span class="coach-spark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7M17 4h4m-2-2v4"></path></svg></span><h3>AI Coach แนะนำ</h3></div>
+            <p id="desktop-coach-note">เริ่มต้นง่าย ๆ ด้วย Jumping Jack สัก 3 นาที แล้วให้ร่างกายค่อย ๆ เข้าสู่จังหวะที่เหมาะกับคุณ</p>
+            <button id="desktop-coach-start" type="button">เริ่มตามคำแนะนำ <span aria-hidden="true">→</span></button>
+        </section>
+    </aside>
 
 
     <!-- HOME NAVIGATION -->
@@ -530,6 +532,68 @@
 </section>
 
 
+<section id="battle-screen" class="screen battle-screen">
+    <main class="battle-page">
+        <header class="battle-header">
+            <button id="battle-home" class="back-button" type="button">← หน้าแรก</button>
+            <span class="dashboard-eyebrow">MOVEWISE BATTLE</span>
+        </header>
+
+        <section class="battle-intro">
+            <h2>Battle 1v1</h2>
+            <p>ท้าทายเพื่อนด้วยจำนวนครั้งและผลวิเคราะห์จากการฝึกจริง</p>
+        </section>
+
+        <section class="battle-setup" aria-label="สร้างหรือเข้าร่วม Battle">
+            <button id="battle-create" class="start-button" type="button">
+                สร้างห้อง
+            </button>
+            <div class="battle-join-row">
+                <label for="battle-code-input">มีรหัสห้องแล้ว?</label>
+                <div>
+                    <input
+                        id="battle-code-input"
+                        type="text"
+                        maxlength="12"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        aria-label="รหัสห้อง Battle"
+                        placeholder="ใส่รหัสห้อง"
+                    >
+                    <button id="battle-join" class="secondary-button" type="button">
+                        เข้าร่วม
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <p id="battle-message" class="battle-message" role="status" hidden></p>
+
+        <section id="battle-lobby" class="battle-lobby" hidden>
+            <div class="battle-room-heading">
+                <div>
+                    <span class="dashboard-eyebrow">รหัสห้อง</span>
+                    <strong id="battle-room-code"></strong>
+                </div>
+                <p id="battle-status" role="status"></p>
+            </div>
+            <div id="battle-players" class="battle-players"></div>
+            <div id="battle-exercises" class="battle-exercises" hidden></div>
+            <button id="battle-ready" class="start-button" type="button" hidden>
+                พร้อมเริ่ม
+            </button>
+        </section>
+
+        <section id="battle-result" class="battle-result" aria-live="polite" hidden>
+            <span class="dashboard-eyebrow">ผลการแข่งขัน</span>
+            <h2 id="battle-result-title"></h2>
+            <strong id="battle-result-score" class="battle-result-score"></strong>
+            <p id="battle-result-summary"></p>
+        </section>
+    </main>
+</section>
+
+
 
 <!-- =========================================================
      ANALYZE
@@ -556,7 +620,7 @@
                 </h2>
 
                 <p>
-                    เลือกท่าที่เหมาะกับคุณ แล้วเริ่มฝึกได้เลย
+                    วิเคราะห์การเคลื่อนไหวแบบเรียลไทม์ด้วย MoveWise AI
                 </p>
 
             </div>
@@ -578,8 +642,8 @@
 
         <div class="exercise-search">
 
-            <span>
-                ⌕
+            <span aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg>
             </span>
 
             <input
@@ -624,6 +688,14 @@
                 Strength
             </button>
 
+            <button
+                class="exercise-filter"
+                data-filter="full-body"
+                type="button"
+            >
+                Full Body
+            </button>
+
         </div>
 
 
@@ -660,7 +732,7 @@
                         </span>
 
                         <span class="available-badge">
-                            ● AVAILABLE
+                            AVAILABLE
                         </span>
 
                     </div>
@@ -739,7 +811,7 @@
                         </span>
 
                         <span class="available-badge">
-                            ● AVAILABLE
+                            AVAILABLE
                         </span>
 
                     </div>
@@ -818,7 +890,7 @@
                         </span>
 
                         <span class="available-badge">
-                            ● AVAILABLE
+                            AVAILABLE
                         </span>
 
                     </div>
@@ -889,7 +961,7 @@
                         </span>
 
                         <span class="available-badge">
-                            ● AVAILABLE
+                            AVAILABLE
                         </span>
 
                     </div>
@@ -960,7 +1032,7 @@
                         </span>
 
                         <span class="available-badge">
-                            ● AVAILABLE
+                            AVAILABLE
                         </span>
 
                     </div>
@@ -1017,7 +1089,7 @@
             >
 
                 <div class="library-icon">
-                    🙆
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4" r="2"></circle><path d="M12 6v8m0-5-5-5-3 2m8 3 5-5 3 2M12 14l-4 7m4-7 4 7"></path></svg>
                 </div>
 
 
@@ -1088,7 +1160,7 @@
             >
 
                 <div class="library-icon">
-                    ↔️
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18m-13-5-5 5 5 5m8-10 5 5-5 5"></path></svg>
                 </div>
 
 
@@ -1307,7 +1379,7 @@
             aria-haspopup="dialog"
             aria-expanded="false"
         >
-            <span aria-hidden="true">▣</span>
+            <span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="12" cy="12" r="4"></circle><path d="M7 5l1-2h8l1 2"></path></svg></span>
             <span class="camera-mode-label">มุมมอง</span>
         </button>
 
@@ -1338,19 +1410,19 @@
             aria-labelledby="camera-mode-title"
         >
             <button type="button" role="radio" aria-checked="true" data-camera-mode="standard">
-                <span class="camera-mode-option-icon" aria-hidden="true">▤</span>
+                <span class="camera-mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 8h10M7 12h10M7 16h6"></path></svg></span>
                 <span><strong>Standard</strong><small>กล้องและข้อมูลการฝึก</small></span>
-                <span class="camera-mode-option-check" aria-hidden="true">✓</span>
+                <span class="camera-mode-option-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg></span>
             </button>
             <button type="button" role="radio" aria-checked="false" data-camera-mode="focus">
-                <span class="camera-mode-option-icon" aria-hidden="true">◫</span>
+                <span class="camera-mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path></svg></span>
                 <span><strong>Focus</strong><small>กล้องขนาดใหญ่ พร้อมข้อมูลย่อ</small></span>
-                <span class="camera-mode-option-check" aria-hidden="true">✓</span>
+                <span class="camera-mode-option-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg></span>
             </button>
             <button type="button" role="radio" aria-checked="false" data-camera-mode="fullscreen">
-                <span class="camera-mode-option-icon" aria-hidden="true">⛶</span>
+                <span class="camera-mode-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"></path></svg></span>
                 <span><strong>Full Screen</strong><small>กล้องเต็มหน้าจอ</small></span>
-                <span class="camera-mode-option-check" aria-hidden="true">✓</span>
+                <span class="camera-mode-option-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg></span>
             </button>
         </div>
     </dialog>
@@ -1445,9 +1517,13 @@
                 </div>
 
 
-                <div class="camera-hint">
+                <div
+                    id="camera-hint"
+                    class="camera-hint"
+                    data-default-text="ยืนให้เห็นศีรษะถึงเท้า"
+                >
 
-                    <span aria-hidden="true">💡</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"></circle><path d="M10 12.5 9 17h6l-1-4.5M10 20h4m-2-19v1M4 8H2m20 0h-2M5 3l1.5 1.5m11 0L19 3"></path></svg>
                     ยืนให้เห็นศีรษะถึงเท้า
 
                 </div>
@@ -1501,7 +1577,7 @@
                 <div class="section-title">
 
                     <div class="section-icon">
-                        AI
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path></svg>
                     </div>
 
 
@@ -1639,7 +1715,7 @@
 
                     <div class="mi-card-top">
 
-                        <span>
+                        <span id="live-rom-title">
                             Range of Motion
                         </span>
 
@@ -1662,7 +1738,7 @@
 
                     <div class="mi-detail">
 
-                        <span>
+                        <span id="live-arm-rom-label">
                             แขน
                         </span>
 
@@ -1675,7 +1751,7 @@
 
                     <div class="mi-detail">
 
-                        <span>
+                        <span id="live-leg-rom-label">
                             ขา
                         </span>
 
@@ -1695,7 +1771,7 @@
 
                     <div class="mi-card-top">
 
-                        <span>
+                        <span id="live-symmetry-title">
                             Body Symmetry
                         </span>
 
@@ -1787,7 +1863,8 @@
                 class="start-button"
                 type="button"
             >
-                ▶ เริ่มการวิเคราะห์ด้วย AI
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m10 8 6 4-6 4V8z"></path></svg>
+                <span class="start-button-label">เริ่มออกกำลังกาย</span>
             </button>
 
 
@@ -1965,57 +2042,175 @@
 <section id="activity-screen" class="screen">
     <div class="product-page">
         <header class="page-heading">
-            <span class="dashboard-eyebrow">บันทึกการฝึก</span>
-            <h2>กิจกรรมของคุณ</h2>
-            <p>ทุกครั้งที่ขยับ คือความก้าวหน้าที่น่าภูมิใจ</p>
+            <span class="dashboard-eyebrow">พัฒนาการของคุณ</span>
+            <h2>เส้นทางการเคลื่อนไหวของคุณ</h2>
+            <p>ทุก workout คืออีกหนึ่งก้าวที่คุณทำได้จริง</p>
         </header>
 
-        <div id="activity-empty-state" class="activity-empty-state" hidden>
-            <strong>ประวัติการฝึกของคุณจะอยู่ที่นี่</strong>
-            <span>จบการออกกำลังกายครั้งแรก แล้วกลับมาดูพัฒนาการได้เลย</span>
-        </div>
-        <div id="progress-recent-sessions" class="workout-history"></div>
+        <div id="activity-weekly-progress"></div>
+        <div id="activity-streak"></div>
+        <div id="activity-exercise-progress"></div>
+        <div id="activity-personal-bests"></div>
+        <section class="activity-recent-section">
+            <div class="section-heading">
+                <div>
+                    <span class="dashboard-eyebrow">ประวัติการฝึก</span>
+                    <h3>การฝึกล่าสุด</h3>
+                </div>
+            </div>
+            <div id="activity-empty-state" class="activity-empty-state" hidden>
+                <strong>ยังไม่มี workout แรกของคุณ</strong>
+                <span>เริ่ม workout แรก แล้ว MoveWise จะเริ่มเรียนรู้รูปแบบการเคลื่อนไหวของคุณ</span>
+                <button id="activity-start-exercise" class="secondary-button" type="button">
+                    เริ่มออกกำลังกาย
+                </button>
+            </div>
+            <div id="progress-recent-sessions" class="workout-history"></div>
+        </section>
     </div>
 
     <nav class="bottom-navigation" aria-label="เมนูหลัก">
-        <button class="bottom-nav-item" data-nav="home" type="button"><span class="nav-icon" aria-hidden="true">⌂</span><small>หน้าแรก</small></button>
-        <button class="bottom-nav-item" data-nav="analyze" type="button"><span class="nav-icon" aria-hidden="true">＋</span><small>ฝึก</small></button>
-        <button class="bottom-nav-item active" data-nav="progress" type="button"><span class="nav-icon" aria-hidden="true">↗</span><small>กิจกรรม</small></button>
-        <button class="bottom-nav-item" data-nav="profile" type="button"><span class="nav-icon" aria-hidden="true">○</span><small>โปรไฟล์</small></button>
+        <button class="bottom-nav-item" data-nav="home" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10.5 12 3l9 7.5"></path>
+                    <path d="M5 9.5V21h14V9.5"></path>
+                    <path d="M9 21v-6h6v6"></path>
+                </svg>
+            </span>
+            <small>หน้าแรก</small>
+        </button>
+        <button class="bottom-nav-item" data-nav="analyze" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m10 8 6 4-6 4V8z"></path>
+                </svg>
+            </span>
+            <small>ฝึก</small>
+        </button>
+        <button class="bottom-nav-item active" data-nav="progress" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19V5"></path>
+                    <path d="M4 19h16"></path>
+                    <path d="m7 15 3-4 3 2 4-6"></path>
+                </svg>
+            </span>
+            <small>กิจกรรม</small>
+        </button>
+        <button class="bottom-nav-item" data-nav="profile" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+                </svg>
+            </span>
+            <small>โปรไฟล์</small>
+        </button>
     </nav>
 </section>
 
 <section id="profile-screen" class="screen">
     <div class="product-page">
         <header class="page-heading">
-            <span class="dashboard-eyebrow">โปรไฟล์ MoveWise</span>
-            <h2>การเดินทางของคุณ</h2>
-            <p>ความสม่ำเสมอเล็ก ๆ สร้างความแข็งแรงได้ทุกวัน</p>
+            <span class="dashboard-eyebrow">โปรไฟล์ของฉัน</span>
+            <h2>Your Movement Journey</h2>
+            <p>ฝึกในแบบของคุณ เติบโตในจังหวะของคุณ</p>
         </header>
 
         <article class="profile-hero">
-            <div class="profile-avatar" aria-hidden="true">M</div>
+            <div class="profile-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+                </svg>
+            </div>
             <div>
                 <span class="dashboard-eyebrow">MOVEWISE</span>
-                <h3>การเดินทางของคุณ</h3>
-                <p>ฝึกในแบบของคุณ เติบโตในจังหวะของคุณ</p>
+                <h3>เส้นทางของคุณ</h3>
+                <p>ทุกการเคลื่อนไหวคือก้าวเล็ก ๆ ที่พาคุณไปข้างหน้า</p>
             </div>
         </article>
 
-        <div class="profile-stat-grid">
-            <article class="profile-stat"><span>จำนวนเซสชัน</span><strong id="profile-workouts">0</strong></article>
-            <article class="profile-stat"><span>จำนวนครั้ง</span><strong id="profile-reps">0</strong></article>
-            <article class="profile-stat"><span>คุณภาพเฉลี่ย</span><strong id="profile-quality">--</strong></article>
-        </div>
+        <section class="profile-journey" aria-labelledby="profile-journey-title">
+            <div class="section-heading">
+                <div>
+                    <span class="dashboard-eyebrow">เส้นทางของคุณ</span>
+                    <h3 id="profile-journey-title">พัฒนาการของคุณ</h3>
+                </div>
+            </div>
 
-        <section id="profile-progress" class="profile-progress"></section>
+            <div class="profile-stat-grid">
+                <article class="profile-stat"><span>จำนวนเซสชัน</span><strong id="profile-workouts">0</strong></article>
+                <article class="profile-stat"><span>จำนวนครั้ง</span><strong id="profile-reps">0</strong></article>
+                <article class="profile-stat"><span>คุณภาพเฉลี่ย</span><strong id="profile-quality">--</strong></article>
+                <article class="profile-stat"><span>Streak ปัจจุบัน</span><strong id="profile-current-streak">0 วัน</strong></article>
+                <article class="profile-stat"><span>Streak สูงสุด</span><strong id="profile-longest-streak">0 วัน</strong></article>
+            </div>
+
+            <section id="profile-progress" class="profile-progress"></section>
+            <div id="profile-personal-bests"></div>
+        </section>
+
+        <section class="profile-setting-section" aria-labelledby="daily-goal-title">
+            <div class="section-heading">
+                <div>
+                    <span class="dashboard-eyebrow">เป้าหมายวันนี้</span>
+                    <h3 id="daily-goal-title">เป้าหมายรายวัน</h3>
+                </div>
+            </div>
+            <div class="daily-goal-setting">
+                <button id="daily-goal-decrease" type="button" aria-label="ลดเป้าหมายรายวัน">−</button>
+                <strong id="daily-goal-value">20</strong>
+                <button id="daily-goal-increase" type="button" aria-label="เพิ่มเป้าหมายรายวัน">+</button>
+                <span>ครั้ง / วัน</span>
+            </div>
+            <p id="daily-goal-save-status" class="setting-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section id="profile-exercise-progress" class="exercise-progress-section"></section>
     </div>
 
     <nav class="bottom-navigation" aria-label="เมนูหลัก">
-        <button class="bottom-nav-item" data-nav="home" type="button"><span class="nav-icon" aria-hidden="true">⌂</span><small>หน้าแรก</small></button>
-        <button class="bottom-nav-item" data-nav="analyze" type="button"><span class="nav-icon" aria-hidden="true">＋</span><small>ฝึก</small></button>
-        <button class="bottom-nav-item" data-nav="progress" type="button"><span class="nav-icon" aria-hidden="true">↗</span><small>กิจกรรม</small></button>
-        <button class="bottom-nav-item active" data-nav="profile" type="button"><span class="nav-icon" aria-hidden="true">○</span><small>โปรไฟล์</small></button>
+        <button class="bottom-nav-item" data-nav="home" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10.5 12 3l9 7.5"></path>
+                    <path d="M5 9.5V21h14V9.5"></path>
+                    <path d="M9 21v-6h6v6"></path>
+                </svg>
+            </span>
+            <small>หน้าแรก</small>
+        </button>
+        <button class="bottom-nav-item" data-nav="analyze" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="m10 8 6 4-6 4V8z"></path>
+                </svg>
+            </span>
+            <small>ฝึก</small>
+        </button>
+        <button class="bottom-nav-item" data-nav="progress" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19V5"></path>
+                    <path d="M4 19h16"></path>
+                    <path d="m7 15 3-4 3 2 4-6"></path>
+                </svg>
+            </span>
+            <small>กิจกรรม</small>
+        </button>
+        <button class="bottom-nav-item active" data-nav="profile" type="button">
+            <span class="nav-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+                </svg>
+            </span>
+            <small>โปรไฟล์</small>
+        </button>
     </nav>
 </section>
 
@@ -2059,13 +2254,9 @@
 
         <div class="result-header">
 
-            <div class="hero-badge">
-                AI SESSION ANALYSIS
-            </div>
+            <div class="hero-badge">ผลการฝึกของคุณ</div>
 
-            <h2>
-                จบการฝึกแล้ว
-            </h2>
+            <h2>จบการฝึกแล้ว</h2>
 
             <p>
                 นี่คือผลการเคลื่อนไหวของคุณในครั้งนี้
@@ -2134,7 +2325,6 @@
             <!-- TIME -->
 
             <div class="result-card">
-
                 <span>
                     เวลาในการฝึก
                 </span>
@@ -2149,11 +2339,22 @@
 
             </div>
 
+            <div class="result-card">
+                <span>ความแม่นยำ</span>
+                <strong id="result-accuracy">--</strong>
+                <small>จากข้อมูลการเคลื่อนไหว</small>
+                <div class="result-progress">
+                    <div id="result-accuracy-bar"></div>
+                </div>
+            </div>
+
         </div>
 
         <p id="session-save-warning" class="session-save-warning" role="status" hidden>
             เซสชันนี้ยังไม่ถูกบันทึกลงในประวัติ กรุณาตรวจสอบพื้นที่จัดเก็บของเบราว์เซอร์
         </p>
+
+        <section id="result-daily-goal" class="result-daily-goal"></section>
 
         <section id="result-movement-report" class="report-card result-movement-report" hidden>
             <div class="report-card-heading">
@@ -2167,76 +2368,39 @@
 
 
 
-        <!-- AI INSIGHT -->
-
-        <div class="insight-card">
-
-            <div class="insight-icon">
-                AI
+        <section class="coach-story" aria-labelledby="coach-story-title">
+            <div class="coach-story-heading">
+                <span class="dashboard-eyebrow">MOVEWISE COACH</span>
+                <h3 id="coach-story-title">วิเคราะห์วันนี้</h3>
             </div>
 
+            <div class="coach-story-fallback">
+                <div class="coach-story-block">
+                    <span class="mi-eyebrow">สรุปการฝึก</span>
+                    <h3 id="ai-insight-title">กำลังวิเคราะห์</h3>
+                    <p id="ai-insight">-</p>
+                    <p id="ai-insight-strength" hidden></p>
+                    <p id="ai-insight-improvement" hidden></p>
+                </div>
 
-            <div>
-
-                <span class="mi-eyebrow">
-                    AI INSIGHT
-                </span>
-
-                <h3 id="ai-insight-title">
-                    กำลังวิเคราะห์
-                </h3>
-
-                <p id="ai-insight">
-                    -
-                </p>
-
+                <div class="coach-story-block">
+                    <span class="mi-eyebrow">ครั้งต่อไปแนะนำ</span>
+                    <p id="ai-recommendation">-</p>
+                </div>
             </div>
 
-        </div>
-
-
-
-        <!-- RECOMMENDATION -->
-
-        <div class="recommendation-card">
-
-            <div class="recommendation-icon">
-                ✦
-            </div>
-
-
-            <div>
-
-                <span class="mi-eyebrow">
-                    PERSONALIZED RECOMMENDATION
-                </span>
-
-                <h3>
-                    คำแนะนำสำหรับคุณ
-                </h3>
-
-                <p id="ai-recommendation">
-                    -
-                </p>
-
-            </div>
-
-        </div>
-
-        <section id="remote-ai-coach" class="recommendation-card" hidden>
-            <div class="recommendation-icon" aria-hidden="true">AI</div>
-            <div>
-                <span class="mi-eyebrow">OPENAI COACH</span>
+            <section id="remote-ai-coach" class="coach-story-block remote-coach-story" hidden>
+                <span class="mi-eyebrow">สรุปจาก AI Coach</span>
                 <h3 id="remote-ai-summary"></h3>
-                <p><strong>จุดเด่น:</strong> <span id="remote-ai-strengths"></span></p>
-                <p><strong>ปรับได้:</strong> <span id="remote-ai-improvement"></span></p>
-                <p><strong>ท่าถัดไป:</strong> <span id="remote-ai-next-tip"></span></p>
-            </div>
-        </section>
+                <p><strong>จุดแข็ง:</strong> <span id="remote-ai-strengths"></span></p>
+                <p><strong>ควรพัฒนา:</strong> <span id="remote-ai-improvement"></span></p>
+                <p><strong>ครั้งต่อไปแนะนำ:</strong> <span id="remote-ai-next-tip"></span></p>
+            </section>
 
-        <p id="remote-ai-unavailable" class="session-save-warning" role="status" hidden>
-            AI Coach ยังไม่พร้อมใช้งาน ขณะนี้แสดงคำแนะนำ MoveWise ที่มีอยู่
-        </p>
+            <p id="remote-ai-unavailable" class="session-save-warning" role="status" hidden>
+                AI Coach ยังไม่พร้อมใช้งาน ขณะนี้แสดงคำแนะนำ MoveWise ที่มีอยู่
+            </p>
+        </section>
 
 
 

@@ -93,7 +93,7 @@ export function generateRecommendation(
     const recommendations = [];
 
     if (quality !== null && quality >= 90) {
-        strengths.push("คุณภาพการเคลื่อนไหวอยู่ในระดับดีมาก");
+        strengths.push("คุณภาพการเคลื่อนไหวอยู่ในระดับดี");
     }
     if (accuracy !== null && accuracy >= 90) {
         strengths.push("ความแม่นยำของ Rep อยู่ในระดับดี");
@@ -213,7 +213,7 @@ export function generateRecommendation(
         : trend.direction === "up"
             ? "คุณมีพัฒนาการที่ดีขึ้นจากการฝึกครั้งก่อน"
             : quality !== null && quality >= 90
-                ? "การเคลื่อนไหวของคุณอยู่ในระดับดีมาก"
+                ? "การเคลื่อนไหวของคุณอยู่ในระดับดี"
                 : "ฝึกต่อโดยเน้น Range of Motion และความสม่ำเสมอของการเคลื่อนไหว";
 
     if (!recommendations.length && trend.status === "insufficient-data") {

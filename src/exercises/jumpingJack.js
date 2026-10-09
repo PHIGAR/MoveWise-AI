@@ -259,7 +259,7 @@ export function createJumpingJackAnalyzer(
                 exerciseState.state = "OPEN";
                 score = metrics.quality;
                 feedback = {
-                    title: "✓ ท่าถูกต้อง",
+                    title: "ท่าถูกต้อง",
                     message: `Symmetry ${metrics.symmetry}% · หุบกลับ`
                 };
             }
@@ -267,7 +267,7 @@ export function createJumpingJackAnalyzer(
         else if (exerciseState.state === "OPEN") {
             score = metrics.quality;
             feedback = {
-                title: "✓ ท่าถูกต้อง",
+                title: "ท่าถูกต้อง",
                 message: "หุบแขนและขากลับ"
             };
 
@@ -286,8 +286,8 @@ export function createJumpingJackAnalyzer(
                 exerciseState.state = "CLOSED";
                 score = metrics.quality;
                 feedback = {
-                    title: "✓ ทำสำเร็จ 1 ครั้ง",
-                    message: "ยอดเยี่ยม! พร้อมทำครั้งต่อไป"
+                    title: "ทำสำเร็จ 1 ครั้ง",
+                    message: "ทำได้ดี พร้อมทำครั้งต่อไป"
                 };
             }
             else {
