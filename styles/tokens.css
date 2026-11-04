@@ -1,0 +1,61 @@
+/* Semantic pairs keep text and its surface in the same theme. */
+:root {
+    color-scheme: light;
+    --bg:#f6f9fd;
+    --surface:#ffffff;
+    --surface-soft:#eef4fb;
+    --surface-hover:#e5eef9;
+    --ink:#102033;
+    --muted:#53657b;
+    --subtle:#5d6e83;
+    --line:#dbe5f0;
+    --primary:#2563eb;
+    --primary-hover:#1d4ed8;
+    --on-primary:#ffffff;
+    --accent:#006ca3;
+    --accent-soft:#e8f6ff;
+    --success:#117b54;
+    --success-soft:#e8f6ef;
+    --warning:#8d570c;
+    --warning-soft:#fff5df;
+    --danger:#b52d41;
+    --danger-soft:#fff0f2;
+    --camera:#101d30;
+    --camera-ink:#f2f7ff;
+    --shadow:0 8px 28px #142c4d08;
+    --radius:18px;
+    --radius-sm:10px;
+    --sidebar:224px;
+    --font:'Inter','Anuphan',sans-serif;
+    --ease:cubic-bezier(.2,.75,.25,1);
+    --fast:150ms;
+    --normal:260ms;
+    /* Compatibility for colors used by existing DOM renderers. */
+    --text:var(--ink);--text-2:var(--muted);--navy:var(--ink);--navy-2:var(--ink);
+    --muted-color:var(--muted);--blue:var(--primary);--blue-dark:var(--primary-hover);
+    --cyan:#38bdf8;--green:var(--success);--red:var(--danger);--orange:var(--warning);
+    --background:var(--bg);--white:var(--surface);--border:var(--line);
+}
+:root[data-theme='dark'] {
+    color-scheme:dark;
+    --bg:#0b1422;
+    --surface:#121f31;
+    --surface-soft:#1b2c43;
+    --surface-hover:#233a55;
+    --ink:#eef5ff;
+    --muted:#b4c4da;
+    --subtle:#a0b2cc;
+    --line:#2b3d55;
+    --primary:#93c5fd;
+    --primary-hover:#bfdbfe;
+    --on-primary:#102746;
+    --accent:#7dd3fc;
+    --accent-soft:#163650;
+    --success:#6ee7b7;
+    --success-soft:#13382f;
+    --warning:#fbd38d;
+    --warning-soft:#372b1a;
+    --danger:#fda4af;
+    --danger-soft:#3d2230;
+    --shadow:none;
+}

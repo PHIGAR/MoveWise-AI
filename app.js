@@ -1,3 +1,10 @@
+import { setText, createFrameGate } from "./src/ui/liveUpdates.js";
+import { renderMonthlyActivity } from "./src/ui/monthlyActivity.js";
+import { createCoachingSession } from "./src/ai/coachingSession.js";
+import { createSessionClock } from "./src/core/sessionClock.js";
+import { matchesExercise, filterHistory } from "./src/core/catalog.js";
+import { renderExerciseGuide } from "./src/ui/exerciseGuide.js";
+import { initializePreferences } from "./src/ui/preferences.js";
 import {
     initializePoseDetector,
     detectPose,
@@ -17,7 +24,8 @@ import {
 import {
     createExerciseAnalyzer,
     getAvailableExercises,
-    getAvailableWorkoutExercises
+    getAvailableWorkoutExercises,
+    getExerciseById
 } from "./src/exercises/exerciseRegistry.js";
 
 import {
@@ -113,7 +121,6 @@ import {
     transitionBattleState
 } from "./src/core/battle/battleState.js";
 
-
 /* =========================================================
    MOVEWISE AI
    FINAL DEMO
@@ -141,14 +148,12 @@ import {
    AI Recommendation
 ========================================================= */
 
-
 /* =========================================================
    DOM
 ========================================================= */
 
 const $ = id =>
     document.getElementById(id);
-
 
 const homeScreen =
     $("home-screen");
@@ -168,7 +173,6 @@ const profileScreen =
 const movementReportScreen =
     $("movement-report-screen");
 
-
 const video =
     $("webcam");
 
@@ -177,7 +181,6 @@ const canvas =
 
 const ctx =
     canvas.getContext("2d");
-
 
 const status =
     $("status");
@@ -190,7 +193,6 @@ const startButtonLabel =
 
 const finishButton =
     $("finish-exercise");
-
 
 const repElement =
     $("rep");
@@ -209,7 +211,6 @@ const formScoreElement =
 
 const scoreBar =
     $("score-bar");
-
 
 const poseStatus =
     $("pose-status");
@@ -240,7 +241,6 @@ const cameraModeOptions =
 
 const cameraHintElement =
     $("camera-hint");
-
 
 /* Result */
 
@@ -297,7 +297,6 @@ const remoteAINextTip =
 
 const remoteAIUnavailable =
     $("remote-ai-unavailable");
-
 
 /* Real-time */
 
@@ -505,16 +504,25 @@ const dailyGoalSaveStatus =
 let activitySelectedExercise = "";
 let profileSelectedExercise = "";
 
-
 /* =========================================================
    AI
 ========================================================= */
 
+const sessionClock = createSessionClock();
+let sessionPaused = false;
+let startupId = 0;
 let running = false;
 
 let sessionActive = false;
 
 let sessionStarting = false;
+
+const poseFrameGate = createFrameGate(50);
+let predictFrame = null;
+function schedulePredict() {
+    cancelAnimationFrame(predictFrame);
+    predictFrame = requestAnimationFrame(predict);
+}
 
 let lastVideoTime = -1;
 
@@ -531,6 +539,7 @@ let battleModeActive = false;
 let localBattlePreparing = false;
 let localBattleActive = false;
 let localBattleState = null;
+let localBattleSelectedExercise = "jumping-jack";
 let localBattleAnalyzers = [];
 let localBattleCenters = [null, null];
 let localBattlePresence = [
@@ -545,7 +554,6 @@ let localBattleTimer = null;
 let localBattleEndsAt = null;
 let localBattleReadyState = "not-found";
 let battleMetricsTimer = null;
-
 
 /* =========================================================
    REP
@@ -573,7 +581,6 @@ let currentResultSession = null;
 
 let resultCoachRequestId = 0;
 
-
 let currentMovementMetrics = {
 
     leftArmAngle: 0,
@@ -593,7 +600,6 @@ let currentMovementMetrics = {
     quality: 0
 
 };
-
 
 /* =========================================================
    CONFIG
@@ -623,7 +629,6 @@ const CONFIG = {
 
 };
 
-
 /* =========================================================
    REQUIRED LANDMARKS
 ========================================================= */
@@ -645,7 +650,6 @@ const LOCAL_BATTLE_FULL_BODY_LANDMARKS = [
     27,
     28
 ];
-
 
 const jumpingJackAnalyzer =
     createJumpingJackAnalyzer({
@@ -684,18 +688,17 @@ let activeExerciseId =
 
 let sixSevenLabelSnapshot = null;
 
-
 function getActiveExerciseAnalyzer() {
     return exerciseAnalyzers[activeExerciseId]
         || jumpingJackAnalyzer;
 }
-
 
 /* =========================================================
    SCREEN
 ========================================================= */
 
 function showScreen(screen) {
+    if (screen !== exerciseScreen && (sessionActive || sessionStarting) && !battleModeActive && !localBattlePreparing && !localBattleActive) stopSession();
 
     document
         .querySelectorAll(".screen")
@@ -709,7 +712,6 @@ function showScreen(screen) {
             }
         );
 
-
     if (screen) {
 
         screen.classList.add(
@@ -718,13 +720,27 @@ function showScreen(screen) {
 
     }
 
+    if (screen === homeScreen && document.body.dataset.initialized === "true") updateHomeProgress();
+    if (screen) {
+        const nav = ({"home-screen":"home", "analyze-screen":"analyze", "activity-screen":"progress", "profile-screen":"profile", "battle-screen":"battle"})[screen.id];
+        if (nav) {
+            document.querySelectorAll("[data-nav]").forEach(button => {
+                const active = button.dataset.nav === nav;
+                button.classList.toggle("active", active);
+                if (active) button.setAttribute("aria-current", "page");
+                else button.removeAttribute("aria-current");
+            });
+        }
+        screen.setAttribute("tabindex", "-1");
+        screen.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: "instant" });
+    }
     document.body.classList.toggle(
         "workout-active",
         screen === exerciseScreen
     );
 
 }
-
 
 function enterWorkout() {
     if (sessionActive || sessionStarting) {
@@ -734,9 +750,9 @@ function enterWorkout() {
     setCameraMode("standard");
     showScreen(exerciseScreen);
     prepareExercise();
-    startSession();
+    renderExerciseGuide($("exercise-guide"), activeExerciseId);
+    if (battleModeActive) startSession();
 }
-
 
 function setCameraMode(mode) {
     if (!["standard", "focus", "fullscreen"].includes(mode)) {
@@ -764,7 +780,6 @@ function setCameraMode(mode) {
         });
 }
 
-
 function clearFullscreenCameraOverrides() {
     [video, canvas].forEach(element => {
         element.style.left = "";
@@ -776,7 +791,6 @@ function clearFullscreenCameraOverrides() {
         element.style.objectFit = "";
     });
 }
-
 
 cameraModeToggle?.addEventListener("click", () => {
     if (!cameraModeSheet?.open) {
@@ -828,7 +842,6 @@ cameraModeSheet?.addEventListener("close", () => {
     cameraModeToggle?.focus();
 });
 
-
 /* =========================================================
    NAVIGATION
 ========================================================= */
@@ -844,7 +857,6 @@ $("jumping-jack-card")?.addEventListener(
     }
 
 );
-
 
 $("back-home")?.addEventListener(
 
@@ -863,7 +875,6 @@ $("back-home")?.addEventListener(
 
 );
 
-
 $("home-button")?.addEventListener(
 
     "click",
@@ -881,7 +892,6 @@ $("home-button")?.addEventListener(
 
 );
 
-
 $("again-button")?.addEventListener(
     "click",
     () => {
@@ -889,37 +899,28 @@ $("again-button")?.addEventListener(
     }
 );
 
-
 /* =========================================================
    UI
 ========================================================= */
 
-function setStatus(
-    text,
-    tracking = false
-) {
-
-    if (!status) {
-        return;
+function setStatus(text, tracking = false) {
+    if (!status || (status.dataset.message === text && status.dataset.tracking === String(tracking))) return;
+    status.dataset.message = text;
+    status.dataset.tracking = String(tracking);
+    status.replaceChildren();
+    if (tracking) {
+        const dot = document.createElement("span");dot.className = "live-dot";dot.setAttribute("aria-hidden", "true");status.append(dot);
     }
-
-
-    status.innerHTML =
-
-        tracking
-
-            ? `<span class="live-dot"></span>${text}`
-
-            : text;
-
+    status.append(document.createTextNode(text));
 }
-
 
 function setCoach(
     title,
     message
 ) {
 
+    const feedbackTitles = { ready: "พร้อมฝึก", movement: "กำลังเคลื่อนไหว", depth: "ช่วงการเคลื่อนไหว", form: "ตรวจสอบตำแหน่ง", quality: "คุณภาพการเคลื่อนไหว", symmetry: "สมดุล", success: "ทำได้แล้ว" };
+    title = feedbackTitles[title] || title;
     if (formElement) {
 
         formElement.classList.toggle(
@@ -927,21 +928,17 @@ function setCoach(
             title === "ท่าถูกต้อง" ||
                 title === "ทำสำเร็จ 1 ครั้ง"
         );
-        formElement.textContent =
-            title;
+        setText(formElement, title);
 
     }
 
-
     if (feedbackElement) {
 
-        feedbackElement.textContent =
-            message;
+        setText(feedbackElement, message);
 
     }
 
 }
-
 
 function updateScore(
     score
@@ -958,24 +955,20 @@ function updateScore(
             )
         );
 
-
     if (formScoreElement) {
 
-        formScoreElement.textContent =
-            `${score}%`;
+        setText(formScoreElement, `${score}%`);
 
     }
 
-
     if (scoreBar) {
 
-        scoreBar.style.width =
-            `${score}%`;
+        const width = `${score}%`;
+        if (scoreBar.style.width !== width) scoreBar.style.width = width;
 
     }
 
 }
-
 
 function updateMovementState() {
 
@@ -1016,7 +1009,6 @@ function updateMovementState() {
 
     };
 
-
     if (movementStateElement) {
 
         movementStateElement.textContent =
@@ -1028,7 +1020,6 @@ function updateMovementState() {
     }
 
 }
-
 
 /* =========================================================
    TIMER
@@ -1043,10 +1034,8 @@ function formatTime(
             seconds / 60
         );
 
-
     const remaining =
         seconds % 60;
-
 
     return (
 
@@ -1066,156 +1055,21 @@ function formatTime(
 
 }
 
-
 function startTimer() {
-
-    sessionStartTime =
-        Date.now();
-
-
-    timerInterval =
-        setInterval(
-
-            () => {
-
-                if (!sessionStartTime) {
-                    return;
-                }
-
-
-                const elapsed =
-                    Math.floor(
-
-                        (
-                            Date.now() -
-                            sessionStartTime
-                        ) / 1000
-
-                    );
-
-
-                if (timerElement) {
-
-                    timerElement.textContent =
-                        formatTime(
-                            elapsed
-                        );
-
-                }
-
-            },
-
-            1000
-
-        );
-
+    stopTimer();
+    sessionStartTime = Date.now();
+    sessionClock.start();
+    timerInterval = setInterval(() => {
+        timerElement.textContent = formatTime(getSessionDuration());
+    }, 250);
 }
-
 
 function stopTimer() {
-
-    if (timerInterval) {
-
-        clearInterval(
-            timerInterval
-        );
-
-        timerInterval =
-            null;
-
-    }
-
+    clearInterval(timerInterval);
+    timerInterval = null;
 }
 
-
-function getSessionDuration() {
-
-    if (!sessionStartTime) {
-        return 0;
-    }
-
-
-    return Math.floor(
-
-        (
-            Date.now() -
-            sessionStartTime
-        ) / 1000
-
-    );
-
-}
-
-
-/* =========================================================
-   AI INITIALIZATION
-========================================================= */
-
-async function initializeAI() {
-
-    try {
-
-        setStatus(
-            "กำลังโหลด AI..."
-        );
-
-
-        setCoach(
-
-            "กำลังเตรียมระบบ",
-
-            "กำลังโหลด AI สำหรับวิเคราะห์การเคลื่อนไหว"
-
-        );
-
-
-        await initializePoseDetector();
-
-
-        console.log(
-            "MoveWise AI initialized"
-        );
-
-
-        setStatus(
-            "AI พร้อมทำงาน"
-        );
-
-
-        setCoach(
-
-            "พร้อมใช้งาน",
-
-            "เลือก Jumping Jack เพื่อเริ่มการฝึก"
-
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        setStatus(
-            "โหลด AI ไม่สำเร็จ"
-        );
-
-
-        setCoach(
-
-            "ไม่สามารถโหลด AI ได้",
-
-            "ตรวจสอบ model และ Console"
-
-        );
-
-    }
-
-}
-
+function getSessionDuration() { return sessionClock.seconds(); }
 
 /* =========================================================
    RESET
@@ -1232,6 +1086,7 @@ function resetSessionData() {
         false;
 
     sessionStartTime = null;
+    sessionClock.reset();
 
     sessionROMValues =
         [];
@@ -1256,7 +1111,6 @@ function resetSessionData() {
         saveWarning.hidden = true;
     }
 
-
     currentMovementMetrics = {
 
         leftArmAngle: 0,
@@ -1279,7 +1133,6 @@ function resetSessionData() {
 
 }
 
-
 /* =========================================================
    PREPARE
 ========================================================= */
@@ -1289,38 +1142,32 @@ function prepareExercise() {
     stopSession();
     document.body.classList.remove("workout-camera-error");
 
-
     resetSessionData();
 
     resetLiveUI();
 
     updateScore(0);
+    if (formScoreElement) formScoreElement.textContent = "--";
 
     if (timerElement) {
         timerElement.textContent = "00:00";
     }
 
-
     if (poseStatus) {
 
-        poseStatus.textContent =
-            "--";
+        setText(poseStatus, "--");
 
     }
-
 
     if (confidenceElement) {
 
-        confidenceElement.textContent =
-            "--";
+        setText(confidenceElement, "--");
 
     }
 
-
     setStatus(
-        "AI พร้อมทำงาน"
+        "พร้อมเตรียมกล้องและ AI"
     );
-
 
     setCoach(
 
@@ -1329,7 +1176,6 @@ function prepareExercise() {
         "กดปุ่มเพื่อเริ่มการวิเคราะห์ด้วย AI"
 
     );
-
 
     if (startButton) {
 
@@ -1341,7 +1187,6 @@ function prepareExercise() {
         }
 
     }
-
 
     clearCanvas();
 
@@ -1393,14 +1238,14 @@ function ensureLocalBattleUI() {
             </div>
         </div>
         <div id="battle-local-exercises" class="battle-local-exercises"></div>
-        <button id="battle-local-continue" class="start-button" type="button">Continue</button>
+        <button id="battle-local-continue" class="start-button" type="button">เตรียมกล้องสำหรับ 2 คน</button>
         <div id="battle-local-final" class="battle-local-final" hidden>
             <span class="dashboard-eyebrow">BATTLE COMPLETE</span>
             <h3 id="battle-local-final-title"></h3>
             <div id="battle-local-scoreboard" class="battle-local-scoreboard"></div>
             <div class="battle-local-actions">
-                <button id="battle-local-replay" class="start-button" type="button">Battle Again</button>
-                <button id="battle-local-home" class="secondary-button" type="button">Back Home</button>
+                <button id="battle-local-replay" class="start-button" type="button">แข่งอีกครั้ง</button>
+                <button id="battle-local-home" class="secondary-button" type="button">กลับหน้าหลัก</button>
             </div>
         </div>
     `;
@@ -1466,7 +1311,7 @@ function ensureLocalBattleCameraUI() {
             <div><strong id="local-battle-player-two-name">PLAYER 2</strong><span><b id="local-battle-player-two-reps">0</b> REPS</span><span><b id="local-battle-player-two-quality">--</b>% QUALITY</span><span>SCORE <b id="local-battle-player-two-score">0</b></span></div>
         </div>
         <strong id="local-battle-timer" class="local-battle-timer">01:00</strong>
-        <button id="local-battle-exit" class="secondary-button" type="button">Exit Battle</button>
+        <button id="local-battle-exit" class="secondary-button" type="button">ออกจากการแข่งขัน</button>
     `;
     cameraCard.appendChild(overlay);
     overlay.querySelector("#local-battle-start")
@@ -1480,7 +1325,7 @@ function renderLocalBattleExercises() {
     if (!container) return;
 
     const exercises = getAvailableExercises();
-    const current = localBattleState?.exerciseId || exercises[0]?.id || "squat";
+    const current = localBattleSelectedExercise || exercises[0]?.id || "squat";
     container.replaceChildren(...exercises.map(exercise => {
         const button = document.createElement("button");
         button.type = "button";
@@ -1489,6 +1334,7 @@ function renderLocalBattleExercises() {
         button.setAttribute("aria-pressed", String(exercise.id === current));
         button.dataset.exerciseId = exercise.id;
         button.addEventListener("click", () => {
+            localBattleSelectedExercise = exercise.id;
             if (localBattleState) {
                 localBattleState.exerciseId = exercise.id;
             }
@@ -1588,10 +1434,13 @@ async function startLocalBattleSetup() {
         }
     }
     catch (error) {
-        console.error("Local Battle camera setup failed:", error);
-        setStatus("Battle camera unavailable");
-        setCoach("Battle camera unavailable", error.message);
-        leaveLocalBattle();
+        const reason = feedbackElement?.textContent || error.message;
+        await leaveLocalBattle();
+        showScreen($("battle-screen"));
+        const message = $("battle-message");
+        message.textContent = `เตรียมกล้องสำหรับแข่งไม่สำเร็จ · ${reason}`;
+        message.hidden = false;
+        message.classList.add("is-error");
     }
 }
 
@@ -1633,7 +1482,7 @@ function startLocalBattleCountdown() {
 
         clearInterval(localBattleCountdownTimer);
         localBattleCountdownTimer = null;
-        countdownElement.textContent = "GO!";
+        countdownElement.textContent = "";
         const startedAt = countdownEndsAt;
         localBattleState.domainState = transitionBattleState(
             localBattleState.domainState,
@@ -1753,13 +1602,13 @@ function updateLocalBattleLiveUI() {
         const status = localBattlePresence[index];
         const statusText = status.visible
             ? localBattleValidPlayers[index]
-                ? "Ready"
+                ? "พร้อมแล้ว"
                 : "ให้เห็นร่างกายเต็มตัว"
             : status.lastSeenAt !== null
                 ? status.graceExpired
-                    ? "ยังไม่อยู่ในเฟรม · Battle continues"
+                    ? "ยังไม่อยู่ในเฟรม · กำลังแข่งขัน"
                     : "กลับเข้ามาในเฟรม"
-                : "Not detected";
+                : "ยังไม่พบผู้เล่น";
         document.getElementById(
             index === 0
                 ? "local-battle-player-one-status"
@@ -1987,8 +1836,8 @@ function renderLocalBattleResult() {
 
     const result = localBattleState.results;
     title.textContent = result.winnerIndex === null
-        ? "DRAW"
-        : `${result.players[result.winnerIndex].name.toUpperCase()} WINS`;
+        ? "เสมอกัน"
+        : `${result.players[result.winnerIndex].name.toUpperCase()} ชนะ`;
     board.replaceChildren(...result.players.map(player => {
         const card = document.createElement("div");
         card.className = "battle-local-score-card";
@@ -2038,7 +1887,6 @@ async function leaveLocalBattle() {
     showScreen(homeScreen);
 }
 
-
 /* =========================================================
    CANVAS
 ========================================================= */
@@ -2053,7 +1901,6 @@ function syncCanvasSize() {
         return;
 
     }
-
 
     if (
 
@@ -2077,7 +1924,6 @@ function syncCanvasSize() {
 
 }
 
-
 function clearCanvas() {
 
     ctx.clearRect(
@@ -2090,7 +1936,6 @@ function clearCanvas() {
     );
 
 }
-
 
 function captureMovementPose(landmarks) {
     const pose = createLandmarkPose(landmarks);
@@ -2110,7 +1955,6 @@ function captureMovementPose(landmarks) {
         lastMovementPoseCapture = now;
     }
 }
-
 
 function getCompletedRepMetrics(record) {
     const source = {
@@ -2152,7 +1996,6 @@ function getCompletedRepMetrics(record) {
     return metrics;
 }
 
-
 function handleCompletedRep(result) {
     if (!result?.repCompleted || !result.record) {
         return;
@@ -2172,7 +2015,6 @@ function handleCompletedRep(result) {
     pendingMovementPoses = [];
 }
 
-
 function updateRepCounter(repetitions) {
     if (!repElement || repElement.textContent === String(repetitions)) {
         return;
@@ -2180,15 +2022,15 @@ function updateRepCounter(repetitions) {
 
     repElement.textContent = String(repetitions);
     repElement.classList.remove("rep-updated");
-    void repElement.offsetWidth;
-    repElement.classList.add("rep-updated");
+    if (!document.documentElement.classList.contains("reduce-motion") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        repElement.animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}], {duration:260,easing:"ease-out"});
+    }
 }
 
 const poseDiagnosticsEnabled =
     new URLSearchParams(window.location.search).get("debugPose") === "1";
 
 let lastPoseDiagnosticTime = 0;
-
 
 function logPosePipeline({
     exerciseId = activeExerciseId,
@@ -2233,7 +2075,6 @@ function logPosePipeline({
     });
 }
 
-
 /* =========================================================
    CAMERA
 ========================================================= */
@@ -2245,45 +2086,49 @@ async function startSession({ deferTimer = false } = {}) {
     }
 
     sessionStarting = true;
+    document.body.classList.add("workout-starting");
+    const requestId = ++startupId;
+    startButton.disabled = true;
+    startButton.setAttribute("aria-busy", "true");
+    if (startButtonLabel) startButtonLabel.textContent = "กำลังเตรียมกล้องและ AI…";
+    document.body.classList.remove("workout-camera-error");
+    setStatus("กำลังเตรียมกล้องและ AI…");
 
     try {
 
+        await initializePoseDetector();
+        if (requestId !== startupId) return false;
         await setPoseCount(
             localBattlePreparing || localBattleActive
                 ? 2
                 : 1
         );
         await initializeCamera(video);
-
+        if (requestId !== startupId) { stopCamera(video); return false; }
 
         syncCanvasSize();
         lastVideoTime = -1;
-
+        poseFrameGate.reset();
 
         sessionActive =
             true;
 
         document.body.classList.add("workout-running");
 
-
         running =
             true;
 
-
         startButton.disabled =
             true;
-
 
         if (startButtonLabel) {
             startButtonLabel.textContent = "กำลังวิเคราะห์";
         }
 
-
         if (!deferTimer) {
             startTimer();
         }
         startBattleMetricsReporting();
-
 
         setStatus(
 
@@ -2293,7 +2138,6 @@ async function startSession({ deferTimer = false } = {}) {
 
         );
 
-
         setCoach(
 
             "กำลังตรวจจับ",
@@ -2302,53 +2146,92 @@ async function startSession({ deferTimer = false } = {}) {
 
         );
 
-
-        requestAnimationFrame(
-            predict
-        );
+        schedulePredict();
         return true;
 
     }
 
     catch (error) {
-
-        console.error(
-            "Camera error:",
-            error
-        );
-
-
-        setStatus(
-            "เปิดกล้องไม่ได้"
-        );
-
-
-        setCoach(
-
-            "เปิดกล้องไม่สำเร็จ",
-
-            error.message
-
-        );
-
+        if (requestId !== startupId) return false;
+        stopCamera(video);
+        const modelFailed = !getPoseDetectorStatus().ready;
+        setStatus(modelFailed ? "เตรียม AI ไม่สำเร็จ" : "เปิดกล้องไม่ได้");
+        setCoach(modelFailed ? "โหลดตัวตรวจจับไม่สำเร็จ" : "เปิดกล้องไม่สำเร็จ",
+            modelFailed ? "ตรวจสอบอินเทอร์เน็ตแล้วกดเริ่มเพื่อลองใหม่ คุณยังดูประวัติและเลือกท่าได้ตามปกติ" : error.message);
         document.body.classList.add("workout-camera-error");
-
-
-        startButton.disabled =
-            false;
-
+        startButton.disabled = false;
+        if (startButtonLabel) startButtonLabel.textContent = "ลองอีกครั้ง";
         return false;
-
     }
 
     finally {
-        sessionStarting = false;
+        if (requestId === startupId) {
+            sessionStarting = false;
+            document.body.classList.remove("workout-starting");
+            startButton.removeAttribute("aria-busy");
+            updateWorkoutControls();
+        }
     }
 
 }
 
+function updateWorkoutControls() {
+    const solo = !battleModeActive && !localBattlePreparing && !localBattleActive;
+    $("pause-workout").hidden = !solo || !sessionActive;
+    $("restart-workout").hidden = !solo || !sessionActive;
+    $("pause-workout").textContent = sessionPaused ? "ฝึกต่อ" : "พักชั่วคราว";
+    $("pause-workout").setAttribute("aria-pressed", String(sessionPaused));
+    if (solo) finishButton.disabled = !sessionActive;
+    $("exercise-guide").hidden = sessionActive;
+}
+
+$("pause-workout").addEventListener("click", () => {
+    if (!sessionActive || battleModeActive || localBattleActive) return;
+    sessionPaused = !sessionPaused;
+    running = !sessionPaused;
+    if (sessionPaused) {
+        cancelAnimationFrame(predictFrame);
+        sessionClock.pause();
+        getActiveExerciseAnalyzer().resetMovementState();
+        pendingMovementPoses = [];
+        clearCanvas();
+        setStatus("พักชั่วคราว • กล้องยังเปิดอยู่");
+    } else {
+        sessionClock.resume();
+        lastVideoTime = -1;
+        poseFrameGate.reset();
+        setStatus("กำลังตรวจจับร่างกาย", true);
+        schedulePredict();
+    }
+    updateWorkoutControls();
+});
+let resumeAfterRestartDialog = false;
+$("restart-workout").addEventListener("click", () => {
+    resumeAfterRestartDialog = sessionActive && !sessionPaused;
+    if (resumeAfterRestartDialog) $("pause-workout").click();
+    $("restart-dialog").showModal();
+});
+$("restart-dialog").addEventListener("close", () => {
+    if (resumeAfterRestartDialog && sessionActive && sessionPaused) $("pause-workout").click();
+    resumeAfterRestartDialog = false;
+});
+$("confirm-restart").addEventListener("click", () => {
+    $("restart-dialog").close();
+    prepareExercise();
+    renderExerciseGuide($("exercise-guide"), activeExerciseId);
+});
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden && sessionActive && !sessionPaused && !battleModeActive && !localBattleActive && !localBattlePreparing) $("pause-workout").click();
+});
+window.addEventListener("pagehide", () => stopCamera(video));
 
 function stopSession() {
+    cancelAnimationFrame(predictFrame);
+    startupId++;
+    sessionStarting = false;
+    document.body.classList.remove("workout-starting");
+    startButton?.removeAttribute("aria-busy");
+    sessionPaused = false;
 
     running =
         false;
@@ -2358,17 +2241,14 @@ function stopSession() {
 
     document.body.classList.remove("workout-running");
 
-
     stopTimer();
     clearInterval(battleMetricsTimer);
     battleMetricsTimer = null;
 
-
     stopCamera(video);
 
-
     clearCanvas();
-
+    updateWorkoutControls();
 
     if (startButton) {
 
@@ -2382,7 +2262,6 @@ function stopSession() {
     }
 
 }
-
 
 function startBattleMetricsReporting() {
     clearInterval(battleMetricsTimer);
@@ -2412,7 +2291,6 @@ function startBattleMetricsReporting() {
     }, 1000);
 }
 
-
 /* =========================================================
    FULL BODY
 ========================================================= */
@@ -2433,7 +2311,6 @@ function checkFullBody(
 
 }
 
-
 function getBodyConfidence(
     landmarks
 ) {
@@ -2443,7 +2320,6 @@ function getBodyConfidence(
 
     let count =
         0;
-
 
     for (
         const index
@@ -2458,11 +2334,9 @@ function getBodyConfidence(
         const point =
             landmarks[index];
 
-
         if (!point) {
             continue;
         }
-
 
         if (
             point.visibility !== undefined
@@ -2477,11 +2351,9 @@ function getBodyConfidence(
 
     }
 
-
     if (!count) {
         return 0;
     }
-
 
     return Math.round(
 
@@ -2493,7 +2365,6 @@ function getBodyConfidence(
     );
 
 }
-
 
 /* =========================================================
    ANGLE ENGINE
@@ -2515,7 +2386,6 @@ function calculateAngle(
 
     }
 
-
     const radians =
 
         Math.atan2(
@@ -2530,7 +2400,6 @@ function calculateAngle(
             a.x - b.x
         );
 
-
     let angle =
 
         Math.abs(
@@ -2538,7 +2407,6 @@ function calculateAngle(
             180 /
             Math.PI
         );
-
 
     if (
         angle > 180
@@ -2550,11 +2418,9 @@ function calculateAngle(
 
     }
 
-
     return angle;
 
 }
-
 
 /* =========================================================
    ARM
@@ -2588,7 +2454,6 @@ function calculateArmAngles(
 
 }
 
-
 /* =========================================================
    LEG
 ========================================================= */
@@ -2621,7 +2486,6 @@ function calculateLegAngles(
 
 }
 
-
 /* =========================================================
    SYMMETRY
 ========================================================= */
@@ -2640,13 +2504,11 @@ function calculateSymmetry(
 
         );
 
-
     const difference =
         Math.abs(
             left -
             right
         );
-
 
     return Math.max(
 
@@ -2668,7 +2530,6 @@ function calculateSymmetry(
 
 }
 
-
 /* =========================================================
    ARM ROM
 ========================================================= */
@@ -2683,7 +2544,6 @@ function calculateArmROM(
             left +
             right
         ) / 2;
-
 
     const score =
 
@@ -2703,7 +2563,6 @@ function calculateArmROM(
 
         ) * 100;
 
-
     return Math.max(
 
         0,
@@ -2716,7 +2575,6 @@ function calculateArmROM(
     );
 
 }
-
 
 /* =========================================================
    LEG ROM
@@ -2735,11 +2593,9 @@ function calculateLegROM(
 
     }
 
-
     const ratio =
         footWidth /
         shoulderWidth;
-
 
     const score =
 
@@ -2759,7 +2615,6 @@ function calculateLegROM(
 
         ) * 100;
 
-
     return Math.max(
 
         0,
@@ -2772,7 +2627,6 @@ function calculateLegROM(
     );
 
 }
-
 
 /* =========================================================
    MOVEMENT ANALYSIS
@@ -2788,12 +2642,10 @@ function analyzeMovementMetrics(
             landmarks
         );
 
-
     const legs =
         calculateLegAngles(
             landmarks
         );
-
 
     const armROM =
         calculateArmROM(
@@ -2803,7 +2655,6 @@ function analyzeMovementMetrics(
 
         );
 
-
     const legROM =
         calculateLegROM(
 
@@ -2811,7 +2662,6 @@ function analyzeMovementMetrics(
             movement.shoulderWidth
 
         );
-
 
     const armSymmetry =
         calculateSymmetry(
@@ -2821,7 +2671,6 @@ function analyzeMovementMetrics(
 
         );
 
-
     const legSymmetry =
         calculateSymmetry(
 
@@ -2830,14 +2679,12 @@ function analyzeMovementMetrics(
 
         );
 
-
     const symmetry =
 
         (
             armSymmetry +
             legSymmetry
         ) / 2;
-
 
     const quality =
 
@@ -2846,7 +2693,6 @@ function analyzeMovementMetrics(
             legROM +
             symmetry
         ) / 3;
-
 
     return {
 
@@ -2894,7 +2740,6 @@ function analyzeMovementMetrics(
 
 }
 
-
 function updateMovementMetrics(
     metrics,
     movement
@@ -2904,7 +2749,6 @@ function updateMovementMetrics(
         metrics;
 
     updateLiveMetricValues(metrics);
-
 
     if (
 
@@ -2927,11 +2771,9 @@ function updateMovementMetrics(
 
             );
 
-
         sessionROMValues.push(
             rom
         );
-
 
         sessionSymmetryValues.push(
             metrics.symmetry
@@ -2941,7 +2783,6 @@ function updateMovementMetrics(
 
 }
 
-
 /* =========================================================
    REAL-TIME UI
 ========================================================= */
@@ -2949,6 +2790,7 @@ function updateMovementMetrics(
 function updateMovementIntelligenceUI(
     metrics
 ) {
+    if (!poseDiagnosticsEnabled) return;
 
     if (!metrics) {
         return;
@@ -3003,14 +2845,12 @@ function updateMovementIntelligenceUI(
 
     );
 
-
     if (liveROM) {
 
         liveROM.textContent =
             `${rom}%`;
 
     }
-
 
     if (liveROMBar) {
 
@@ -3019,14 +2859,12 @@ function updateMovementIntelligenceUI(
 
     }
 
-
     if (liveArmROM) {
 
         liveArmROM.textContent =
             `${metrics.armROM}%`;
 
     }
-
 
     if (liveLegROM) {
 
@@ -3035,14 +2873,12 @@ function updateMovementIntelligenceUI(
 
     }
 
-
     if (liveSymmetry) {
 
         liveSymmetry.textContent =
             `${metrics.symmetry}%`;
 
     }
-
 
     if (liveSymmetryBar) {
 
@@ -3051,14 +2887,12 @@ function updateMovementIntelligenceUI(
 
     }
 
-
     if (liveLeftAngle) {
 
         liveLeftAngle.textContent =
             `${metrics.leftArmAngle}°`;
 
     }
-
 
     if (liveRightAngle) {
 
@@ -3067,14 +2901,12 @@ function updateMovementIntelligenceUI(
 
     }
 
-
     if (liveQuality) {
 
         liveQuality.textContent =
             metrics.quality;
 
     }
-
 
     if (liveQualityLabel) {
 
@@ -3115,7 +2947,6 @@ function updateMovementIntelligenceUI(
     }
 
 }
-
 
 function resetLiveUI() {
 
@@ -3168,7 +2999,6 @@ function resetLiveUI() {
 
 }
 
-
 /* =========================================================
    JUMPING JACK
 ========================================================= */
@@ -3181,7 +3011,6 @@ function analyzeJumpingJack(
     );
 }
 
-
 function resetMovementStateIfLandmarksMissing(
     analyzer,
     movement
@@ -3190,7 +3019,6 @@ function resetMovementStateIfLandmarksMissing(
         analyzer.resetMovementState();
     }
 }
-
 
 function processJumpingJack(
     data
@@ -3236,7 +3064,6 @@ function processJumpingJack(
     updateMovementState();
 }
 
-
 function processSquat(
     movement
 ) {
@@ -3256,7 +3083,8 @@ function processSquat(
         quality: Math.round(movement.quality),
         leftKneeAngle: Math.round(movement.leftKneeAngle),
         rightKneeAngle: Math.round(movement.rightKneeAngle),
-        kneeAngle: Math.round(movement.kneeAngle)
+        kneeAngle: Math.round(movement.kneeAngle),
+        depth: Math.round(movement.depth)
     };
 
     currentMovementMetrics = metrics;
@@ -3299,7 +3127,6 @@ function processSquat(
     updateMovementState();
 }
 
-
 function processPushUp(
     movement
 ) {
@@ -3320,6 +3147,7 @@ function processPushUp(
         depth: Math.round(movement.depth),
         alignment: Math.round(movement.alignment),
         elbowSymmetry: Math.round(movement.elbowSymmetry),
+        elbowAngle: Math.round(movement.elbowAngle),
         consistency: Math.round(movement.consistency)
     };
 
@@ -3364,7 +3192,6 @@ function processPushUp(
 
     updateMovementState();
 }
-
 
 function processLunge(
     movement
@@ -3433,7 +3260,6 @@ function processLunge(
     updateMovementState();
 }
 
-
 function processBicepCurl(
     movement
 ) {
@@ -3501,7 +3327,6 @@ function processBicepCurl(
     updateMovementState();
 }
 
-
 function processSixSeven(
     movement
 ) {
@@ -3545,7 +3370,6 @@ function processSixSeven(
     updateMovementState();
 }
 
-
 /* =========================================================
    SKELETON
 ========================================================= */
@@ -3570,9 +3394,7 @@ function drawSkeleton(
 
     }
 
-
     syncCanvasSize();
-
 
     if (clearBefore) {
         ctx.clearRect(
@@ -3582,7 +3404,6 @@ function drawSkeleton(
             canvas.height
         );
     }
-
 
     const connections = [
 
@@ -3607,9 +3428,7 @@ function drawSkeleton(
 
     ];
 
-
     ctx.save();
-
 
     ctx.lineWidth =
         Math.max(
@@ -3623,25 +3442,19 @@ function drawSkeleton(
 
         );
 
-
     ctx.lineCap =
         "round";
-
 
     ctx.lineJoin =
         "round";
 
-
     ctx.strokeStyle = color;
-
 
     ctx.shadowColor =
         "rgba(0,0,0,.7)";
 
-
     ctx.shadowBlur =
         5;
-
 
     for (
         const [start,end]
@@ -3654,11 +3467,9 @@ function drawSkeleton(
         const b =
             landmarks[end];
 
-
         if (!a || !b) {
             continue;
         }
-
 
         if (
 
@@ -3673,7 +3484,6 @@ function drawSkeleton(
 
         }
 
-
         if (
 
             b.visibility !== undefined
@@ -3687,7 +3497,6 @@ function drawSkeleton(
 
         }
 
-
         const ax =
             a.x *
             canvas.width;
@@ -3696,7 +3505,6 @@ function drawSkeleton(
             a.y *
             canvas.height;
 
-
         const bx =
             b.x *
             canvas.width;
@@ -3704,7 +3512,6 @@ function drawSkeleton(
         const by =
             b.y *
             canvas.height;
-
 
         if (
 
@@ -3718,7 +3525,6 @@ function drawSkeleton(
             continue;
 
         }
-
 
         ctx.beginPath();
 
@@ -3736,14 +3542,11 @@ function drawSkeleton(
 
     }
 
-
     ctx.restore();
-
 
     /* Points */
 
     ctx.save();
-
 
     for (
         const point
@@ -3753,7 +3556,6 @@ function drawSkeleton(
         if (!point) {
             continue;
         }
-
 
         if (
 
@@ -3768,7 +3570,6 @@ function drawSkeleton(
 
         }
 
-
         const x =
             point.x *
             canvas.width;
@@ -3776,7 +3577,6 @@ function drawSkeleton(
         const y =
             point.y *
             canvas.height;
-
 
         if (
 
@@ -3789,9 +3589,7 @@ function drawSkeleton(
 
         }
 
-
         ctx.beginPath();
-
 
         ctx.arc(
 
@@ -3803,17 +3601,13 @@ function drawSkeleton(
 
         );
 
-
         ctx.fillStyle = color;
-
 
         ctx.shadowColor =
             "rgba(0,0,0,.7)";
 
-
         ctx.shadowBlur =
             4;
-
 
         ctx.fill();
 
@@ -3841,28 +3635,25 @@ function drawSkeleton(
 
 }
 
-
 /* =========================================================
    AI LOOP
 ========================================================= */
 
 function predict() {
+    predictFrame = null;
+    if (running && !poseFrameGate.shouldRun(performance.now())) { schedulePredict(); return; }
 
     if (!running) {
         return;
     }
 
-
     if (!getPoseDetectorStatus().ready) {
 
-        requestAnimationFrame(
-            predict
-        );
+        schedulePredict();
 
         return;
 
     }
-
 
     if (
 
@@ -3873,13 +3664,10 @@ function predict() {
 
         syncCanvasSize();
 
-
         lastVideoTime =
             video.currentTime;
 
-
         let results;
-
 
         try {
 
@@ -3901,10 +3689,7 @@ function predict() {
                 error
             );
 
-
-            requestAnimationFrame(
-                predict
-            );
+            schedulePredict();
 
             return;
 
@@ -3912,10 +3697,9 @@ function predict() {
 
         if (localBattlePreparing || localBattleActive) {
             processLocalBattleFrame(results?.landmarks || []);
-            requestAnimationFrame(predict);
+            schedulePredict();
             return;
         }
-
 
         /* PERSON FOUND */
 
@@ -3939,26 +3723,21 @@ function predict() {
                 landmarks
             );
 
-
             const confidence =
                 getBodyConfidence(
                     landmarks
                 );
 
-
             if (confidenceElement) {
 
-                confidenceElement.textContent =
-                    `${confidence}%`;
+                setText(confidenceElement, `${confidence}%`);
 
             }
-
 
             const fullBody =
                 checkFullBody(
                     landmarks
                 );
-
 
             /*
                ถ้ายังเห็นตัวไม่ครบ
@@ -3992,14 +3771,11 @@ function predict() {
                         : "ต้องเห็นร่างกายเต็มตัว"
                 );
 
-
                 if (poseStatus) {
 
-                    poseStatus.textContent =
-                        "ตรวจจับไม่ครบ";
+                    setText(poseStatus, "ตรวจจับไม่ครบ");
 
                 }
-
 
                 setCoach(
                     activeExerciseId === "six-seven"
@@ -4010,30 +3786,22 @@ function predict() {
                         : "ถอยออกจากกล้อง ให้เห็นตั้งแต่ศีรษะถึงเท้า"
                 );
 
-
                 updateScore(
                     0
                 );
 
-
                 getActiveExerciseAnalyzer()
                     .resetMovementState();
 
-
                 updateMovementState();
 
-
-                requestAnimationFrame(
-                    predict
-                );
-
+                schedulePredict();
 
                 return;
 
             }
 
             captureMovementPose(landmarks);
-
 
             /*
                Full Body
@@ -4047,14 +3815,11 @@ function predict() {
 
             );
 
-
             if (poseStatus) {
 
-                poseStatus.textContent =
-                    "ตรวจจับครบ";
+                setText(poseStatus, "ตรวจจับครบ");
 
             }
-
 
             if (activeExerciseId === "squat") {
                 processSquat(
@@ -4109,7 +3874,6 @@ function predict() {
 
         }
 
-
         /* NO PERSON */
 
         else {
@@ -4126,22 +3890,17 @@ function predict() {
                 "ยังไม่พบผู้ใช้งาน"
             );
 
-
             if (poseStatus) {
 
-                poseStatus.textContent =
-                    "ไม่พบ";
+                setText(poseStatus, "ไม่พบ");
 
             }
-
 
             if (confidenceElement) {
 
-                confidenceElement.textContent =
-                    "--";
+                setText(confidenceElement, "--");
 
             }
-
 
             setCoach(
 
@@ -4151,21 +3910,16 @@ function predict() {
 
             );
 
-
             updateScore(
                 0
             );
 
-
             resetLiveUI();
-
 
             getActiveExerciseAnalyzer()
                 .resetMovementState();
 
-
             updateMovementState();
-
 
             clearCanvas();
 
@@ -4173,13 +3927,9 @@ function predict() {
 
     }
 
-
-    requestAnimationFrame(
-        predict
-    );
+    schedulePredict();
 
 }
-
 
 /* =========================================================
    SESSION ANALYSIS
@@ -4199,7 +3949,6 @@ function calculateConsistency() {
 
     }
 
-
     const average =
         repStartTimes.reduce(
 
@@ -4211,7 +3960,6 @@ function calculateConsistency() {
         )
         /
         repStartTimes.length;
-
 
     const deviation =
         repStartTimes.reduce(
@@ -4229,7 +3977,6 @@ function calculateConsistency() {
         )
         /
         repStartTimes.length;
-
 
     return Math.max(
 
@@ -4258,7 +4005,6 @@ function calculateConsistency() {
 
 }
 
-
 function calculateAverageRepTime() {
 
     const {
@@ -4272,7 +4018,6 @@ function calculateAverageRepTime() {
         return 0;
 
     }
-
 
     return (
 
@@ -4293,7 +4038,6 @@ function calculateAverageRepTime() {
 
 }
 
-
 function averageMetric(
     values
 ) {
@@ -4308,7 +4052,6 @@ function averageMetric(
         ) / values.length
     );
 }
-
 
 function updateHomeProgress() {
     const allSessions =
@@ -4405,13 +4148,14 @@ function renderDesktopCalendar(sessions) {
     }
 }
 
-
 function renderHomeNextWorkout(sessions) {
     if (!homeNextWorkout) {
         return;
     }
 
     homeNextWorkout.textContent = "";
+    homeNextWorkout.closest("section").hidden = !sessions.length;
+    if (!sessions.length) return;
     const section = document.createElement("div");
     section.className = "home-next-workout-content";
     const eyebrow = document.createElement("span");
@@ -4443,11 +4187,7 @@ function renderHomeNextWorkout(sessions) {
         description.textContent = recommendation.summary;
         action.textContent = `ฝึก ${exerciseName} →`;
         action.addEventListener("click", () => {
-            const exerciseButton = Array.from(
-                document.querySelectorAll("[data-home-exercise]")
-            ).find(button =>
-                button.dataset.homeExercise === latestSession.exerciseId
-            );
+            const exerciseButton = homeQuickExercises.querySelector(`[data-exercise="${latestSession.exerciseId}"]`);
             if (exerciseButton) {
                 exerciseButton.click();
             } else {
@@ -4459,7 +4199,6 @@ function renderHomeNextWorkout(sessions) {
     section.append(eyebrow, title, description, action);
     homeNextWorkout.appendChild(section);
 }
-
 
 function getCompletedWorkouts(sessions) {
     if (!Array.isArray(sessions)) {
@@ -4474,7 +4213,6 @@ function getCompletedWorkouts(sessions) {
     );
 }
 
-
 function createInsightHeading(eyebrow, title) {
     const heading = document.createElement("div");
     heading.className = "insight-heading";
@@ -4488,7 +4226,6 @@ function createInsightHeading(eyebrow, title) {
     heading.append(label, headingText);
     return heading;
 }
-
 
 function createInsightStat(labelText, valueText, detailText = "") {
     const stat = document.createElement("div");
@@ -4509,7 +4246,6 @@ function createInsightStat(labelText, valueText, detailText = "") {
 
     return stat;
 }
-
 
 function renderDailyGoal(container, sessions, title) {
     if (!container) {
@@ -4576,7 +4312,6 @@ function renderDailyGoal(container, sessions, title) {
     return progress;
 }
 
-
 function renderDailyGoalSettings() {
     const goal = getDailyGoal();
 
@@ -4594,7 +4329,6 @@ function renderDailyGoalSettings() {
     }
 }
 
-
 function renderResultDailyGoal() {
     const sessions = getCompletedWorkouts(getSessions());
     if (
@@ -4607,9 +4341,8 @@ function renderResultDailyGoal() {
     ) {
         sessions.push(currentResultSession);
     }
-    renderDailyGoal(resultDailyGoal, sessions, "Today's Goal");
+    renderDailyGoal(resultDailyGoal, sessions, "เป้าหมายวันนี้");
 }
-
 
 function changeDailyGoal(amount) {
     const current = getDailyGoal();
@@ -4643,7 +4376,6 @@ function changeDailyGoal(amount) {
     }
 }
 
-
 function getWeeklyChange(current, previous, suffix = "") {
     if (
         typeof current !== "number" ||
@@ -4663,7 +4395,6 @@ function getWeeklyChange(current, previous, suffix = "") {
         : String(difference);
     return `${direction} ${amount}${suffix} จากสัปดาห์ก่อน`;
 }
-
 
 function renderWeeklyProgress(container, sessions) {
     if (!container) {
@@ -4759,7 +4490,6 @@ function renderWeeklyProgress(container, sessions) {
     container.replaceChildren(section);
 }
 
-
 function renderPersonalBests(container, personalBests, title) {
     if (!container) {
         return;
@@ -4838,7 +4568,6 @@ function renderPersonalBests(container, personalBests, title) {
     container.replaceChildren(section);
 }
 
-
 function renderStreak(container, sessions) {
     if (!container) {
         return;
@@ -4866,7 +4595,6 @@ function renderStreak(container, sessions) {
     container.replaceChildren(section);
 }
 
-
 const EXERCISE_PROGRESS_OPTIONS = [
     { id: "jumping-jack", name: "Jumping Jack", secondary: "symmetry", label: "Symmetry" },
     { id: "squat", name: "Squat", secondary: "depth", label: "Depth" },
@@ -4874,7 +4602,6 @@ const EXERCISE_PROGRESS_OPTIONS = [
     { id: "lunge", name: "Lunge", secondary: "stability", label: "Stability" },
     { id: "bicep-curl", name: "Bicep Curl", secondary: "rom", label: "ROM" }
 ];
-
 
 function createExerciseProgressChart(data, label, unit) {
     const points = data
@@ -4984,8 +4711,8 @@ function createExerciseProgressChart(data, label, unit) {
     return svg;
 }
 
-
 function createExerciseMetricSection(data, key, label, unit) {
+    label = ({Quality:"คุณภาพการเคลื่อนไหว",Depth:"ช่วงการย่อตัว",Alignment:"แนวลำตัว",Stability:"ความมั่นคง",Symmetry:"สมดุลซ้าย–ขวา",ROM:"ช่วงการเคลื่อนไหว",Speed:"ความเร็ว"})[label] || label;
     const section = document.createElement("section");
     section.className = "exercise-progress-metric";
 
@@ -5034,13 +4761,11 @@ function createExerciseMetricSection(data, key, label, unit) {
     return section;
 }
 
-
 function getExercisesWithProgress(sessions) {
     return EXERCISE_PROGRESS_OPTIONS.filter(exercise =>
         getExerciseProgress(sessions, exercise.id).length > 0
     );
 }
-
 
 function createExerciseSelector(exercises, selectedId, onChange) {
     const label = document.createElement("label");
@@ -5060,7 +4785,6 @@ function createExerciseSelector(exercises, selectedId, onChange) {
     label.appendChild(select);
     return label;
 }
-
 
 function renderExerciseProgress(
     container,
@@ -5121,8 +4845,8 @@ function renderExerciseProgress(
         summary.className = "exercise-progress-summary";
         if (quality.length) {
             summary.textContent =
-                `${exercise.name} · Best Quality ` +
-                `${Math.max(...quality)}% · Latest Quality ` +
+                `${exercise.name} · คุณภาพสูงสุด ` +
+                `${Math.max(...quality)}% · ล่าสุด ` +
                 `${quality[quality.length - 1]}%`;
         }
         else {
@@ -5149,7 +4873,6 @@ function renderExerciseProgress(
     container.replaceChildren(section);
     return activeExercise;
 }
-
 
 function renderQuickStart() {
     if (!homeQuickExercises) {
@@ -5202,7 +4925,6 @@ function renderQuickStart() {
     });
 }
 
-
 function formatActivityDuration(seconds) {
     if (typeof seconds !== "number" || !Number.isFinite(seconds)) {
         return "--";
@@ -5210,7 +4932,6 @@ function formatActivityDuration(seconds) {
 
     return formatTime(Math.max(0, Math.round(seconds)));
 }
-
 
 function getExerciseDisplayName(exerciseId) {
     const names = {
@@ -5225,7 +4946,6 @@ function getExerciseDisplayName(exerciseId) {
     return names[exerciseId] || exerciseId || "Workout";
 }
 
-
 function getActivityDateKey(date) {
     const value = new Date(date);
 
@@ -5235,7 +4955,6 @@ function getActivityDateKey(date) {
 
     return `${value.getFullYear()}-${value.getMonth()}-${value.getDate()}`;
 }
-
 
 function getActivityDateLabel(date) {
     const value = new Date(date);
@@ -5257,7 +4976,6 @@ function getActivityDateLabel(date) {
     });
 }
 
-
 function sortSessionsByDate(sessions) {
     return [...sessions].sort(
         (left, right) => Date.parse(
@@ -5267,7 +4985,6 @@ function sortSessionsByDate(sessions) {
         )
     );
 }
-
 
 function renderTodayActivity(sessions) {
     const todayKey = getActivityDateKey(new Date());
@@ -5310,7 +5027,6 @@ function renderTodayActivity(sessions) {
         : "--";
     homeTodayDuration.textContent = formatActivityDuration(duration);
 }
-
 
 function renderRecentWorkouts(sessions) {
     const recentSessions = sortSessionsByDate(sessions).slice(0, 3);
@@ -5359,7 +5075,6 @@ function renderRecentWorkouts(sessions) {
     });
 }
 
-
 function createExerciseArtwork(exerciseId) {
     const exerciseAssets = {
         "jumping-jack": "jumping-jack.svg",
@@ -5382,7 +5097,6 @@ function createExerciseArtwork(exerciseId) {
     return image;
 }
 
-
 function renderProgressPage() {
     const sessions = sortSessionsByDate(
         getCompletedWorkouts(getSessions())
@@ -5390,6 +5104,7 @@ function renderProgressPage() {
     const list = $("progress-recent-sessions");
 
     renderWeeklyProgress(activityWeeklyProgress, sessions);
+    renderMonthlyActivity($("activity-monthly-progress"), sessions);
     renderStreak(activityStreak, sessions);
     renderPersonalBests(
         activityPersonalBests,
@@ -5409,7 +5124,13 @@ function renderProgressPage() {
     if (list) {
         list.replaceChildren();
 
-        sessions.forEach(session => {
+        const filtered = filterHistory(sessions, {
+            exerciseId: $("history-exercise").value,
+            days: Number($("history-period").value)
+        });
+        $("history-count").textContent = `${filtered.length} เซสชัน`;
+        $("history-no-results").hidden = filtered.length > 0 || sessions.length === 0;
+        filtered.forEach(session => {
             const card = document.createElement("article");
             card.className = "history-card";
             const artwork = createExerciseArtwork(session.exerciseId);
@@ -5440,15 +5161,11 @@ function renderProgressPage() {
             }
             card.appendChild(text);
 
-            if (isValidMovementVisual(
-                session.movementVisual,
-                session.exerciseId,
-                session.repetitions
-            )) {
+            {
                 const link = document.createElement("button");
                 link.className = "history-report-link";
                 link.type = "button";
-                link.textContent = "ดูการเคลื่อนไหว →";
+                link.textContent = "ดูรายละเอียด →";
                 link.addEventListener("click", () =>
                     openMovementReport(session.id)
                 );
@@ -5464,20 +5181,10 @@ function renderProgressPage() {
     }
 }
 
-
 function openMovementReport(sessionId) {
     const session = getSessionById(sessionId);
 
-    if (
-        !session ||
-        !isValidMovementVisual(
-            session.movementVisual,
-            session.exerciseId,
-            session.repetitions
-        )
-    ) {
-        return;
-    }
+    if (!session) return;
 
     if (reportTitle) {
         reportTitle.textContent = getExerciseDisplayName(session.exerciseId);
@@ -5510,9 +5217,10 @@ function openMovementReport(sessionId) {
         session.exerciseId,
         session.movementMetrics
     );
+    $("report-duration").textContent = formatTime(Math.floor(session.duration));
+    $("report-no-visual").hidden = isValidMovementVisual(session.movementVisual, session.exerciseId, session.repetitions);
     showScreen(movementReportScreen);
 }
-
 
 function renderProfilePage() {
     const sessions = sortSessionsByDate(
@@ -5616,7 +5324,6 @@ function renderProfilePage() {
     }
 }
 
-
 function renderMovementMetrics(container, exerciseId, metrics) {
     if (!container) {
         return;
@@ -5661,7 +5368,6 @@ function renderMovementMetrics(container, exerciseId, metrics) {
     container.hidden = container.childElementCount === 0;
 }
 
-
 function renderMovementResult(session) {
     const report = $("result-movement-report");
     const visual = session?.movementVisual;
@@ -5692,7 +5398,6 @@ function renderMovementResult(session) {
     );
 }
 
-
 /* =========================================================
    RESULT
 ========================================================= */
@@ -5700,6 +5405,7 @@ function renderMovementResult(session) {
 function generateResult(
     duration
 ) {
+    const resultRenderStarted = performance.now();
 
     if (remoteAICoach) {
         remoteAICoach.hidden = true;
@@ -5735,7 +5441,6 @@ function generateResult(
             :
 
             0;
-
 
     const accuracy =
 
@@ -5794,10 +5499,7 @@ function generateResult(
         currentResultSession = session;
         sessionSaved = saveSession(session);
 
-        if (sessionSaved) {
-            updateHomeProgress();
-        }
-        else {
+        if (!sessionSaved) {
             const warning = $("session-save-warning");
             if (warning) {
                 warning.hidden = false;
@@ -5808,14 +5510,11 @@ function generateResult(
     renderMovementResult(currentResultSession);
     renderResultDailyGoal();
 
-
     const consistency =
         calculateConsistency();
 
-
     const averageRepTime =
         calculateAverageRepTime();
-
 
     if (resultReps) {
 
@@ -5824,14 +5523,12 @@ function generateResult(
 
     }
 
-
     if (resultQuality) {
 
         resultQuality.textContent =
-            `${quality}%`;
+            exerciseState.qualityScores.length ? `${quality}%` : "--";
 
     }
-
 
     if (resultQualityBar) {
 
@@ -5840,14 +5537,12 @@ function generateResult(
 
     }
 
-
     if (resultAccuracy) {
 
         resultAccuracy.textContent =
-            `${accuracy}%`;
+            exerciseState.attempts > 0 ? `${accuracy}%` : "--";
 
     }
-
 
     if (resultAccuracyBar) {
 
@@ -5855,7 +5550,6 @@ function generateResult(
             `${accuracy}%`;
 
     }
-
 
     if (resultTime) {
 
@@ -5865,7 +5559,6 @@ function generateResult(
             );
 
     }
-
 
     generateAIRecommendation(
 
@@ -5887,13 +5580,10 @@ function generateResult(
             repetitions: exerciseState.repetitions,
             quality,
             accuracy,
-            metrics: {
-                ...movementMetrics,
-                accuracy,
-                armROM: currentMovementMetrics.armROM,
-                legROM: currentMovementMetrics.legROM,
-                symmetry: currentMovementMetrics.symmetry
-            },
+            metrics: createCoachingSession({
+                exerciseId: activeExerciseId,
+                movementMetrics
+            }).movementMetrics,
             feedback: [
                 aiInsight?.textContent,
                 aiRecommendation?.textContent
@@ -5901,55 +5591,48 @@ function generateResult(
         }, coachRequestId);
     }
 
-
     console.log(
         "========== MOVEWISE AI =========="
     );
-
 
     console.log(
         "Reps:",
         exerciseState.repetitions
     );
 
-
     console.log(
         "Accuracy:",
         accuracy
     );
-
 
     console.log(
         "Quality:",
         quality
     );
 
-
     console.log(
         "Consistency:",
         consistency
     );
-
 
     console.log(
         "Average Rep:",
         averageRepTime
     );
 
-
     console.log(
         "Rep Records:",
         exerciseState.repRecords
     );
-
 
     console.log(
         "Movement Metrics:",
         exerciseState.repMovementMetrics
     );
 
-}
+    if (new URLSearchParams(location.search).has("debugPerformance")) resultScreen.dataset.renderMs = String(Math.round(performance.now() - resultRenderStarted));
 
+}
 
 async function requestRemoteAICoaching(
     payload,
@@ -5995,7 +5678,6 @@ async function requestRemoteAICoaching(
     remoteAICoach.hidden = false;
 }
 
-
 /* =========================================================
    AI RECOMMENDATION
 ========================================================= */
@@ -6030,18 +5712,15 @@ function generateAIRecommendation(
         return;
     }
 
-    const currentSession = {
-        id: "current-result",
+    const currentSession = createCoachingSession({
         exerciseId: activeExerciseId,
-        quality,
-        accuracy,
-        symmetry: currentMovementMetrics.symmetry,
-        armROM: currentMovementMetrics.armROM,
-        legROM: currentMovementMetrics.legROM,
-        consistency
-    };
-    const history =
-        getSessions().slice(0, -1);
+        repetitions: exerciseState.repetitions,
+        quality, accuracy, consistency,
+        movementMetrics: summarizeMovementMetrics(activeExerciseId, movementMetricRecords)
+    });
+    const history = getSessions().filter(session =>
+        session.exerciseId === activeExerciseId && session.id !== currentResultSession?.id
+    );
     const recommendation =
         generateRecommendation(
             currentSession,
@@ -6049,7 +5728,7 @@ function generateAIRecommendation(
         );
 
     aiInsightTitle.textContent =
-        recommendation.priority || "AI Movement Insight";
+        recommendation.focusAreas[0]?.title || "สรุปการเคลื่อนไหว";
     aiInsight.textContent =
         recommendation.summary;
     const strength = recommendation.strengths[0];
@@ -6062,147 +5741,14 @@ function generateAIRecommendation(
     if (improvement) {
         aiInsightImprovement.textContent =
             `ควรพัฒนา: ${improvement}`;
-        aiInsightImprovement.hidden = false;
+        aiInsightImprovement.hidden = improvement === recommendation.summary;
     }
     aiRecommendation.textContent =
         recommendation.recommendations.length
             ? recommendation.recommendations[0].message
             : "ฝึกต่อโดยเน้น Range of Motion และความสม่ำเสมอของการเคลื่อนไหว";
 
-    return;
-
-    if (!exerciseState.repetitions) {
-
-        aiInsightTitle.textContent =
-            "ยังมีข้อมูลไม่เพียงพอ";
-
-
-        aiInsight.textContent =
-            "ลองทำ Jumping Jack อย่างน้อย 1 ครั้ง เพื่อให้ AI วิเคราะห์การเคลื่อนไหว";
-
-
-        aiRecommendation.textContent =
-            "เริ่มจากทำท่าช้า ๆ และยืนให้เห็นร่างกายเต็มตัว";
-
-        return;
-
-    }
-
-
-    if (
-        currentMovementMetrics.symmetry < 85
-    ) {
-
-        aiInsightTitle.textContent =
-            "การเคลื่อนไหวซ้าย–ขวายังไม่สมมาตร";
-
-
-        aiInsight.textContent =
-            `AI พบ Body Symmetry ${currentMovementMetrics.symmetry}%`;
-
-
-        aiRecommendation.textContent =
-            "พยายามให้แขนและขาทั้งสองข้างเคลื่อนไหวพร้อมกันและอยู่ในช่วงใกล้เคียงกัน";
-
-        return;
-
-    }
-
-
-    if (
-        currentMovementMetrics.armROM < 80
-    ) {
-
-        aiInsightTitle.textContent =
-            "ช่วงการเคลื่อนไหวของแขนยังไม่เต็ม";
-
-
-        aiInsight.textContent =
-            `Arm ROM ล่าสุด ${currentMovementMetrics.armROM}%`;
-
-
-        aiRecommendation.textContent =
-            "ลองกางแขนให้สูงและเต็มช่วงมากขึ้น โดยไม่ต้องเร่งความเร็ว";
-
-        return;
-
-    }
-
-
-    if (
-        currentMovementMetrics.legROM < 80
-    ) {
-
-        aiInsightTitle.textContent =
-            "ช่วงการกางขายังไม่เต็ม";
-
-
-        aiInsight.textContent =
-            `Leg ROM ล่าสุด ${currentMovementMetrics.legROM}%`;
-
-
-        aiRecommendation.textContent =
-            "ลองกางขาออกให้กว้างขึ้นเล็กน้อย แล้วกลับสู่ท่าเริ่มต้นอย่างควบคุม";
-
-        return;
-
-    }
-
-
-    if (
-        consistency < 85
-    ) {
-
-        aiInsightTitle.textContent =
-            "ท่าดี แต่จังหวะยังไม่สม่ำเสมอ";
-
-
-        aiInsight.textContent =
-            `Movement Quality ${quality}% · Consistency ${consistency}%`;
-
-
-        aiRecommendation.textContent =
-            "ลดความเร็วลงเล็กน้อย และรักษาจังหวะการกาง–หุบให้ใกล้เคียงกันทุก Rep";
-
-        return;
-
-    }
-
-
-    if (
-        quality >= 90 &&
-        accuracy >= 90
-    ) {
-
-        aiInsightTitle.textContent =
-            "การเคลื่อนไหวของคุณอยู่ในระดับดีมาก";
-
-
-        aiInsight.textContent =
-            `ทำได้ ${exerciseState.repetitions} Reps · Quality ${quality}% · Accuracy ${accuracy}%`;
-
-
-        aiRecommendation.textContent =
-            "สามารถเพิ่มจำนวนครั้งหรือเพิ่มอีก 1 เซ็ตได้ โดยพยายามรักษา ROM และ Symmetry ให้ใกล้เคียงเดิม";
-
-        return;
-
-    }
-
-
-    aiInsightTitle.textContent =
-        "การเคลื่อนไหวอยู่ในระดับดี";
-
-
-    aiInsight.textContent =
-        `ทำได้ ${exerciseState.repetitions} Reps · Quality ${quality}% · Accuracy ${accuracy}%`;
-
-
-    aiRecommendation.textContent =
-        "ฝึกต่อโดยเน้น Range of Motion และความสม่ำเสมอของการเคลื่อนไหว";
-
 }
-
 
 /* =========================================================
    BUTTONS
@@ -6219,7 +5765,6 @@ startButton?.addEventListener(
     }
 
 );
-
 
 finishButton?.addEventListener(
 
@@ -6239,18 +5784,14 @@ finishButton?.addEventListener(
             return;
         }
 
-
         const duration =
             getSessionDuration();
 
-
         stopSession();
-
 
         generateResult(
             duration
         );
-
 
         showScreen(
             resultScreen
@@ -6260,7 +5801,6 @@ finishButton?.addEventListener(
 
 );
 
-
 /* =========================================================
    INITIALIZE
 ========================================================= */
@@ -6268,7 +5808,6 @@ finishButton?.addEventListener(
 showScreen(
     homeScreen
 );
-
 
 resetLiveUI();
 
@@ -6304,8 +5843,8 @@ const battleUI = createBattleUI({
     }
 });
 
-
-initializeAI();
+initializePreferences();
+updateWorkoutControls();
 
 /* =========================================================
    HOME DASHBOARD NAVIGATION
@@ -6322,20 +5861,17 @@ function openJumpingJack() {
 
 }
 
-
 function openSquat() {
     activeExerciseId = "squat";
     updateExerciseLabels();
     enterWorkout();
 }
 
-
 function openLunge() {
     activeExerciseId = "lunge";
     updateExerciseLabels();
     enterWorkout();
 }
-
 
 function openBicepCurl() {
     activeExerciseId = "bicep-curl";
@@ -6348,7 +5884,6 @@ function openSixSeven() {
     updateExerciseLabels();
     enterWorkout();
 }
-
 
 function updateExerciseLabels() {
     const names = {
@@ -6442,7 +5977,6 @@ function updateExerciseLabels() {
     updateLiveMetricLabels();
 }
 
-
 function updateLiveMetricLabels() {
     const metricLabels = {
         "jumping-jack": ["การเคลื่อนไหวแขน", "การเคลื่อนไหวขา", "สมดุลซ้าย–ขวา"],
@@ -6473,7 +6007,6 @@ function updateLiveMetricLabels() {
         liveMetricThreeLabel.textContent = labels[2];
     }
 }
-
 
 function updateLiveMetricValues(metrics) {
     if (!metrics) {
@@ -6509,7 +6042,6 @@ function updateLiveMetricValues(metrics) {
     });
 }
 
-
 function renderExerciseLibrary() {
     if (!exerciseLibrary) {
         return;
@@ -6544,6 +6076,7 @@ function renderExerciseLibrary() {
     getAvailableWorkoutExercises().forEach(exercise => {
         const card = document.createElement("article");
         card.className = "library-card";
+        card.dataset.exerciseId = exercise.id;
         card.dataset.category = exercise.category;
         card.dataset.body = ["jumping-jack", "lunge"].includes(exercise.id)
             ? "full-body"
@@ -6612,12 +6145,19 @@ function renderExerciseLibrary() {
         action.disabled = !exercise.available;
         action.textContent = exercise.available ? "เริ่ม →" : "เตรียมระบบ";
 
+        const guide = document.createElement("details");
+        guide.className = "library-guide";
+        const summary = document.createElement("summary");
+        summary.textContent = "วิธีฝึกและตำแหน่งกล้อง";
+        const guideContent = document.createElement("div");
+        renderExerciseGuide(guideContent, exercise.id);
+        guide.append(summary, guideContent);
+        content.append(guide);
         card.append(image, content, action);
         exerciseLibrary.appendChild(card);
     });
 
 }
-
 
 function setImageWithFallback(image, asset) {
     if (!asset) {
@@ -6638,7 +6178,6 @@ function setImageWithFallback(image, asset) {
     image.src = asset.image || asset.fallback;
 }
 
-
 function formatLiveMetricValue(value, exerciseId, index) {
     if (typeof value !== "number" || !Number.isFinite(value)) {
         return "--";
@@ -6656,27 +6195,10 @@ function formatLiveMetricValue(value, exerciseId, index) {
     return `${Math.round(value)}${angleMetric ? "°" : "%"}`;
 }
 
-
 $("recommended-start")?.addEventListener(
     "click",
     openJumpingJack
 );
-
-
-$("view-all-exercises")?.addEventListener(
-
-    "click",
-
-    () => {
-
-        showScreen(exerciseScreen);
-
-        prepareExercise();
-
-    }
-
-);
-
 
 $("home-profile-button")?.addEventListener(
     "click",
@@ -6706,97 +6228,25 @@ $("desktop-coach-start")?.addEventListener(
     openJumpingJack
 );
 
-
-document
-    .querySelectorAll(".bottom-nav-item, .sidebar-nav-item")
-    .forEach(button => {
-
-        button.addEventListener(
-
-            "click",
-
-            () => {
-
-                document
-                    .querySelectorAll(
-                        ".bottom-nav-item, .sidebar-nav-item"
-                    )
-                    .forEach(item => {
-
-                        item.classList.remove(
-                            "active"
-                        );
-
-                    });
-
-
-                button.classList.add(
-                    "active"
-                );
-
-
-                const nav =
-                    button.dataset.nav;
-
-
-                if (
-                    nav === "home"
-                ) {
-
-                    showScreen(
-                        homeScreen
-                    );
-
-                }
-
-
-if (nav === "analyze") {
-
-    openAnalyzePage();
-
-}
-
-
-                if (
-                    nav === "progress"
-                ) {
-
-                    openProgressPage();
-
-                }
-
-
-                if (
-                    nav === "profile"
-                ) {
-                    openProfilePage();
-                }
-
-                if (nav === "battle") {
-                    showScreen($("battle-screen"));
-                    setActiveNavigation("battle");
-                }
-
-            }
-
-        );
-
-    });
-
-    /* =========================================================
-   ANALYZE / EXERCISE LIBRARY
-========================================================= */
+// One navigation handler avoids repeated page rendering per click.
+document.addEventListener("click", event => {
+    const button = event.target.closest("button[data-nav]");
+    if (!button) return;
+    const routes = { home: () => showScreen(homeScreen), analyze: openAnalyzePage,
+        progress: openProgressPage, profile: openProfilePage, battle: () => battleUI.open() };
+    routes[button.dataset.nav]?.();
+});
+document.querySelector(".sidebar-brand")?.addEventListener("click", event => { event.preventDefault(); showScreen(homeScreen); });
+document.querySelector(".skip-link")?.addEventListener("click", event => { event.preventDefault(); document.querySelector(".screen.active")?.focus(); });
 
 const analyzeScreen =
     $("analyze-screen");
-
 
 function openAnalyzePage() {
 
     showScreen(
         analyzeScreen
     );
-
 
     setActiveNavigation(
         "analyze"
@@ -6809,7 +6259,6 @@ $("activity-start-exercise")?.addEventListener(
     openAnalyzePage
 );
 
-
 if (homeHeroImage) {
     homeHeroImage.loading = "eager";
     homeHeroImage.fetchPriority = "high";
@@ -6820,13 +6269,15 @@ if (homeHeroImage) {
 renderExerciseLibrary();
 updateExerciseLabels();
 
+$("history-exercise").replaceChildren(new Option("ทุกท่า", ""), ...getAvailableWorkoutExercises().map(exercise => new Option(exercise.name, exercise.id)));
+$("history-exercise").addEventListener("change", renderProgressPage);
+$("history-period").addEventListener("change", renderProgressPage);
 
 function openProgressPage() {
     showScreen(progressScreen);
     renderProgressPage();
     setActiveNavigation("progress");
 }
-
 
 function openProfilePage() {
     showScreen(profileScreen);
@@ -6844,9 +6295,7 @@ $("daily-goal-increase")?.addEventListener(
     () => changeDailyGoal(5)
 );
 
-
 $("session-report-back")?.addEventListener("click", openProgressPage);
-
 
 function setActiveNavigation(
     navName
@@ -6872,7 +6321,6 @@ function setActiveNavigation(
         );
 
 }
-
 
 /* ---------------------------------------------------------
    OPEN JUMPING JACK
@@ -6909,7 +6357,6 @@ document
         }
     );
 
-
 document
     .querySelectorAll(
         '[data-exercise="squat"]'
@@ -6925,7 +6372,6 @@ document
             );
         }
     );
-
 
 document
     .querySelectorAll(
@@ -6945,7 +6391,6 @@ document
         }
     );
 
-
 document
     .querySelectorAll(
         '[data-exercise="lunge"]'
@@ -6961,7 +6406,6 @@ document
             );
         }
     );
-
 
 document
     .querySelectorAll(
@@ -6995,7 +6439,6 @@ document
         }
     );
 
-
 /* ---------------------------------------------------------
    BACK HOME
 --------------------------------------------------------- */
@@ -7010,7 +6453,6 @@ $("analyze-back-home")?.addEventListener(
             homeScreen
         );
 
-
         setActiveNavigation(
             "home"
         );
@@ -7018,7 +6460,6 @@ $("analyze-back-home")?.addEventListener(
     }
 
 );
-
 
 /* ---------------------------------------------------------
    FILTER
@@ -7029,182 +6470,44 @@ const exerciseFilters =
         ".exercise-filter"
     );
 
-
-const libraryCards =
-    document.querySelectorAll(
-        ".library-card"
-    );
-
-
-exerciseFilters.forEach(
-
-    filter => {
-
-        filter.addEventListener(
-
-            "click",
-
-            () => {
-
-                exerciseFilters
-                    .forEach(
-                        item => {
-
-                            item.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
-
-
-                filter.classList.add(
-                    "active"
-                );
-
-
-                const category =
-                    filter.dataset.filter;
-
-
-                filterExercises(
-                    category
-                );
-
-            }
-
-        );
-
-    }
-
-);
-
-
-function filterExercises(
-    category
-) {
-
-    let visible =
-        0;
-
-
-    libraryCards.forEach(
-
-        card => {
-
-            const matches =
-                category === "all"
-
-                ||
-
-                (
-                    category === "full-body"
-                        ? card.dataset.body === "full-body"
-                        : card.dataset.category === category
-                );
-
-
-            card.style.display =
-                matches
-                    ? "flex"
-                    : "none";
-
-
-            if (matches) {
-
-                visible++;
-
-            }
-
-        }
-
-    );
-
-
-    updateNoResult(
-        visible
-    );
-
+let selectedCategory = "all";
+const exerciseSearch = $("exercise-search-input");
+const workspaceSearch = $("workspace-search-input");
+function filterExercises(category = selectedCategory) {
+    selectedCategory = category;
+    let visible = 0;
+    exerciseLibrary.querySelectorAll(".library-card").forEach(card => {
+        const exercise = getExerciseById(card.dataset.exerciseId);
+        const matches = exercise && matchesExercise(exercise, exerciseSearch.value, selectedCategory);
+        card.hidden = !matches;
+        if (matches) visible++;
+    });
+    exerciseFilters.forEach(button => {
+        const active = button.dataset.filter === category;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+    });
+    updateNoResult(visible);
 }
-
-
-/* ---------------------------------------------------------
-   SEARCH
---------------------------------------------------------- */
-
-const exerciseSearch =
-    $("exercise-search-input");
-const workspaceSearch =
-    $("workspace-search-input");
-
-workspaceSearch?.addEventListener("focus", openAnalyzePage);
-workspaceSearch?.addEventListener("input", () => {
-    if (!exerciseSearch) {
-        return;
-    }
-    exerciseSearch.value = workspaceSearch.value;
-    exerciseSearch.dispatchEvent(new Event("input", { bubbles: true }));
-    if (!analyzeScreen?.classList.contains("active")) {
+exerciseFilters.forEach(button => button.addEventListener("click", () => filterExercises(button.dataset.filter)));
+exerciseSearch?.addEventListener("input", () => filterExercises());
+workspaceSearch?.addEventListener("focus", () => {
+    if (!analyzeScreen.classList.contains("active")) {
         openAnalyzePage();
+        workspaceSearch.focus({ preventScroll: true });
     }
 });
-
-exerciseSearch?.addEventListener(
-
-    "input",
-
-    () => {
-
-        const keyword =
-            exerciseSearch.value
-                .trim()
-                .toLowerCase();
-
-
-        let visible =
-            0;
-
-
-        libraryCards.forEach(
-
-            card => {
-
-                const name =
-                    card.dataset.name ||
-                    "";
-
-
-                const matches =
-                    name.includes(
-                        keyword
-                    );
-
-
-                card.style.display =
-                    matches
-                        ? "flex"
-                        : "none";
-
-
-                if (matches) {
-
-                    visible++;
-
-                }
-
-            }
-
-        );
-
-
-        updateNoResult(
-            visible
-        );
-
+workspaceSearch?.addEventListener("input", () => {
+    exerciseSearch.value = workspaceSearch.value;
+    filterExercises();
+});
+document.addEventListener("keydown", event => {
+    if (event.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        openAnalyzePage();
+        exerciseSearch.focus();
     }
-
-);
-
+});
 
 function updateNoResult(
     count
@@ -7213,11 +6516,9 @@ function updateNoResult(
     const element =
         $("no-exercise-result");
 
-
     if (!element) {
         return;
     }
-
 
     element.style.display =
 
@@ -7226,78 +6527,6 @@ function updateNoResult(
             : "none";
 
 }
-
-
-/* ---------------------------------------------------------
-   NAVIGATION FROM ANALYZE
---------------------------------------------------------- */
-
-document
-    .querySelectorAll(
-        '#analyze-screen .bottom-nav-item'
-    )
-    .forEach(
-
-        button => {
-
-            button.addEventListener(
-
-                "click",
-
-                () => {
-
-                    const nav =
-                        button.dataset.nav;
-
-
-                    setActiveNavigation(
-                        nav
-                    );
-
-
-                    if (
-                        nav === "home"
-                    ) {
-
-                        showScreen(
-                            homeScreen
-                        );
-
-                    }
-
-
-                    else if (
-                        nav === "analyze"
-                    ) {
-
-                        openAnalyzePage();
-
-                    }
-
-
-                    else if (
-                        nav === "progress"
-                    ) {
-
-                        openProgressPage();
-
-                    }
-
-
-                    else if (
-                        nav === "profile"
-                    ) {
-                        openProfilePage();
-                    }
-
-                }
-
-            );
-
-        }
-
-    );
-
 
 /* ---------------------------------------------------------
    HOME → ANALYZE
@@ -7310,3 +6539,15 @@ $("view-all-exercises")?.addEventListener(
     openAnalyzePage
 
 );
+
+// Sidebar shortcuts use the same registry and workout preparation as the library.
+document.querySelectorAll(".sidebar-exercises .sidebar-nav-item").forEach(button => {
+    const exercise = getAvailableWorkoutExercises().find(item => button.textContent.trim() === item.name);
+    if (exercise) button.addEventListener("click", () => {
+        activeExerciseId = exercise.id;
+        updateExerciseLabels();
+        enterWorkout();
+    });
+});
+
+document.body.dataset.initialized = "true";

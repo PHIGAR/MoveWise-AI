@@ -55,6 +55,7 @@ export function renderMovementVisual(
         !container ||
         !isValidMovementVisual(visual, exerciseId)
     ) {
+        if (container) { container.replaceChildren(); container.hidden = true; }
         return false;
     }
 
@@ -69,7 +70,7 @@ export function renderMovementVisual(
     );
     svg.classList.add("movement-visual-svg");
 
-    for (const rep of visual.reps) {
+    for (const rep of visual.reps.slice(-3)) {
         renderTrail(
             svg,
             [...rep.trail, rep.representativePose],

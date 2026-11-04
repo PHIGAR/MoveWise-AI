@@ -1,0 +1,62 @@
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:96px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.65 var(--font);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default;opacity:.55}
+button,input,select,summary,a{-webkit-tap-highlight-color:transparent}
+button{border:0}
+button,input,select{min-height:44px}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 14px;max-width:100%;min-width:0}
+input::placeholder{color:var(--subtle);opacity:1}
+input[type='checkbox']{min-height:0;width:18px;height:18px;accent-color:var(--primary);flex-shrink:0}
+select{padding-right:32px}
+img{max-width:100%;display:block}
+svg{max-width:100%}
+button svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+a{color:var(--primary)}
+h1,h2,h3,h4,p{margin:0}
+h1,h2,h3,h4{font-weight:650;line-height:1.4;text-wrap:pretty;word-break:normal;overflow-wrap:break-word}
+h2{font-size:clamp(26px,2.5vw,36px)}
+h3{font-size:20px}
+h4{font-size:16px}
+p{color:var(--muted);text-wrap:pretty}
+small{font-size:12px;color:var(--muted)}
+strong{font-weight:650}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.screen:focus{outline:0}
+::selection{background:#2563eb;color:white}
+.screen{display:none;min-width:0}
+.screen.active{display:block}
+.app{max-width:1496px;margin:auto;padding:24px 20px 108px}
+.screen>*{min-width:0}
+.skip-link{position:fixed;left:20px;top:-100px;z-index:1000;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.skip-link:focus{top:12px}
+.start-button,.library-start,.secondary-button,.finish-button,.back-button,.battle-entry-button,.history-report-link,.library-start.disabled{display:inline-flex;justify-content:center;align-items:center;gap:10px;min-height:46px;padding:12px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;line-height:1.45;text-decoration:none;white-space:normal}
+.start-button,.library-start{background:var(--primary);color:var(--on-primary)}
+.secondary-button,.back-button,.battle-entry-button,.history-report-link{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.finish-button{background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger)}
+.text-button{padding:8px 0;min-height:44px;background:transparent;color:var(--primary);font-size:13px;font-weight:600;text-align:right}
+.dashboard-eyebrow,.mi-eyebrow,.library-category{display:block;font-size:10px;line-height:1.5;font-weight:700;letter-spacing:.1em;color:var(--accent);text-transform:uppercase}
+.page-heading,.analyze-header{margin-bottom:28px}
+.page-heading h2,.analyze-header h2{margin:6px 0 8px}
+.page-heading p,.analyze-header p{font-size:14px}
+.product-page,.result-container,.battle-page{max-width:1180px;margin:auto}
+.section-heading,.insight-heading,.dashboard-section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.insight-heading{display:block}
+.insight-heading h3{margin-top:4px}
+.profile-hero,.progress-insight,.report-card,.settings-card,.coach-story,.profile-journey,.profile-setting-section,.activity-empty-state,.battle-lobby,.battle-setup,.battle-result,.battle-local-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+.empty-message,.exercise-progress-empty,.insight-note,.exercise-progress-single{font-size:13px;color:var(--muted);line-height:1.8}
+.activity-empty-state{display:grid;gap:14px;text-align:center;padding:40px 24px}
+.activity-empty-state .secondary-button{justify-self:center}
+.session-save-warning,.battle-message.is-error{background:var(--warning-soft);color:var(--warning);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13px;line-height:1.7}
+progress{accent-color:var(--primary)}
+dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:28px;width:min(460px,calc(100vw - 32px));max-height:85dvh;box-shadow:0 24px 90px #0004}
+dialog::backdrop{background:#061326a8}
+dialog h2{font-size:24px;margin-bottom:12px}
+dialog p{font-size:14px}
+.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+.dialog-actions form{margin:0}
+@media(min-width:960px){.app{margin-left:var(--sidebar);padding:100px 32px 48px;max-width:none}.screen{max-width:1312px;margin:auto}}
+@media(max-width:480px){.app{padding:18px 16px 108px}.profile-hero,.progress-insight,.report-card,.settings-card,.coach-story,.profile-journey,.profile-setting-section,.battle-lobby,.battle-setup,.battle-local-panel{padding:20px}h2{font-size:27px}h3{font-size:19px}}

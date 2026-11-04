@@ -1,3 +1,4 @@
+import { calculateBattleOutcome } from "../core/battle/battleScoring.js";
 import {
     clearBattleCredentials,
     createBattleRoom,
@@ -19,6 +20,7 @@ export function createBattleUI({
     onStart,
     onResult
 }) {
+    const liveHud = document.getElementById("online-battle-hud");
     const message = document.getElementById("battle-message");
     const setup = document.querySelector(".battle-setup");
     const lobby = document.getElementById("battle-lobby");
@@ -38,16 +40,27 @@ export function createBattleUI({
     let activeStarted = false;
     let resultShown = false;
     let statusTimer = null;
+    let actionPending = false;
+    let connectionError = "";
 
     function setMessage(text, isError = false) {
+        connectionError = isError ? text : "";
         if (!message) return;
         message.textContent = text;
         message.classList.toggle("is-error", isError);
         message.hidden = !text;
+        if (isError && liveHud && !liveHud.hidden) document.getElementById("online-match-status").textContent = text;
     }
 
     function showBattle() {
         showScreen(screen);
+        const saved = getSavedBattleCredentials();
+        if (saved && !credentials) {
+            runAction(async () => {
+                try { connect(saved, await getBattleSnapshot(saved)); }
+                catch (error) { clearBattleCredentials(); throw error; }
+            });
+        }
     }
 
     function connect(nextCredentials, initialSnapshot) {
@@ -79,12 +92,14 @@ export function createBattleUI({
             statusElement.textContent = statusText(state);
         }
         clearInterval(statusTimer);
-        if (state.status === "countdown") {
-            statusTimer = setInterval(() => {
-                if (statusElement) {
-                    statusElement.textContent = statusText(state);
-                }
-            }, 200);
+        if (liveHud) liveHud.hidden = state.status !== "active";
+        if (["countdown", "active"].includes(state.status)) {
+            const tick = () => {
+                if (statusElement) statusElement.textContent = statusText(state);
+                if (state.status === "active") renderLiveMatch(state);
+            };
+            tick();
+            statusTimer = setInterval(tick, 250);
         }
         setMessage("");
         if (state.status === "active" && !activeStarted) {
@@ -99,6 +114,21 @@ export function createBattleUI({
         }
     }
 
+    function renderLiveMatch(state) {
+        if (!liveHud) return;
+        const own = state.players.find(player => player.id === credentials?.playerId);
+        const other = state.players.find(player => player.id !== credentials?.playerId);
+        if (!own || !other) return;
+        const outcome = calculateBattleOutcome(own, other);
+        document.getElementById("online-own-score").textContent = `${outcome.playerScore} คะแนน`;
+        document.getElementById("online-other-score").textContent = `${outcome.opponentScore} คะแนน`;
+        document.getElementById("online-own-reps").textContent = `${own.repetitions} ครั้ง`;
+        document.getElementById("online-other-reps").textContent = `${other.repetitions} ครั้ง`;
+        const seconds = Math.max(0, Math.ceil((state.startedAt + state.durationSeconds * 1000 - Date.now()) / 1000));
+        document.getElementById("online-match-timer").textContent = `${String(Math.floor(seconds / 60)).padStart(2,"0")}:${String(seconds % 60).padStart(2,"0")}`;
+        document.getElementById("online-match-status").textContent = connectionError || (other.connected ? "กำลังแข่งขัน · คะแนนสด" : "รอคู่แข่งเชื่อมต่อใหม่");
+    }
+
     function renderPlayers(state) {
         if (!playersElement) return;
         playersElement.replaceChildren(...state.players.map((player, index) => {
@@ -109,7 +139,9 @@ export function createBattleUI({
                 ? "คุณ"
                 : `ผู้เล่น ${index + 1}`;
             const detail = document.createElement("span");
-            detail.textContent = player.connected
+            detail.textContent = state.status === "active"
+                ? `${player.repetitions ?? 0} ครั้ง · ${player.connected ? "เชื่อมต่อแล้ว" : "กำลังเชื่อมต่อใหม่"}`
+                : player.connected
                 ? player.ready ? "พร้อมแล้ว" : "เชื่อมต่อแล้ว"
                 : "กำลังเชื่อมต่อใหม่";
             item.append(name, detail);
@@ -185,14 +217,24 @@ export function createBattleUI({
     }
 
     async function runAction(action) {
+        if (actionPending) return;
+        actionPending = true;
+        [createButton, joinButton, readyButton].forEach(button => { if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); } });
         try {
             setMessage("");
             await action();
         }
         catch (error) {
-            setMessage(error.message, true);
+            setMessage(error.name === "TimeoutError" ? "เซิร์ฟเวอร์ตอบช้า โปรดลองอีกครั้ง" : error.message, true);
+        } finally {
+            actionPending = false;
+            [createButton, joinButton, readyButton].forEach(button => { if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
+            if (currentState) renderExercises(currentState);
         }
     }
+    joinInput?.addEventListener("keydown", event => {
+        if (event.key === "Enter") joinButton.click();
+    });
 
     createButton?.addEventListener("click", () => runAction(async () => {
         const result = await createBattleRoom();
@@ -216,21 +258,16 @@ export function createBattleUI({
         document.getElementById("home-screen")
     ));
 
-    document.getElementById("home-battle-button")?.addEventListener(
-        "click",
-        () => {
-            showBattle();
-            const saved = getSavedBattleCredentials();
-            if (saved && !credentials) {
-                runAction(async () => {
-                    const state = await getBattleSnapshot(saved);
-                    connect(saved, state);
-                });
-            }
-        }
-    );
+    document.getElementById("home-battle-button")?.addEventListener("click", showBattle);
+    document.getElementById("battle-reconnect")?.addEventListener("click", () => runAction(async () => {
+        const saved = credentials ?? getSavedBattleCredentials();
+        if (!saved) throw new Error("ยังไม่มีห้อง โปรดสร้างหรือเข้าร่วมห้องก่อน");
+        try { connect(saved, await getBattleSnapshot(saved)); }
+        catch (error) { clearBattleCredentials(); credentials = null; throw error; }
+    }));
 
     return {
+        open: showBattle,
         reportMetrics(metrics) {
             if (!credentials || currentState?.status !== "active") return;
             return submitBattleMetrics(credentials, metrics);

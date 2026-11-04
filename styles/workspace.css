@@ -1,0 +1,46 @@
+/* Shell: normal document flow with an explicit top-bar offset. */
+.desktop-sidebar,.desktop-workspace-bar{display:none}
+.header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+.brand,.sidebar-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand-mark{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;background:#2563eb;color:white;border-radius:12px;font-size:23px;font-weight:750;letter-spacing:-2px}
+.brand h1{font-size:23px;letter-spacing:-1px;line-height:1.2}
+.brand h1 span,.sidebar-brand strong span{color:var(--accent)}
+.brand p{font-size:10px}
+.profile-button,.workspace-profile{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--surface);color:var(--ink)}
+.bottom-navigation{position:fixed;z-index:80;inset:auto 0 0;display:flex;justify-content:center;gap:6px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -8px 25px #10203305}
+.bottom-nav-brand{display:none}
+.bottom-nav-item{display:flex;flex:1;max-width:160px;min-height:54px;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:5px 10px;background:transparent;color:var(--muted);border-radius:12px}
+.bottom-nav-item .nav-icon{display:flex}
+.bottom-nav-item small{font-size:10px;color:inherit}
+.bottom-nav-item.active{background:var(--accent-soft);color:var(--primary)}
+@media(min-width:960px){
+ .desktop-sidebar{display:flex;position:fixed;z-index:90;inset:0 auto 0 0;width:var(--sidebar);flex-direction:column;gap:0;padding:28px 16px;background:var(--surface);border-right:1px solid var(--line);overflow-y:auto}
+ .sidebar-brand{margin:0 6px 36px}
+ .sidebar-brand strong{font-size:23px;line-height:1.2;letter-spacing:-1px}
+ .sidebar-brand small{display:block;font-size:8px;letter-spacing:.1em;margin-top:4px;color:var(--muted)}
+ .sidebar-label{margin:0 12px 12px;color:var(--subtle);font-size:10px;letter-spacing:.08em}
+ .sidebar-navigation{display:grid;gap:5px}
+ .sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;min-height:46px;color:var(--muted);background:transparent;text-align:left;border-radius:10px;font-size:13px;line-height:1.5}
+ .sidebar-nav-item>span{display:grid;place-items:center;width:20px;height:20px}
+ .sidebar-nav-item.active{background:var(--accent-soft);color:var(--primary);font-weight:650}
+ .sidebar-library-label{margin-top:32px}
+ .sidebar-exercises .sidebar-nav-item{font-size:12px;min-height:40px;padding:8px 12px}
+ .sidebar-privacy{margin:auto 10px 0;padding-top:32px;font-size:11px;color:var(--subtle)}
+ .sidebar-privacy>span{font-size:9px;letter-spacing:.09em;color:var(--accent)}
+ .sidebar-privacy p{margin-top:8px;font-size:11px}
+ .desktop-workspace-bar{display:flex;position:fixed;z-index:70;inset:0 0 auto var(--sidebar);height:72px;align-items:center;justify-content:space-between;gap:24px;padding:12px 32px;background:var(--surface);border-bottom:1px solid var(--line)}
+ .workspace-search{display:flex;align-items:center;gap:10px;width:min(420px,50%);background:var(--surface-soft);border-radius:10px;padding:0 12px}
+ .workspace-search>span{display:flex;flex-shrink:0}
+ .workspace-search svg{width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:1.7}
+ .workspace-search input{background:transparent;border:0;padding:10px 0;flex:1;width:100%;font-size:12px}
+ .workspace-search kbd{border:1px solid var(--line);border-radius:5px;padding:0 6px;color:var(--subtle);font-size:11px}
+ .workspace-user{display:flex;align-items:center;gap:10px}
+ .workspace-avatar{display:grid;place-items:center;width:36px;height:36px;background:var(--accent-soft);color:var(--accent);border-radius:50%;font-size:11px;font-weight:700}
+ .workspace-user strong{display:block;font-size:12px}.workspace-user small{display:block;font-size:10px}
+ .workspace-profile{border:0;background:transparent;width:32px}
+ .bottom-navigation,.header{display:none}
+}
+body.workout-active .desktop-sidebar,body.workout-active .desktop-workspace-bar{display:none}
+body.workout-active .app{margin:0;max-width:none;padding:20px 24px 32px}
+body.workout-active .screen{max-width:1600px}
+@media(max-width:600px){body.workout-active .app{padding:14px 12px 24px}}

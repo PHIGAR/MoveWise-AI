@@ -8,6 +8,7 @@ export async function createBattleRoom() {
 
 
 export async function joinBattleRoom(roomCode) {
+    if (!/^[A-Z0-9]{12}$/i.test(roomCode)) throw new Error("กรอกรหัสห้อง 12 ตัวอักษรให้ครบ");
     return request(
         `${API_PREFIX}/${encodeURIComponent(roomCode)}/join`,
         { method: "POST" }
@@ -65,21 +66,22 @@ export function subscribeToBattle(credentials, onState, onError) {
         }
     });
     events.addEventListener("error", () => {
-        if (events.readyState === EventSource.CLOSED) {
-            onError(new Error("การเชื่อมต่อ Battle หลุด"));
-        }
+        onError(new Error(events.readyState === EventSource.CLOSED
+            ? "การเชื่อมต่อ Battle ปิดแล้ว โปรดกลับเข้าห้องอีกครั้ง"
+            : "การเชื่อมต่อสะดุด กำลังเชื่อมต่อใหม่อัตโนมัติ…"));
     });
     return () => events.close();
 }
 
 
 export function saveBattleCredentials(credentials) {
-    sessionStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+    try { sessionStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials)); } catch { /* In-memory room remains usable. */ }
 }
 
 
 export function getSavedBattleCredentials() {
-    const value = sessionStorage.getItem(CREDENTIALS_KEY);
+    let value;
+    try { value = sessionStorage.getItem(CREDENTIALS_KEY); } catch { return null; }
     if (!value) return null;
     try {
         const credentials = JSON.parse(value);
@@ -90,17 +92,17 @@ export function getSavedBattleCredentials() {
         ) {
             return credentials;
         }
-        sessionStorage.removeItem(CREDENTIALS_KEY);
+        clearBattleCredentials();
     }
     catch {
-        sessionStorage.removeItem(CREDENTIALS_KEY);
+        clearBattleCredentials();
     }
     return null;
 }
 
 
 export function clearBattleCredentials() {
-    sessionStorage.removeItem(CREDENTIALS_KEY);
+    try { sessionStorage.removeItem(CREDENTIALS_KEY); } catch { /* Storage may be blocked. */ }
 }
 
 
@@ -127,6 +129,7 @@ async function request(path, options = {}) {
     const response = await fetch(path, {
         method: options.method ?? "GET",
         headers,
+        signal: AbortSignal.timeout(12000),
         body: options.body === undefined
             ? undefined
             : JSON.stringify(options.body)

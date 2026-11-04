@@ -17,7 +17,9 @@ const contentTypes = {
     ".js": "text/javascript; charset=utf-8",
     ".json": "application/json; charset=utf-8",
     ".svg": "image/svg+xml",
-    ".webp": "image/webp"
+    ".webp": "image/webp",
+    ".jpg": "image/jpeg",
+    ".task": "application/octet-stream"
 };
 
 const coachSchema = {
