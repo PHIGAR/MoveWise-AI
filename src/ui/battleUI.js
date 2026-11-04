@@ -1,3 +1,4 @@
+import { calculateBattleOutcome } from "../core/battle/battleScoring.js";
 import {
     clearBattleCredentials,
     createBattleRoom,
@@ -19,6 +20,7 @@ export function createBattleUI({
     onStart,
     onResult
 }) {
+    const liveHud = document.getElementById("online-battle-hud");
     const message = document.getElementById("battle-message");
     const setup = document.querySelector(".battle-setup");
     const lobby = document.getElementById("battle-lobby");
@@ -39,12 +41,15 @@ export function createBattleUI({
     let resultShown = false;
     let statusTimer = null;
     let actionPending = false;
+    let connectionError = "";
 
     function setMessage(text, isError = false) {
+        connectionError = isError ? text : "";
         if (!message) return;
         message.textContent = text;
         message.classList.toggle("is-error", isError);
         message.hidden = !text;
+        if (isError && liveHud && !liveHud.hidden) document.getElementById("online-match-status").textContent = text;
     }
 
     function showBattle() {
@@ -87,12 +92,14 @@ export function createBattleUI({
             statusElement.textContent = statusText(state);
         }
         clearInterval(statusTimer);
-        if (state.status === "countdown") {
-            statusTimer = setInterval(() => {
-                if (statusElement) {
-                    statusElement.textContent = statusText(state);
-                }
-            }, 200);
+        if (liveHud) liveHud.hidden = state.status !== "active";
+        if (["countdown", "active"].includes(state.status)) {
+            const tick = () => {
+                if (statusElement) statusElement.textContent = statusText(state);
+                if (state.status === "active") renderLiveMatch(state);
+            };
+            tick();
+            statusTimer = setInterval(tick, 250);
         }
         setMessage("");
         if (state.status === "active" && !activeStarted) {
@@ -105,6 +112,21 @@ export function createBattleUI({
             onResult(state);
             clearBattleCredentials();
         }
+    }
+
+    function renderLiveMatch(state) {
+        if (!liveHud) return;
+        const own = state.players.find(player => player.id === credentials?.playerId);
+        const other = state.players.find(player => player.id !== credentials?.playerId);
+        if (!own || !other) return;
+        const outcome = calculateBattleOutcome(own, other);
+        document.getElementById("online-own-score").textContent = `${outcome.playerScore} คะแนน`;
+        document.getElementById("online-other-score").textContent = `${outcome.opponentScore} คะแนน`;
+        document.getElementById("online-own-reps").textContent = `${own.repetitions} ครั้ง`;
+        document.getElementById("online-other-reps").textContent = `${other.repetitions} ครั้ง`;
+        const seconds = Math.max(0, Math.ceil((state.startedAt + state.durationSeconds * 1000 - Date.now()) / 1000));
+        document.getElementById("online-match-timer").textContent = `${String(Math.floor(seconds / 60)).padStart(2,"0")}:${String(seconds % 60).padStart(2,"0")}`;
+        document.getElementById("online-match-status").textContent = connectionError || (other.connected ? "กำลังแข่งขัน · คะแนนสด" : "รอคู่แข่งเชื่อมต่อใหม่");
     }
 
     function renderPlayers(state) {

@@ -7,6 +7,9 @@ import { createMoveWiseServer } from '../server.mjs';
 const camera = `
 let active=false;
 export async function initializeCamera(video) {
+    const scenario=new URLSearchParams(location.search).get('camera');
+    if(scenario==='denied') throw new Error('ไม่ได้รับอนุญาตให้ใช้กล้อง โปรดอนุญาตกล้องในเบราว์เซอร์แล้วลองอีกครั้ง');
+    if(scenario==='missing') throw new Error('ไม่พบกล้อง โปรดเชื่อมต่อกล้องแล้วลองอีกครั้ง');
     active=true;
     let frame=0;
     Object.defineProperties(video, {
@@ -36,7 +39,7 @@ export function detectPose(video,timestamp) {
     }
     pose[11]={x:.38,y:.27,visibility:1}; pose[12]={x:.58,y:.27,visibility:1};
     pose[15]={x:.28,y:.45,visibility:1}; pose[16]={x:.68,y:.45,visibility:1};
-    return {landmarks:Array.from({length:count},()=>pose)};
+    return {landmarks:Array.from({length:count},(_,index)=>count===1?pose:pose.map(point=>({...point,x:point.x*.55+(index===0?.05:.5)})))};
 }
 `;
 const app = createMoveWiseServer({apiKey:''});

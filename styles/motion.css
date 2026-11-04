@@ -1,0 +1,13 @@
+/* Only opacity and transforms animate during camera analysis. */
+.screen.active{animation:mw-enter var(--normal) var(--ease) backwards}
+@keyframes mw-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes mw-spin{to{transform:rotate(360deg)}}
+@keyframes mw-success{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.result-header{animation:mw-success 400ms var(--ease) both}
+button,a,summary{transition:background-color var(--fast) ease,color var(--fast) ease,border-color var(--fast) ease,transform var(--fast) var(--ease)}
+@media(hover:hover){.start-button:hover,.library-start:hover{background:var(--primary-hover)}.secondary-button:hover,.back-button:hover,.sidebar-nav-item:hover,.quick-exercise-card:hover{background:var(--surface-hover)}.quick-exercise-card:hover{transform:translateY(-2px);border-color:var(--accent)}.text-button:hover{color:var(--accent)}.exercise-filter:hover{border-color:var(--accent)}}
+button:active:not(:disabled){transform:translateY(1px)}
+dialog[open]{animation:mw-enter 200ms var(--ease)}
+.daily-goal-meter>span,.score-progress>div,.result-progress>div{transition:width 280ms var(--ease)}
+.reduce-motion *,.reduce-motion *:before,.reduce-motion *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
