@@ -19,6 +19,7 @@ export async function requestAICoaching(
         headers: {
             "Content-Type": "application/json"
         },
+        signal: AbortSignal.timeout(25000),
         body: JSON.stringify(payload)
     });
 

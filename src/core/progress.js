@@ -123,7 +123,8 @@ export function getQualityTrend(
 
 
 export function getProgressSummary(
-    storage
+    storage,
+    limit = 5
 ) {
     return {
         totalSessions: getTotalSessions(storage),
@@ -132,7 +133,7 @@ export function getProgressSummary(
         averageAccuracy: getAverageAccuracy(storage),
         bestQuality: getBestQuality(storage),
         averageDuration: getAverageDuration(storage),
-        recentSessions: getRecentSessions(storage),
+        recentSessions: getRecentSessions(storage, limit),
         qualityTrend: getQualityTrend(storage)
     };
 }

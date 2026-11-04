@@ -36,11 +36,14 @@
         href="./style.css"
     >
 
+    <link rel="stylesheet" href="./styles/workspace.css">
+    <link rel="stylesheet" href="./styles/product.css">
 </head>
 
 
 <body>
 
+<a class="skip-link" href="#home-screen">ข้ามไปเนื้อหา</a>
 <div class="app">
 
     <aside class="desktop-sidebar" aria-label="เมนูหลัก">
@@ -54,9 +57,7 @@
             <button class="sidebar-nav-item active" data-nav="home" type="button">
                 <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7"></path><path d="M5 9v12h14V9M9 21v-6h6v6"></path></svg></span> หน้าหลัก
             </button>
-            <button class="sidebar-nav-item" data-nav="analyze" type="button">
-                <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m10 8 6 4-6 4V8z"></path></svg></span> บันทึกการฝึก
-            </button>
+
             <button class="sidebar-nav-item" data-nav="analyze" type="button">
                 <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22z"></path><path d="M4 4.5V22M8 6h8M8 10h8"></path></svg></span> คลังท่าออกกำลังกาย
             </button>
@@ -73,28 +74,24 @@
 
         <span class="sidebar-label sidebar-library-label">ออกกำลังกาย</span>
         <nav class="sidebar-navigation sidebar-exercises" aria-label="คลังท่าออกกำลังกาย">
-            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m8 22 2-7-3-3 2-5h6l2 5-3 3 2 7M7 11l-4-3m14 3 4-3M9 9 6 5m9 4 3-4"></path></svg></span> Jumping Jack</button>
-            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m9 8-2 6 2 2 1 6m5-14 2 6-2 2-1 6m-6-8h8"></path></svg></span> Squat</button>
-            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="2"></circle><path d="m7 7 5 3 5-1 3 2m-13-3-3 6m8-4-2 5-5 2m10-8 2 6 4 2"></path></svg></span> Push-up</button>
-            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m10 7-3 5 4 3 1 7m2-15 3 4 3 2m-10-1-5 5-3 1m12-7-4 6 5 3"></path></svg></span> Lunge</button>
-            <button class="sidebar-nav-item" data-nav="analyze" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="M12 6v7m0-4 5-2 2 3m-7 3-4 4-1 5m5-9 4 4 1 5"></path></svg></span> Bicep Curl</button>
+            <button class="sidebar-nav-item" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m8 22 2-7-3-3 2-5h6l2 5-3 3 2 7M7 11l-4-3m14 3 4-3M9 9 6 5m9 4 3-4"></path></svg></span> Jumping Jack</button>
+            <button class="sidebar-nav-item" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m9 8-2 6 2 2 1 6m5-14 2 6-2 2-1 6m-6-8h8"></path></svg></span> Squat</button>
+            <button class="sidebar-nav-item" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="5" r="2"></circle><path d="m7 7 5 3 5-1 3 2m-13-3-3 6m8-4-2 5-5 2m10-8 2 6 4 2"></path></svg></span> Push-up</button>
+            <button class="sidebar-nav-item" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="m10 7-3 5 4 3 1 7m2-15 3 4 3 2m-10-1-5 5-3 1m12-7-4 6 5 3"></path></svg></span> Lunge</button>
+            <button class="sidebar-nav-item" type="button"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"></circle><path d="M12 6v7m0-4 5-2 2 3m-7 3-4 4-1 5m5-9 4 4 1 5"></path></svg></span> Bicep Curl</button>
         </nav>
 
-        <div class="sidebar-upgrade">
-            <strong>MoveWise Pro</strong>
-            <p>ก้าวต่อไปของการเคลื่อนไหวที่ดีกว่า</p>
-            <span>ดูเพิ่มเติม <b aria-hidden="true">→</b></span>
-        </div>
+        <div class="sidebar-privacy"><span>PRIVATE BY DESIGN</span><p>ฝึกบนอุปกรณ์ของคุณ<br>ไม่อัปโหลดวิดีโอจากกล้อง</p></div>
     </aside>
 
     <div class="desktop-workspace-bar">
         <label class="workspace-search">
             <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></span>
             <input type="search" id="workspace-search-input" placeholder="ค้นหาท่าออกกำลังกาย..." aria-label="ค้นหาท่าออกกำลังกาย">
-            <kbd>/</kbd>
+            <kbd aria-hidden="true">/</kbd>
         </label>
         <div class="workspace-user">
-            <button type="button" class="workspace-notification" aria-label="การแจ้งเตือน"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg><i></i></button>
+
             <span class="workspace-avatar" aria-hidden="true">MW</span>
             <span><strong>MoveWise Member</strong><small>Movement journey</small></span>
             <button type="button" class="workspace-profile" id="workspace-profile-button" aria-label="เปิดโปรไฟล์">⌄</button>
@@ -155,11 +152,11 @@
 
         <div class="home-hero-copy">
 
-            <span class="dashboard-eyebrow">สวัสดีครับ</span>
+            <span class="dashboard-eyebrow">YOUR EVERYDAY MOVEMENT</span>
 
-            <h2>พร้อมขยับร่างกายวันนี้ไหม?</h2>
+            <h2>ขยับให้ดีขึ้น<br>ทีละครั้ง</h2>
 
-            <p>ให้ MoveWise AI ช่วยดูแลการเคลื่อนไหวและพัฒนาการของคุณ</p>
+            <p>ฝึกอย่างตั้งใจ พร้อมนับครั้งและคำแนะนำจากการเคลื่อนไหวจริงของคุณ</p>
 
             <button id="recommended-start" class="start-button" type="button">
                 เริ่มออกกำลังกาย <span aria-hidden="true">→</span>
@@ -568,6 +565,8 @@
         </section>
 
         <p id="battle-message" class="battle-message" role="status" hidden></p>
+        <button id="battle-reconnect" type="button" class="secondary-button">เชื่อมต่อห้องเดิมอีกครั้ง</button>
+        <p class="battle-privacy-note">ใช้รหัสห้องเพื่อชวนเพื่อน คะแนนส่งเฉพาะจำนวนครั้งและค่าการฝึก ไม่มีการส่งวิดีโอ ห้องออนไลน์เก็บในหน่วยความจำของเซิร์ฟเวอร์และอาจหมดอายุเมื่อเซิร์ฟเวอร์เริ่มใหม่</p>
 
         <section id="battle-lobby" class="battle-lobby" hidden>
             <div class="battle-room-heading">
@@ -1856,6 +1855,12 @@
 
 
 
+            <section id="exercise-guide" class="exercise-guide"></section>
+            <div class="workout-tools">
+                <button id="pause-workout" type="button" class="secondary-button" hidden>พักชั่วคราว</button>
+                <button id="restart-workout" type="button" class="secondary-button" hidden>เริ่มใหม่</button>
+                <label class="skeleton-control"><input id="skeleton-toggle" type="checkbox" checked> แสดงโครงร่าง</label>
+            </div>
             <!-- START -->
 
             <button
@@ -2065,6 +2070,12 @@
                     เริ่มออกกำลังกาย
                 </button>
             </div>
+            <div class="history-filters">
+                <label>ท่าออกกำลังกาย<select id="history-exercise"></select></label>
+                <label>ช่วงเวลา<select id="history-period"><option value="0">ทั้งหมด</option><option value="7">7 วันที่ผ่านมา</option><option value="30">30 วันที่ผ่านมา</option><option value="90">90 วันที่ผ่านมา</option></select></label>
+                <output id="history-count" aria-live="polite"></output>
+            </div>
+            <p id="history-no-results" class="empty-message" hidden>ไม่พบเซสชันในตัวกรองนี้ ลองเลือกช่วงเวลาหรือท่าอื่น</p>
             <div id="progress-recent-sessions" class="workout-history"></div>
         </section>
     </div>
@@ -2169,6 +2180,14 @@
             <p id="daily-goal-save-status" class="setting-status" role="status" aria-live="polite"></p>
         </section>
 
+        <section class="settings-card product-settings">
+            <span class="dashboard-eyebrow">PREFERENCES</span><h3>ปรับให้เหมาะกับคุณ</h3>
+            <label>ธีม<select id="theme-preference"><option value="system">ตามอุปกรณ์</option><option value="light">สว่าง</option><option value="dark">มืด</option></select></label>
+            <label><input id="motion-preference" type="checkbox"> ลดการเคลื่อนไหว</label>
+            <p>ประวัติและเป้าหมายเก็บไว้ในเบราว์เซอร์นี้ การล้างข้อมูลเบราว์เซอร์อาจลบประวัติของคุณ</p>
+            <p>AI Coach ใช้เฉพาะค่าการฝึกที่คำนวณแล้วเพื่อขอคำแนะนำ ไม่ส่งวิดีโอไปยัง Gemini คำแนะนำนี้ไม่ใช่การวินิจฉัยทางการแพทย์</p>
+            <p id="preferences-status" role="status"></p>
+        </section>
         <section id="profile-exercise-progress" class="exercise-progress-section"></section>
     </div>
 
@@ -2217,6 +2236,8 @@
 <section id="movement-report-screen" class="screen">
     <div class="product-page">
         <button id="session-report-back" class="back-button report-back" type="button">← กลับไปกิจกรรม</button>
+        <p class="report-duration">เวลาฝึก <strong id="report-duration">--</strong></p>
+        <p id="report-no-visual" class="empty-message" hidden>เซสชันนี้ไม่มีภาพการเคลื่อนไหวที่บันทึกไว้ แสดงเฉพาะข้อมูลที่มีจริง</p>
         <header class="page-heading">
             <span class="dashboard-eyebrow">MOVEMENT INTELLIGENCE</span>
             <h2 id="session-report-title">การเคลื่อนไหวของคุณ</h2>
@@ -2443,6 +2464,10 @@
     type="module"
     src="./app.js"
 ></script>
+<dialog id="restart-dialog" class="product-dialog" aria-labelledby="restart-title">
+    <h2 id="restart-title">เริ่มเซสชันใหม่?</h2><p>จำนวนครั้งในเซสชันปัจจุบันจะถูกล้าง หากต้องการบันทึก ให้กลับไปกดจบการฝึก</p>
+    <div class="dialog-actions"><form method="dialog"><button class="secondary-button">ฝึกต่อ</button></form><button id="confirm-restart" class="start-button" type="button">เริ่มใหม่</button></div>
+</dialog>
 </body>
 
 </html>

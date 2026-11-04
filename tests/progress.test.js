@@ -108,7 +108,7 @@ assert.deepEqual(
     [80, 92]
 );
 assert.deepEqual(
-    getProgressSummary(storage),
+    getProgressSummary(storage, 2),
     {
         totalSessions: 3,
         totalRepetitions: 30,

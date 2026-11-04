@@ -1,11 +1,8 @@
-import {
-    PoseLandmarker,
-    FilesetResolver
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
-
+let visionModule;
+let initialization;
 
 const DEFAULT_WASM_PATH =
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm";
 
 const DEFAULT_MODEL_PATH =
     "./public/models/pose_landmarker_lite.task";
@@ -21,10 +18,19 @@ let poseCountTransition = Promise.resolve();
 export async function initializePoseDetector(
     options = {}
 ) {
+    if (poseLandmarker) return poseLandmarker;
+    if (initialization) return initialization;
+    initialization = loadDetector(options).finally(() => { initialization = null; });
+    return initialization;
+}
+
+async function loadDetector(options) {
     detectorStatus = "loading";
     detectorError = null;
 
     try {
+        visionModule ??= options.visionModule ?? await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm");
+        const { FilesetResolver, PoseLandmarker } = visionModule;
         const vision =
             await FilesetResolver.forVisionTasks(
                 options.wasmPath || DEFAULT_WASM_PATH

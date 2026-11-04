@@ -38,6 +38,7 @@ export function createBattleUI({
     let activeStarted = false;
     let resultShown = false;
     let statusTimer = null;
+    let actionPending = false;
 
     function setMessage(text, isError = false) {
         if (!message) return;
@@ -48,6 +49,13 @@ export function createBattleUI({
 
     function showBattle() {
         showScreen(screen);
+        const saved = getSavedBattleCredentials();
+        if (saved && !credentials) {
+            runAction(async () => {
+                try { connect(saved, await getBattleSnapshot(saved)); }
+                catch (error) { clearBattleCredentials(); throw error; }
+            });
+        }
     }
 
     function connect(nextCredentials, initialSnapshot) {
@@ -109,7 +117,9 @@ export function createBattleUI({
                 ? "คุณ"
                 : `ผู้เล่น ${index + 1}`;
             const detail = document.createElement("span");
-            detail.textContent = player.connected
+            detail.textContent = state.status === "active"
+                ? `${player.repetitions ?? 0} ครั้ง · ${player.connected ? "เชื่อมต่อแล้ว" : "กำลังเชื่อมต่อใหม่"}`
+                : player.connected
                 ? player.ready ? "พร้อมแล้ว" : "เชื่อมต่อแล้ว"
                 : "กำลังเชื่อมต่อใหม่";
             item.append(name, detail);
@@ -185,14 +195,24 @@ export function createBattleUI({
     }
 
     async function runAction(action) {
+        if (actionPending) return;
+        actionPending = true;
+        [createButton, joinButton, readyButton].forEach(button => { if (button) { button.disabled = true; button.setAttribute("aria-busy", "true"); } });
         try {
             setMessage("");
             await action();
         }
         catch (error) {
-            setMessage(error.message, true);
+            setMessage(error.name === "TimeoutError" ? "เซิร์ฟเวอร์ตอบช้า โปรดลองอีกครั้ง" : error.message, true);
+        } finally {
+            actionPending = false;
+            [createButton, joinButton, readyButton].forEach(button => { if (button) { button.disabled = false; button.removeAttribute("aria-busy"); } });
+            if (currentState) renderExercises(currentState);
         }
     }
+    joinInput?.addEventListener("keydown", event => {
+        if (event.key === "Enter") joinButton.click();
+    });
 
     createButton?.addEventListener("click", () => runAction(async () => {
         const result = await createBattleRoom();
@@ -216,21 +236,16 @@ export function createBattleUI({
         document.getElementById("home-screen")
     ));
 
-    document.getElementById("home-battle-button")?.addEventListener(
-        "click",
-        () => {
-            showBattle();
-            const saved = getSavedBattleCredentials();
-            if (saved && !credentials) {
-                runAction(async () => {
-                    const state = await getBattleSnapshot(saved);
-                    connect(saved, state);
-                });
-            }
-        }
-    );
+    document.getElementById("home-battle-button")?.addEventListener("click", showBattle);
+    document.getElementById("battle-reconnect")?.addEventListener("click", () => runAction(async () => {
+        const saved = credentials ?? getSavedBattleCredentials();
+        if (!saved) throw new Error("ยังไม่มีห้อง โปรดสร้างหรือเข้าร่วมห้องก่อน");
+        try { connect(saved, await getBattleSnapshot(saved)); }
+        catch (error) { clearBattleCredentials(); credentials = null; throw error; }
+    }));
 
     return {
+        open: showBattle,
         reportMetrics(metrics) {
             if (!credentials || currentState?.status !== "active") return;
             return submitBattleMetrics(credentials, metrics);

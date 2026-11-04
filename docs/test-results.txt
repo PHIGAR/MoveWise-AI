@@ -1,0 +1,106 @@
+
+> test
+> node --test tests/*.test.js
+
+✔ rejects malformed and invalid feedback input (113.1805ms)
+✔ returns service unavailable when the API key is missing (15.9896ms)
+✔ sends localized movement data to a mocked Gemini API (15.8135ms)
+✔ normalizes Gemini JSON wrapped in a markdown code fence (10.5158ms)
+[MoveWise AI Coach] Gemini request failed {
+  httpStatus: 429,
+  code: 429,
+  type: 'RESOURCE_EXHAUSTED',
+  requestId: undefined
+}
+[MoveWise AI Coach] Gemini output did not match the coaching schema
+✔ maps Gemini quota and malformed responses to a handled fallback status (19.5602ms)
+[MoveWise AI Coach] Gemini request failed { timeout: true, code: undefined, type: undefined }
+✔ times out through the same optional fallback response (13.5628ms)
+✔ serves the existing app without exposing environment files (21.7027ms)
+✔ frontend API helper sends the payload and parses coaching (1.3935ms)
+✔ frontend retains its existing feedback when the API request fails (0.8268ms)
+✔ frontend fallback exposes the endpoint HTTP status for local diagnosis (0.8525ms)
+✔ frontend accepts the Gemini coaching schema with improvement arrays (0.5597ms)
+Analysis utility tests passed
+✔ tests\analysis.test.js (687.2658ms)
+✔ Battle state requires matching, ready players and permits reconnection (5.5692ms)
+✔ Battle score handles zero reps, missing metrics, and draws (6.3763ms)
+✔ Battle API authenticates players and returns a server-timed result (363.2322ms)
+✔ expired rooms cannot be rejoined or read (54.8728ms)
+Bicep Curl tests passed
+✔ tests\bicepCurl.test.js (224.5773ms)
+✔ camera denial and missing device errors are actionable (5.0359ms)
+✔ camera closes on playback failure and always requests audio off (0.9474ms)
+✔ late camera permission cannot reopen camera after leaving workout (1.4873ms)
+✔ successful camera session releases tracks and video source on stop (0.9882ms)
+✔ daily goal defaults to 20 and persists a custom goal under its own key (2.0231ms)
+✔ daily goal rejects values outside the allowed positive integer range (0.4438ms)
+✔ missing and malformed local storage values safely use the default (2.487ms)
+✔ daily goal progress counts only completed sessions from the local day (4.2075ms)
+✔ multiple workouts on the same day are summed and progress caps at 100 percent (1.2324ms)
+✔ empty sessions and invalid repetition values produce zero progress (0.2815ms)
+✔ detector loads once for concurrent starts and preserves pose detection/count controls (7.3009ms)
+✔ detector initialization failure is observable and can be retried (3.5238ms)
+Exercise contract tests passed
+✔ tests\exerciseContract.test.js (196.7632ms)
+✔ exercise progress returns an empty array without matching sessions (2.7916ms)
+✔ exercise progress selects only completed sessions for the requested exercise (1.2379ms)
+✔ exercise progress is chronological and exposes absent metrics as null (2.5221ms)
+✔ exercise progress supports each supported exercise metric set (0.7483ms)
+✔ legacy top-level metrics are used only when present and unknown exercises are retained (0.4372ms)
+Exercise registry tests passed
+✔ tests\exerciseRegistry.test.js (220.5698ms)
+Jumping Jack repetition test passed
+✔ tests\jumpingJack.test.js (140.4086ms)
+✔ Local Battle assignment handles zero, one, and two people (5.7844ms)
+✔ Local Battle keeps left/right player assignment stable when detector order changes (1.1577ms)
+✔ Local Battle preserves a player's slot during disappearance and return (1.2197ms)
+✔ Local Battle uses independent exercise analyzers and quality histories (1.5042ms)
+✔ Local Battle countdown, simultaneous start/finish, winner and draw use battle state/scoring (2.2772ms)
+Lunge tests passed
+✔ tests\lunge.test.js (324.7697ms)
+Movement session, legacy data, and retry reset tests passed
+✔ tests\movementSession.test.js (377.1098ms)
+Movement visual and metric tests passed
+✔ tests\movementVisualizer.test.js (141.3391ms)
+✔ personal bests return no invented metrics for empty input (3.4133ms)
+✔ personal bests use historical maxima per exercise (1.0506ms)
+✔ personal bests accept legacy sessions and ignore invalid metrics (0.9997ms)
+✔ search combines Thai/English query and category without exposing unavailable analyzers (4.5382ms)
+✔ history filters use local calendar days, exclude incomplete/future sessions and preserve input (3.1059ms)
+✔ session clock excludes repeated pauses and resets on restart (2.0983ms)
+✔ coaching uses only measured fields for the selected exercise (10.2584ms)
+Progress tests passed
+✔ tests\progress.test.js (245.8272ms)
+Push-up tests passed
+✔ tests\pushUp.test.js (260.4833ms)
+Recommendation tests passed
+✔ tests\recommendation.test.js (166.5365ms)
+✔ battle subscription recovers the same player after a dropped stream (3.6854ms)
+✔ battle client reports transient disconnection while allowing EventSource retry (0.765ms)
+✔ battle remains usable when session storage is blocked and invalid room codes fail before fetch (1.4464ms)
+✔ new styles, modules and model are served while QA fixtures and secrets stay private (130.7945ms)
+Session and storage tests passed
+✔ tests\sessionStorage.test.js (132.6485ms)
+Six Seven analyzer tests passed
+✔ tests\sixSeven.test.js (129.1719ms)
+Squat tests passed
+✔ tests\squat.test.js (845.0145ms)
+✔ streak helpers handle empty and malformed input (3.7907ms)
+✔ multiple workouts on the same local day count once (1.5912ms)
+✔ current and longest streaks count consecutive local dates (4.0043ms)
+✔ current streak continues through yesterday but expires after a gap (0.4376ms)
+✔ longest streak is retained across a broken recent streak (0.4525ms)
+✔ streak date arithmetic crosses month and year boundaries (0.2722ms)
+✔ weekly progress handles empty input and returns the local week (3.2472ms)
+✔ weekly progress counts completed sessions and averages only available metrics (0.8232ms)
+✔ weekly progress supports legacy sessions with optional metrics missing (0.3327ms)
+✔ weekly progress tolerates non-array input and invalid metrics (0.3062ms)
+ℹ tests 72
+ℹ suites 0
+ℹ pass 72
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4352.4659
