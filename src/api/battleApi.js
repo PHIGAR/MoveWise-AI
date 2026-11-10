@@ -2,8 +2,8 @@ const API_PREFIX = "/api/battle/rooms";
 const CREDENTIALS_KEY = "movewise_battle_credentials";
 
 
-export async function createBattleRoom() {
-    return request(API_PREFIX, { method: "POST" });
+export async function createBattleRoom(durationSeconds = 60) {
+    return request(API_PREFIX, { method: "POST", body: { durationSeconds } });
 }
 
 
@@ -37,6 +37,10 @@ export async function setBattleReady(credentials, ready) {
         `${roomPath(credentials)}/ready`,
         { method: "POST", credentials, body: { ready } }
     );
+}
+
+export async function leaveBattleRoom(credentials) {
+    return request(`${roomPath(credentials)}/leave`, { method: 'POST', credentials, body: {} });
 }
 
 

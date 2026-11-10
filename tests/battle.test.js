@@ -150,7 +150,9 @@ test("Battle score handles zero reps, missing metrics, and draws", () => {
 test("Battle API authenticates players and returns a server-timed result", async () => {
     const baseUrl = await startServer({
         countdownSeconds: 0.02,
-        durationSeconds: 0.12,
+        // This is an HTTP/authentication test, not a 120ms throughput benchmark.
+        // Exact countdown/duration boundaries are covered with fake timers separately.
+        durationSeconds: 1,
         disconnectTtlMs: 100,
         roomTtlMs: 10_000,
         resultTtlMs: 10_000

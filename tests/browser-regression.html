@@ -1,0 +1,96 @@
+<!doctype html><meta charset="utf-8"><title>MoveWise synthetic regression suite</title>
+<style>body{font:14px system-ui;margin:20px;display:grid;grid-template-columns:minmax(260px,1fr) 390px;gap:20px;background:#eef5ff;color:#102540}iframe{width:390px;height:844px;border:1px solid #2464bb;background:white}button{padding:12px}pre{white-space:pre-wrap}li{margin:10px 0}</style>
+<main><h1>Synthetic browser regression suite</h1><p>No camera, Gemini key, personal images, or persistent browser storage. Runs the actual app and analyzers with generated landmark fixtures.</p><button id="run">Run regressions</button><ol id="results"></ol><pre id="summary"></pre></main><iframe title="App under test" id="app"></iframe>
+<script type="module">
+const frame = document.querySelector('#app'), results = [];
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+let doc, win;
+async function until(predicate, timeout = 15000) {
+    const deadline = performance.now() + timeout;
+    while (performance.now() < deadline) { if (predicate()) return; await sleep(50); }
+    throw new Error('Timed out waiting for expected app state');
+}
+const el = id => doc.getElementById(id), click = id => el(id).click();
+const stored = () => JSON.parse(win.localStorage.getItem('movewise_sessions') || '[]');
+async function load(query = '') {
+    await new Promise(resolve => { frame.onload = resolve; frame.src = '/?testStorage=1&' + query; });
+    doc = frame.contentDocument; win = frame.contentWindow;
+    await until(() => doc.body.dataset.initialized === 'true');
+}
+async function startSolo({ target = '0', capture = false } = {}) {
+    click('home-squat'); el('workout-reps').value = target; el('capture-skeleton').checked = capture; click('start');
+}
+const active = () => !el('finish-exercise').disabled;
+async function check(name, fn) {
+    const item = document.createElement('li'); item.textContent = name + ' …'; document.querySelector('#results').append(item);
+    try { await fn(); results.push({ name, passed: true }); item.textContent = 'PASS · ' + name; }
+    catch (error) { results.push({ name, passed: false, reason: error.message }); item.textContent = 'FAIL · ' + name + ': ' + error.message; }
+}
+document.querySelector('#run').onclick = async () => {
+    document.querySelector('#run').disabled = true;
+    await check('Solo one-click startup, pause/resume, automatic five-rep completion, opt-in skeleton bounds and deletion', async () => {
+        await load(); await startSolo({ target: '5', capture: true });
+        assert(!active() && el('timer').textContent.trim() === '00:00', 'No timer before readiness');
+        await until(() => active()); await until(() => Number(el('rep').textContent) >= 1);
+        click('pause-workout'); const time = el('timer').textContent, reps = el('rep').textContent;
+        await sleep(1300); assert(el('timer').textContent === time && el('rep').textContent === reps, 'Pause must freeze metrics');
+        assert(el('status').textContent.includes('พัก'), 'Paused status must not become a stale-camera error');
+        click('pause-workout'); await until(() => el('result-screen').classList.contains('active'), 20000);
+        const sessions = stored(); assert(sessions.length === 1 && sessions[0].repetitions === 5, 'Save exactly one target-completed session');
+        assert(sessions[0].movementMetrics.depth === 100 && sessions[0].movementMetrics.kneeAngle === 90, 'Save measured peak metrics');
+        assert(sessions[0].movementVisual.reps.length <= 3, 'Bound skeleton evidence');
+        click('delete-skeletons'); assert(stored()[0].movementVisual === null, 'Delete saved skeletons');
+        assert(!el('result-movement-report').hidden && !el('movement-metrics-result').hidden, 'Measured metrics remain visible without stored skeletons');
+    });
+    await check('Tracking loss cancels countdown and requires renewed stability', async () => {
+        await load('tracking=loss'); await startSolo();
+        await sleep(7500); assert(!active() && el('timer').textContent.trim() === '00:00', 'Tracking loss must delay start');
+        await until(() => active(), 6500); click('cancel-workout'); assert(!doc.body.classList.contains('workout-running'), 'Cancel stops pipeline');
+    });
+    await check('Frozen camera cannot finish a countdown', async () => {
+        await load('camera=frozen'); await startSolo(); await sleep(8000);
+        assert(!active() && el('rep').textContent === '0', 'Frozen frames cannot start or count');
+        click('cancel-workout'); assert(!doc.body.classList.contains('workout-running'), 'Camera cancellation');
+    });
+    await check('Late async inference cannot update a cancelled session', async () => {
+        await load('slow=1'); await startSolo(); await sleep(200); click('cancel-workout'); await sleep(1200);
+        assert(!doc.body.classList.contains('workout-running') && !active() && el('rep').textContent === '0', 'Drop a late frame after cancellation');
+    });
+    await check('Missing required landmarks stay unavailable and never count', async () => {
+        await load('tracking=missing'); await startSolo(); await sleep(2500);
+        assert(!active() && el('rep').textContent === '0' && el('form-score').textContent === '--', 'Do not fake missing metrics');
+    });
+    await check('Camera denial leaves an actionable retry and navigation', async () => {
+        await load('camera=denied'); await startSolo(); await until(() => doc.body.classList.contains('workout-camera-error'));
+        assert(!el('start').disabled && !doc.body.classList.contains('workout-running'), 'Retry available without running camera');
+        click('back-home'); assert(el('home-screen').classList.contains('active'), 'Navigation works after camera error');
+    });
+    await check('Completed zero-rep session saves unavailable metrics as null', async () => {
+        await load('movement=standing'); await startSolo(); await until(() => active()); click('finish-exercise');
+        const session = stored()[0]; assert(session?.repetitions === 0 && session.quality === null && session.accuracy === null, 'Keep null measurements in saved zero-rep session: ' + JSON.stringify(session));
+    });
+    await check('Restart resets counts and re-arms hands-free startup', async () => {
+        await load(); await startSolo(); await until(() => active()); await until(() => Number(el('rep').textContent) > 0);
+        click('restart-workout'); click('confirm-restart'); await sleep(100);
+        assert(el('rep').textContent === '0' && !active(), 'Restart clears count and timer');
+        await until(() => active()); click('cancel-workout'); assert(stored().length === 0, 'Cancelled restarts are not saved');
+    });
+    await check('390px layout has no horizontal overflow and manual controls remain available', async () => {
+        await load(); click('home-squat');
+        assert(doc.documentElement.scrollWidth <= win.innerWidth, 'No mobile horizontal overflow');
+        for (const id of ['start', 'finish-exercise', 'back-home']) assert(el(id).getBoundingClientRect().height >= 44, id + ' touch target');
+        assert(el('timer').getBoundingClientRect().width > 0 && el('rep').getBoundingClientRect().width > 0, 'Rep and timer visible');
+    });
+    await check('Local Battle starts two independent analyzers hands-free and completes at configured duration', async () => {
+        await load(); click('home-battle-button'); el('battle-duration').value = '30'; click('battle-local-button');
+        [...el('battle-local-exercises').children].find(button => button.dataset.exerciseId === 'squat').click(); click('battle-local-continue');
+        await until(() => Number(el('local-battle-player-one-reps').textContent) > 0, 15000);
+        assert(Number(el('local-battle-player-two-reps').textContent) > 0, 'Two players count independently');
+        assert(!el('local-battle-overlay').closest('.camera-card'), 'Scoreboard is outside camera');
+        await until(() => !el('battle-local-final').hidden, 35000);
+        assert(!doc.body.classList.contains('workout-running') && el('battle-local-scoreboard').textContent.includes('REPS'), 'Automatic battle results and camera teardown');
+    });
+    document.querySelector('#summary').textContent = JSON.stringify({ synthetic: true, passed: results.filter(item => item.passed).length, total: results.length, results }, null, 2);
+};
+</script>

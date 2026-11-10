@@ -32,3 +32,18 @@ test('detector initialization failure is observable and can be retried',async()=
     assert.equal(detector.getPoseDetectorStatus().ready,true);
     assert.equal(attempts,2);
 });
+
+test('an explicitly selected GPU delegate falls back to CPU on incompatible devices', async () => {
+    const detector = await import('../src/ai/pose/detector.js?gpu-fallback');
+    const delegates = [];
+    await detector.initializePoseDetector({ delegate: 'GPU', visionModule: {
+        FilesetResolver: { forVisionTasks: async () => ({}) },
+        PoseLandmarker: { createFromOptions: async (_, options) => {
+            delegates.push(options.baseOptions.delegate);
+            if (options.baseOptions.delegate === 'GPU') throw new Error('WebGL unavailable');
+            return {};
+        } }
+    } });
+    assert.deepEqual(delegates, ['GPU', 'CPU']);
+    assert.equal(detector.getPoseDetectorStatus().delegate, 'CPU');
+});

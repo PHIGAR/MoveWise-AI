@@ -1,3 +1,4 @@
+import { createRepEvidence } from "./repEvidence.js";
 import {
     calculateAngle,
     normalizeROM
@@ -50,6 +51,7 @@ export function createSquatAnalyzer(
     };
 
     let exerciseState = createInitialState();
+    const evidence = createRepEvidence();
 
     function analyze(landmarks) {
         const validation = validateLandmarks(
@@ -136,6 +138,7 @@ export function createSquatAnalyzer(
         exerciseState.repStartTimes.push(duration);
 
         const record = {
+            measurementVersion: 2,
             rep: exerciseState.repetitions,
             quality: metrics.quality,
             duration: Number(duration.toFixed(2)),
@@ -161,6 +164,7 @@ export function createSquatAnalyzer(
         };
         let repCompleted = false;
         let record = null;
+        evidence.observe(movement, metrics);
 
         if (!movement?.hasRequiredLandmarks) {
             return {
@@ -229,7 +233,8 @@ export function createSquatAnalyzer(
             };
 
             if (movement.isStanding) {
-                record = completeRep(metrics, timestamp);
+                record = completeRep(evidence.metrics(metrics), timestamp);
+                evidence.reset();
                 repCompleted = record !== null;
                 exerciseState.state = "STANDING";
                 feedback = {
@@ -256,10 +261,12 @@ export function createSquatAnalyzer(
     }
 
     function reset() {
+        evidence.reset();
         exerciseState = createInitialState();
     }
 
     function resetMovementState() {
+        evidence.reset();
         exerciseState.state = "STANDING";
         exerciseState.currentRepStartTime = null;
     }
