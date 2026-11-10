@@ -72,7 +72,7 @@ test('new styles, modules and model are served while QA fixtures and secrets sta
             assert.equal(result.status,200,path);
             assert.equal(result.headers.get('x-content-type-options'),'nosniff');
         }
-        for(const path of ['/tests/browser-server.mjs','/.env','/package.json','/.git/config']) {
+        for(const path of ['/tests/browser-server.mjs','/tests/browser-regression.html','/qa','/_qa/real-detector.js','/.env','/package.json','/.git/config']) {
             assert.equal((await fetch(base+path)).status,404,path);
         }
     } finally { await new Promise(resolve=>server.close(resolve)); }

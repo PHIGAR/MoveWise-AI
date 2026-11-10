@@ -354,6 +354,7 @@
             <p>ท้าทายเพื่อนด้วยจำนวนครั้งและผลวิเคราะห์จากการฝึกจริง</p>
         </section>
 
+        <label class="battle-duration-label">ระยะเวลาแข่งขัน <select id="battle-duration"><option value="30">30 วินาที</option><option value="60" selected>1 นาที</option><option value="180">3 นาที</option><option value="300">5 นาที</option></select><small>ผู้สร้างห้องกำหนดเวลาเดียวกันให้ทั้งสองคน</small></label>
         <section class="battle-setup" aria-label="สร้างหรือเข้าร่วม Battle">
             <button id="battle-create" class="start-button" type="button">
                 สร้างห้อง
@@ -394,6 +395,7 @@
             <button id="battle-ready" class="start-button" type="button" hidden>
                 พร้อมเริ่ม
             </button>
+            <button id="battle-leave" class="secondary-button" type="button">ออกจากห้อง / ยกเลิก</button>
         </section>
 
         <section id="battle-result" class="battle-result" aria-live="polite" hidden>
@@ -1094,10 +1096,20 @@
             </div>
 
             <section id="exercise-guide" class="exercise-guide"></section>
+            <p id="workout-preparation" class="workout-preparation" role="status" aria-live="polite"></p>
+            <fieldset id="workout-targets" class="workout-targets">
+                <legend>จบการฝึกอัตโนมัติ</legend>
+                <label>เวลา <select id="workout-duration"><option value="0">ไม่จำกัด</option><option value="30">30 วินาที</option><option value="60">1 นาที</option><option value="180">3 นาที</option><option value="300">5 นาที</option></select></label>
+                <label>จำนวนครั้ง <select id="workout-reps"><option value="0">ไม่จำกัด</option><option value="5">5 ครั้ง</option><option value="10">10 ครั้ง</option><option value="20">20 ครั้ง</option><option value="50">50 ครั้ง</option></select></label>
+                <small>จบเมื่อถึงเป้าหมายใดเป้าหมายหนึ่ง</small>
+            </fieldset>
+            <details id="pipeline-diagnostics"><summary>ประสิทธิภาพการตรวจจับ</summary><output id="pipeline-values">รอภาพจากกล้อง</output><p>เวลาเฉพาะในแอป ไม่รวม latency ของเซนเซอร์กล้อง · FPS ไม่ใช่ความแม่นยำ</p></details>
             <div class="workout-controls">
             <div class="workout-tools">
                 <button id="pause-workout" type="button" class="secondary-button" hidden>พักชั่วคราว</button>
                 <button id="restart-workout" type="button" class="secondary-button" hidden>เริ่มใหม่</button>
+                <button id="cancel-workout" class="secondary-button" type="button" hidden>ยกเลิก / ออกจากการฝึก</button>
+                <label class="skeleton-control"><input id="capture-skeleton" type="checkbox"> เก็บโครงร่าง 1–3 ครั้งบนอุปกรณ์</label>
                 <label class="skeleton-control"><input id="skeleton-toggle" type="checkbox" checked> แสดงโครงร่าง</label>
             </div>
             <!-- START -->
@@ -1417,6 +1429,7 @@
             <p>ประวัติและเป้าหมายเก็บไว้ในเบราว์เซอร์นี้ การล้างข้อมูลเบราว์เซอร์อาจลบประวัติของคุณ</p>
             <p>AI Coach ใช้เฉพาะค่าการฝึกที่คำนวณแล้วเพื่อขอคำแนะนำ ไม่ส่งวิดีโอไปยัง Gemini คำแนะนำนี้ไม่ใช่การวินิจฉัยทางการแพทย์</p>
             <p id="preferences-status" role="status"></p>
+            <button id="profile-delete-skeletons" type="button" class="secondary-button">ลบโครงร่างที่บันทึกไว้ทั้งหมด</button><p id="profile-delete-skeleton-status" role="status"></p>
         </section></div></div>
 
 
@@ -1598,9 +1611,14 @@
 
         </div>
 
+        <section class="session-evidence"><p id="snapshot-explanation"></p>
+        <p id="result-issues" role="status"></p>
+        <p class="measurement-note">คะแนนเป็นเกณฑ์จากท่าทางที่กล้องตรวจพบ ไม่ใช่ผลประเมินทางการแพทย์ · ความสำเร็จของรอบ = รอบที่นับได้ / รอบที่เริ่ม</p>
+        <button id="delete-skeletons" type="button" class="secondary-button">ลบโครงร่างที่บันทึกไว้ทั้งหมด</button><p id="delete-skeleton-status" role="status"></p></section>
         <p id="session-save-warning" class="session-save-warning" role="status" hidden>
             เซสชันนี้ยังไม่ถูกบันทึกลงในประวัติ กรุณาตรวจสอบพื้นที่จัดเก็บของเบราว์เซอร์
         </p>
+        <button id="retry-save-session" type="button" class="secondary-button" hidden>ลองบันทึกอีกครั้ง</button>
 
         <section id="result-daily-goal" class="result-daily-goal"></section>
 
@@ -1608,7 +1626,7 @@
             <div class="report-card-heading">
                 <span class="dashboard-eyebrow">MOVEMENT INTELLIGENCE</span>
                 <h3>การเคลื่อนไหวของคุณ</h3>
-                <p>โครงร่างครั้งล่าสุดและเส้นทางจาก 3 ครั้งล่าสุดที่ทำสำเร็จ</p>
+                <p>โครงร่างและเส้นทางข้อต่อจาก 3 รอบแรกที่นับสำเร็จ เมื่อเลือกเก็บโครงร่าง</p>
             </div>
             <div id="movement-visual-result" class="movement-visual" hidden></div>
             <div id="movement-metrics-result" class="movement-metrics-grid" hidden></div>

@@ -1,3 +1,4 @@
+import { createRepEvidence } from "./repEvidence.js";
 import {
     calculateAngle,
     normalizeROM
@@ -77,6 +78,7 @@ export function createPushUpAnalyzer(config = {}) {
     };
 
     let exerciseState = createInitialState();
+    const evidence = createRepEvidence();
 
     function analyze(landmarks) {
         if (!hasRequiredLandmarks(landmarks)) {
@@ -156,7 +158,7 @@ export function createPushUpAnalyzer(config = {}) {
         });
         const consistency = calculateConsistency();
         const quality = Math.round(
-            baseQuality.score * 0.85 + consistency * 0.15
+            consistency === null ? baseQuality.score : baseQuality.score * 0.85 + consistency * 0.15
         );
 
         return {
@@ -181,7 +183,7 @@ export function createPushUpAnalyzer(config = {}) {
 
     function calculateConsistency() {
         if (exerciseState.repStartTimes.length < 2) {
-            return 100;
+            return null;
         }
 
         const average = exerciseState.repStartTimes.reduce(
@@ -225,6 +227,7 @@ export function createPushUpAnalyzer(config = {}) {
         exerciseState.repStartTimes.push(duration);
 
         const record = {
+            measurementVersion: 2,
             rep: exerciseState.repetitions,
             quality: metrics.quality,
             duration: Number(duration.toFixed(2)),
@@ -251,6 +254,7 @@ export function createPushUpAnalyzer(config = {}) {
         };
         let repCompleted = false;
         let record = null;
+        evidence.observe(movement, metrics);
 
         if (
             movement?.hasRequiredLandmarks &&
@@ -316,7 +320,8 @@ export function createPushUpAnalyzer(config = {}) {
             };
 
             if (movement.isUp) {
-                record = completeRep(metrics, timestamp);
+                record = completeRep(evidence.metrics(metrics), timestamp);
+                evidence.reset();
                 repCompleted = record !== null;
                 exerciseState.state = "UP";
                 feedback = {
@@ -343,10 +348,12 @@ export function createPushUpAnalyzer(config = {}) {
     }
 
     function reset() {
+        evidence.reset();
         exerciseState = createInitialState();
     }
 
     function resetMovementState() {
+        evidence.reset();
         exerciseState.state = "UP";
         exerciseState.currentRepStartTime = null;
         exerciseState.maxDepth = 0;

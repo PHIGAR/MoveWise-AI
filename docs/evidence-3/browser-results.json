@@ -1,0 +1,47 @@
+{
+  "synthetic": true,
+  "passed": 10,
+  "total": 10,
+  "results": [
+    {
+      "name": "Solo one-click startup, pause/resume, automatic five-rep completion, opt-in skeleton bounds and deletion",
+      "passed": true
+    },
+    {
+      "name": "Tracking loss cancels countdown and requires renewed stability",
+      "passed": true
+    },
+    {
+      "name": "Frozen camera cannot finish a countdown",
+      "passed": true
+    },
+    {
+      "name": "Late async inference cannot update a cancelled session",
+      "passed": true
+    },
+    {
+      "name": "Missing required landmarks stay unavailable and never count",
+      "passed": true
+    },
+    {
+      "name": "Camera denial leaves an actionable retry and navigation",
+      "passed": true
+    },
+    {
+      "name": "Completed zero-rep session saves unavailable metrics as null",
+      "passed": true
+    },
+    {
+      "name": "Restart resets counts and re-arms hands-free startup",
+      "passed": true
+    },
+    {
+      "name": "390px layout has no horizontal overflow and manual controls remain available",
+      "passed": true
+    },
+    {
+      "name": "Local Battle starts two independent analyzers hands-free and completes at configured duration",
+      "passed": true
+    }
+  ]
+}

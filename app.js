@@ -1,4 +1,9 @@
-import { setText, createFrameGate } from "./src/ui/liveUpdates.js";
+import { analyzeJumpingJackMetrics, JUMPING_JACK_METRIC_LANDMARKS } from "./src/ai/analysis/jumpingJackMetrics.js";
+import { setText } from "./src/ui/liveUpdates.js";
+import { createPreparation, reachedTarget } from "./src/core/preparation.js";
+import { createPosePerformance } from "./src/core/posePerformance.js";
+import { summarizeIssues } from "./src/ai/issuePatterns.js";
+import { createMetricAverage } from "./src/core/metricAverage.js";
 import { renderMonthlyActivity } from "./src/ui/monthlyActivity.js";
 import { createCoachingSession } from "./src/ai/coachingSession.js";
 import { createSessionClock } from "./src/core/sessionClock.js";
@@ -44,7 +49,8 @@ import {
 } from "./src/core/storage.js";
 
 import {
-    generateRecommendation
+    generateRecommendation,
+    getMeasurementVersion
 } from "./src/ai/recommendation/recommendation.js";
 
 import {
@@ -517,7 +523,26 @@ let sessionActive = false;
 
 let sessionStarting = false;
 
-const poseFrameGate = createFrameGate(50);
+const poseFrameGate = createPosePerformance();
+const requestedPoseFPS = Number(new URLSearchParams(location.search).get('poseFps'));
+if ([15, 20, 30].includes(requestedPoseFPS)) poseFrameGate.setFPS(requestedPoseFPS);
+const preparation = createPreparation();
+const localPreparation = createPreparation({ countdownMs: 0 });
+const onlinePreparation = createPreparation({ countdownMs: 0 });
+let workoutStarted = false;
+let lastTrackingAt = -Infinity;
+let preparationTimer = null;
+let sessionTarget = { seconds: 0, reps: 0 };
+let lastMetricsUIAt = -Infinity;
+let lastCoachAt = -Infinity;
+let lastCoachMessage = '';
+let inferenceStartedAt = 0;
+let inferenceEndedAt = 0;
+let lastInferenceMs = null;
+let repOnFrame = false;
+let diagnosticTimer = null;
+let pipelineStartedAt = 0;
+let startupLatencyMs = null;
 let predictFrame = null;
 function schedulePredict() {
     cancelAnimationFrame(predictFrame);
@@ -553,6 +578,7 @@ let localBattleCountdownTimer = null;
 let localBattleTimer = null;
 let localBattleEndsAt = null;
 let localBattleReadyState = "not-found";
+let localBattleIdentityLost = false;
 let battleMetricsTimer = null;
 
 /* =========================================================
@@ -563,9 +589,9 @@ let battleMetricsTimer = null;
    SESSION DATA
 ========================================================= */
 
-let sessionROMValues = [];
+let sessionROMValues = createMetricAverage();
 
-let sessionSymmetryValues = [];
+let sessionSymmetryValues = createMetricAverage();
 
 let movementVisualReps = [];
 
@@ -634,7 +660,7 @@ const CONFIG = {
 ========================================================= */
 
 const REQUIRED_LANDMARKS = {
-    "jumping-jack": [11, 12, 15, 16, 27, 28],
+    "jumping-jack": JUMPING_JACK_METRIC_LANDMARKS,
     squat: [23, 24, 25, 26, 27, 28],
     "push-up": [11, 12, 13, 14, 15, 16, 23, 24, 27, 28],
     lunge: [23, 24, 25, 26, 27, 28],
@@ -751,7 +777,7 @@ function enterWorkout() {
     showScreen(exerciseScreen);
     prepareExercise();
     renderExerciseGuide($("exercise-guide"), activeExerciseId);
-    if (battleModeActive) startSession();
+    if (battleModeActive) return startSession({ deferTimer: true });
 }
 
 function setCameraMode(mode) {
@@ -918,6 +944,12 @@ function setCoach(
     title,
     message
 ) {
+    const now = performance.now();
+    const urgent = /ตรวจจับ|กล้อง|ตำแหน่ง|ไม่พบ|เตรียม|นับถอยหลัง|พัก/.test(title);
+    if (message === lastCoachMessage) return;
+    if (!urgent && now - lastCoachAt < 1800) return;
+    lastCoachAt = now;
+    lastCoachMessage = message;
 
     const feedbackTitles = { ready: "พร้อมฝึก", movement: "กำลังเคลื่อนไหว", depth: "ช่วงการเคลื่อนไหว", form: "ตรวจสอบตำแหน่ง", quality: "คุณภาพการเคลื่อนไหว", symmetry: "สมดุล", success: "ทำได้แล้ว" };
     title = feedbackTitles[title] || title;
@@ -1011,11 +1043,7 @@ function updateMovementState() {
 
     if (movementStateElement) {
 
-        movementStateElement.textContent =
-            labels[
-                getActiveExerciseAnalyzer()
-                    .getState().state
-            ];
+        setText(movementStateElement, labels[getActiveExerciseAnalyzer().getState().state] || "กำลังเคลื่อนไหว");
 
     }
 
@@ -1060,7 +1088,8 @@ function startTimer() {
     sessionStartTime = Date.now();
     sessionClock.start();
     timerInterval = setInterval(() => {
-        timerElement.textContent = formatTime(getSessionDuration());
+        setText(timerElement, formatTime(getSessionDuration()));
+        if (!battleModeActive && reachedTarget({ duration: getSessionDuration(), repetitions: getActiveExerciseAnalyzer().getState().repetitions }, sessionTarget)) finishButton.click();
     }, 250);
 }
 
@@ -1076,6 +1105,11 @@ function getSessionDuration() { return sessionClock.seconds(); }
 ========================================================= */
 
 function resetSessionData() {
+    setText($("workout-preparation"), '');
+    setText($("pipeline-values"), 'รอภาพจากกล้อง');
+    workoutStarted = false;
+    lastCoachMessage = '';
+    lastCoachAt = lastMetricsUIAt = -Infinity;
 
     resetWorkout(
         Object.values(exerciseAnalyzers),
@@ -1088,11 +1122,9 @@ function resetSessionData() {
     sessionStartTime = null;
     sessionClock.reset();
 
-    sessionROMValues =
-        [];
+    sessionROMValues = createMetricAverage();
 
-    sessionSymmetryValues =
-        [];
+    sessionSymmetryValues = createMetricAverage();
 
     movementVisualReps = [];
 
@@ -1313,7 +1345,7 @@ function ensureLocalBattleCameraUI() {
         <strong id="local-battle-timer" class="local-battle-timer">01:00</strong>
         <button id="local-battle-exit" class="secondary-button" type="button">ออกจากการแข่งขัน</button>
     `;
-    cameraCard.appendChild(overlay);
+    cameraCard.before(overlay);
     overlay.querySelector("#local-battle-start")
         .addEventListener("click", startLocalBattleCountdown);
     overlay.querySelector("#local-battle-exit")
@@ -1404,6 +1436,7 @@ async function startLocalBattleSetup() {
     localBattleActive = false;
     battleModeActive = false;
     localBattleReadyState = "not-found";
+    localBattleIdentityLost = false;
     activeExerciseId = selectedExercise;
     updateExerciseLabels();
     setCameraMode("standard");
@@ -1428,6 +1461,7 @@ async function startLocalBattleSetup() {
         document.getElementById("local-battle-start").hidden = true;
         document.getElementById("local-battle-start").disabled = true;
         document.getElementById("local-battle-countdown").textContent = "";
+        setText(document.getElementById('local-battle-timer'), formatTime(localBattleDuration()));
         updateLocalBattleLiveUI();
         if (!await startSession({ deferTimer: true })) {
             throw new Error("Unable to start the camera for Local Battle");
@@ -1460,7 +1494,7 @@ function startLocalBattleCountdown() {
         "START_COUNTDOWN",
         { countdownStartsAt: startsAt }
     );
-    const countdownEndsAt = startsAt + 3000;
+    const countdownEndsAt = startsAt + 5000;
     const countdownElement = document.getElementById("local-battle-countdown");
     const startButton = document.getElementById("local-battle-start");
     startButton.disabled = true;
@@ -1492,15 +1526,15 @@ function startLocalBattleCountdown() {
         localBattlePreparing = false;
         localBattleActive = true;
         document.getElementById("local-battle-start").hidden = true;
-        localBattleEndsAt =
-            startedAt + LOCAL_BATTLE_DURATION_SECONDS * 1000;
+        localBattleEndsAt = startedAt + localBattleDuration() * 1000;
         document.getElementById("local-battle-timer").textContent =
-            formatTime(LOCAL_BATTLE_DURATION_SECONDS);
+            formatTime(localBattleDuration());
         startLocalBattleTimer();
     }, 50);
 }
 
 function cancelLocalBattleCountdown() {
+    localPreparation.arm();
     if (!localBattleCountdownTimer) {
         return;
     }
@@ -1557,8 +1591,7 @@ function startLocalBattleTimer() {
             0,
             Math.ceil((localBattleEndsAt - Date.now()) / 1000)
         );
-        document.getElementById("local-battle-timer").textContent =
-            formatTime(remaining);
+        setText(document.getElementById("local-battle-timer"), formatTime(remaining));
         if (remaining === 0) {
             void finishLocalBattle();
         }
@@ -1591,14 +1624,9 @@ function updateLocalBattleLiveUI() {
         const prefix = index === 0
             ? "local-battle-player-one"
             : "local-battle-player-two";
-        document.getElementById(`${prefix}-reps`).textContent =
-            String(player.metrics.repetitions);
-        document.getElementById(`${prefix}-quality`).textContent =
-            player.metrics.quality === null
-                ? "--"
-                : String(player.metrics.quality);
-        document.getElementById(`${prefix}-score`).textContent =
-            String(player.score);
+        setText(document.getElementById(`${prefix}-reps`), String(player.metrics.repetitions));
+        setText(document.getElementById(`${prefix}-quality`), player.metrics.quality === null ? "--" : String(player.metrics.quality));
+        setText(document.getElementById(`${prefix}-score`), String(player.score));
         const status = localBattlePresence[index];
         const statusText = status.visible
             ? localBattleValidPlayers[index]
@@ -1609,11 +1637,11 @@ function updateLocalBattleLiveUI() {
                     ? "ยังไม่อยู่ในเฟรม · กำลังแข่งขัน"
                     : "กลับเข้ามาในเฟรม"
                 : "ยังไม่พบผู้เล่น";
-        document.getElementById(
+        setText(document.getElementById(
             index === 0
                 ? "local-battle-player-one-status"
                 : "local-battle-player-two-status"
-        ).textContent = statusText;
+        ), statusText);
     });
 }
 
@@ -1623,6 +1651,7 @@ function processLocalBattleFrame(poses) {
     }
 
     const assignment = assignLocalBattlePoses(poses, localBattleCenters);
+    if (localBattleActive && !assignment.players.some(Boolean)) localBattleIdentityLost = true;
     localBattleCenters = assignment.centers;
     const now = performance.now();
     const validPlayers = assignment.players.map((landmarks, index) => {
@@ -1662,6 +1691,7 @@ function processLocalBattleFrame(poses) {
     });
     localBattlePresence = nextPresence;
     localBattleValidPlayers = validPlayers;
+    validPlayers.forEach((valid, index) => { if (!valid) localBattleCurrentQuality[index] = null; });
 
     drawBattleSkeletons(
         assignment.players,
@@ -1678,6 +1708,7 @@ function processLocalBattleFrame(poses) {
     const instruction = document.getElementById("local-battle-instruction");
     const startButton = document.getElementById("local-battle-start");
     if (localBattlePreparing) {
+        const readiness = localPreparation.update(bothReady, now);
         if (bothReady) {
             localBattleReadyState = "ready";
             if (localBattleState.domainState.players.some(player => !player.ready)) {
@@ -1692,9 +1723,9 @@ function processLocalBattleFrame(poses) {
                     { playerId: "local-player-2", ready: true }
                 );
             }
-            instruction.textContent = "ผู้เล่นทั้งสองพร้อมเริ่ม";
-            startButton.hidden = false;
-            startButton.disabled = false;
+            setText(instruction, readiness.phase === 'active' ? "ผู้เล่นทั้งสองพร้อมเริ่ม" : "อยู่ในเฟรมให้มั่นคง 2 วินาที");
+            startButton.hidden = true;
+            if (readiness.phase === 'active') startLocalBattleCountdown();
         }
         else {
             localBattleReadyState = assignment.detectedCount === 0
@@ -1714,6 +1745,12 @@ function processLocalBattleFrame(poses) {
         }
     }
     else if (localBattleActive) {
+        if (localBattleIdentityLost) {
+            localBattleAnalyzers.forEach(analyzer => analyzer.resetMovementState());
+            setText(instruction, 'หยุดนับ: แยกผู้เล่นไม่ชัดเจน โปรดออกแล้วเริ่มแมตช์ใหม่ เพื่อป้องกันการสลับผู้เล่น');
+            drawBattleSkeletons([null, null], poses);
+            return;
+        }
         instruction.textContent = localBattlePresence.some(
             player => !player.visible
         )
@@ -1734,6 +1771,7 @@ function processLocalBattleFrame(poses) {
                         movement.movementQuality ??
                         0
                 };
+            if (!metrics) { analyzer.resetMovementState(); localBattleCurrentQuality[index] = null; return; }
             localBattleCurrentQuality[index] = metrics.quality;
             analyzer.process(movement, metrics, now);
         });
@@ -1938,6 +1976,7 @@ function clearCanvas() {
 }
 
 function captureMovementPose(landmarks) {
+    if (!$("capture-skeleton").checked || movementVisualReps.length >= 3) return;
     const pose = createLandmarkPose(landmarks);
 
     if (!pose) {
@@ -2002,9 +2041,11 @@ function handleCompletedRep(result) {
     }
 
     const metrics = getCompletedRepMetrics(result.record);
+    repOnFrame = true;
+    if (battleModeActive) reportBattleMetrics();
     movementMetricRecords.push(metrics);
 
-    if (currentMovementPose) {
+    if (currentMovementPose && movementVisualReps.length < 3 && $("capture-skeleton").checked) {
         movementVisualReps.push({
             rep: result.record.rep,
             trail: [...pendingMovementPoses],
@@ -2086,6 +2127,11 @@ async function startSession({ deferTimer = false } = {}) {
     }
 
     sessionStarting = true;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    pipelineStartedAt = performance.now();
+    startupLatencyMs = null;
+    updateWorkoutControls();
+    sessionTarget = { seconds: Number($("workout-duration").value), reps: Number($("workout-reps").value) };
     document.body.classList.add("workout-starting");
     const requestId = ++startupId;
     startButton.disabled = true;
@@ -2125,10 +2171,25 @@ async function startSession({ deferTimer = false } = {}) {
             startButtonLabel.textContent = "กำลังวิเคราะห์";
         }
 
-        if (!deferTimer) {
-            startTimer();
-        }
-        startBattleMetricsReporting();
+        lastTrackingAt = performance.now();
+        if (!deferTimer && !battleModeActive) preparation.arm();
+        if (localBattlePreparing) localPreparation.arm();
+        preparationTimer = setInterval(() => {
+            if (sessionPaused) return;
+            if (performance.now() - lastTrackingAt > 750) {
+                preparation.update(false, performance.now());
+                onlinePreparation.arm();
+                if (battleModeActive) battleUI.tracking(false);
+                if (localBattlePreparing) cancelLocalBattleCountdown();
+                clearUnavailableMetrics();
+                getActiveExerciseAnalyzer().resetMovementState();
+                localBattleAnalyzers.forEach(analyzer => analyzer.resetMovementState());
+                if (localBattleActive) localBattleIdentityLost = true;
+                currentMovementPose = null; pendingMovementPoses = [];
+                setStatus("กล้องหยุดส่งภาพ · ตรวจสอบกล้อง");
+            }
+        }, 250);
+        diagnosticTimer = setInterval(renderPerformance, 1000);
 
         setStatus(
 
@@ -2177,17 +2238,83 @@ async function startSession({ deferTimer = false } = {}) {
 
 function updateWorkoutControls() {
     const solo = !battleModeActive && !localBattlePreparing && !localBattleActive;
-    $("pause-workout").hidden = !solo || !sessionActive;
+    $("pause-workout").hidden = !solo || !sessionActive || !workoutStarted;
     $("restart-workout").hidden = !solo || !sessionActive;
+    $("cancel-workout").hidden = !sessionActive && !sessionStarting;
+    $("workout-targets").hidden = sessionActive || sessionStarting || !solo;
     $("pause-workout").textContent = sessionPaused ? "ฝึกต่อ" : "พักชั่วคราว";
     $("pause-workout").setAttribute("aria-pressed", String(sessionPaused));
-    if (solo) finishButton.disabled = !sessionActive;
+    if (solo) finishButton.disabled = !sessionActive || !workoutStarted;
     $("exercise-guide").hidden = sessionActive;
 }
+
+function beginWorkout() {
+    if (workoutStarted) return;
+    workoutStarted = true;
+    getActiveExerciseAnalyzer().resetMovementState();
+    setText($("workout-preparation"), '');
+    startTimer();
+    startBattleMetricsReporting();
+    updateWorkoutControls();
+}
+
+function clearUnavailableMetrics() {
+    resetLiveUI();
+    setText(formScoreElement, '--');
+    if (scoreBar.style.width !== '0%') scoreBar.style.width = '0%';
+}
+
+function recordPipeline() {
+    poseFrameGate.record(inferenceStartedAt, inferenceEndedAt, performance.now(), repOnFrame, lastInferenceMs);
+    if (!battleModeActive && !localBattlePreparing && !localBattleActive && workoutStarted &&
+        reachedTarget({ duration: getSessionDuration(), repetitions: getActiveExerciseAnalyzer().getState().repetitions }, sessionTarget)) finishButton.click();
+}
+
+function renderPerformance() {
+    if (!$("pipeline-diagnostics").open) return;
+    const values = poseFrameGate.snapshot();
+    const number = value => Number.isFinite(value) ? value.toFixed(1) : '--';
+    setText($("pipeline-values"), `${getPoseDetectorStatus().execution || 'main-thread'} · FPS ${number(values.fps)} · inference ${number(values.inferenceMs)} ms · frame processing → UI ${number(values.pipelineMs)} ms · startup ${number(startupLatencyMs)} ms · rep → UI ${number(values.repLatencyMs)} ms · main heap ${number(values.heapMB)} MB · long tasks ${values.longTasks ?? '--'} / max ${number(values.maxLongTaskMs)} ms · errors ${values.errors}`);
+}
+
+function localBattleDuration() { return Number($("battle-duration").value) || LOCAL_BATTLE_DURATION_SECONDS; }
+
+$("cancel-workout").addEventListener('click', async () => {
+    if (localBattlePreparing || localBattleActive) { await leaveLocalBattle(); return; }
+    if (battleModeActive) { await battleUI.cancel(); return; }
+    stopSession();
+    prepareExercise();
+    showScreen(exerciseScreen);
+});
+$("capture-skeleton").addEventListener('change', () => {
+    if (!$("capture-skeleton").checked) { pendingMovementPoses = []; currentMovementPose = null; movementVisualReps = []; }
+});
+function deleteStoredSkeletons() {
+    let failed = false;
+    getSessions().filter(session => session.movementVisual).forEach(session => {
+        failed = !saveSession({ ...session, movementVisual: null }) || failed;
+    });
+    if (currentResultSession) currentResultSession.movementVisual = null;
+    renderMovementResult(currentResultSession);
+    const message = failed ? 'ลบไม่สำเร็จทั้งหมด โปรดลองอีกครั้ง' : 'ลบโครงร่างที่บันทึกไว้แล้ว';
+    setText($("delete-skeleton-status"), message);
+    setText($("profile-delete-skeleton-status"), message);
+}
+$("delete-skeletons").addEventListener('click', deleteStoredSkeletons);
+$("profile-delete-skeletons").addEventListener('click', deleteStoredSkeletons);
+
+$("retry-save-session").addEventListener('click', () => {
+    if (!currentResultSession) return;
+    sessionSaved = saveSession(currentResultSession);
+    $("session-save-warning").hidden = sessionSaved;
+    $("retry-save-session").hidden = sessionSaved;
+    if (sessionSaved) renderResultDailyGoal();
+});
 
 $("pause-workout").addEventListener("click", () => {
     if (!sessionActive || battleModeActive || localBattleActive) return;
     sessionPaused = !sessionPaused;
+    startupId++;
     running = !sessionPaused;
     if (sessionPaused) {
         cancelAnimationFrame(predictFrame);
@@ -2219,13 +2346,23 @@ $("confirm-restart").addEventListener("click", () => {
     $("restart-dialog").close();
     prepareExercise();
     renderExerciseGuide($("exercise-guide"), activeExerciseId);
+    void startSession();
 });
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && sessionActive && !sessionPaused && !battleModeActive && !localBattleActive && !localBattlePreparing) $("pause-workout").click();
 });
-window.addEventListener("pagehide", () => stopCamera(video));
+window.addEventListener("pagehide", () => { stopSession(); if (battleModeActive) void battleUI.cancel(); });
 
 function stopSession() {
+    clearInterval(localBattleCountdownTimer); localBattleCountdownTimer = null;
+    clearInterval(localBattleTimer); localBattleTimer = null;
+    poseFrameGate.stop();
+    clearInterval(preparationTimer);
+    clearInterval(diagnosticTimer);
+    preparationTimer = diagnosticTimer = null;
+    preparation.cancel();
+    localPreparation.cancel();
+    onlinePreparation.cancel();
     cancelAnimationFrame(predictFrame);
     startupId++;
     sessionStarting = false;
@@ -2268,27 +2405,28 @@ function startBattleMetricsReporting() {
     battleMetricsTimer = null;
     if (!battleModeActive || localBattleActive) return;
 
-    battleMetricsTimer = setInterval(() => {
-        const state = getActiveExerciseAnalyzer().getState();
-        const quality = state.qualityScores.length
+    battleMetricsTimer = setInterval(reportBattleMetrics, 1000);
+}
+
+function reportBattleMetrics() {
+    if (!battleModeActive || !workoutStarted) return;
+    const state = getActiveExerciseAnalyzer().getState();
+    const quality = state.qualityScores.length
             ? Math.round(state.qualityScores.reduce(
                 (sum, value) => sum + value,
                 0
             ) / state.qualityScores.length)
             : null;
-        const accuracy = state.attempts > 0
+    const accuracy = state.attempts > 0
             ? Math.round(state.validReps / state.attempts * 100)
             : null;
-        battleUI.reportMetrics({
+    battleUI.reportMetrics({
             repetitions: state.repetitions,
             quality,
             accuracy
-        }).catch(error => {
+    })?.catch(error => {
             console.error("Battle metrics upload failed:", error);
-            clearInterval(battleMetricsTimer);
-            battleMetricsTimer = null;
-        });
-    }, 1000);
+    });
 }
 
 /* =========================================================
@@ -2370,374 +2508,8 @@ function getBodyConfidence(
    ANGLE ENGINE
 ========================================================= */
 
-function calculateAngle(
-    a,
-    b,
-    c
-) {
-
-    if (
-        !a ||
-        !b ||
-        !c
-    ) {
-
-        return 0;
-
-    }
-
-    const radians =
-
-        Math.atan2(
-            c.y - b.y,
-            c.x - b.x
-        )
-
-        -
-
-        Math.atan2(
-            a.y - b.y,
-            a.x - b.x
-        );
-
-    let angle =
-
-        Math.abs(
-            radians *
-            180 /
-            Math.PI
-        );
-
-    if (
-        angle > 180
-    ) {
-
-        angle =
-            360 -
-            angle;
-
-    }
-
-    return angle;
-
-}
-
-/* =========================================================
-   ARM
-========================================================= */
-
-function calculateArmAngles(
-    landmarks
-) {
-
-    return {
-
-        left:
-            calculateAngle(
-
-                landmarks[11],
-                landmarks[13],
-                landmarks[15]
-
-            ),
-
-        right:
-            calculateAngle(
-
-                landmarks[12],
-                landmarks[14],
-                landmarks[16]
-
-            )
-
-    };
-
-}
-
-/* =========================================================
-   LEG
-========================================================= */
-
-function calculateLegAngles(
-    landmarks
-) {
-
-    return {
-
-        left:
-            calculateAngle(
-
-                landmarks[23],
-                landmarks[25],
-                landmarks[27]
-
-            ),
-
-        right:
-            calculateAngle(
-
-                landmarks[24],
-                landmarks[26],
-                landmarks[28]
-
-            )
-
-    };
-
-}
-
-/* =========================================================
-   SYMMETRY
-========================================================= */
-
-function calculateSymmetry(
-    left,
-    right
-) {
-
-    const max =
-        Math.max(
-
-            Math.abs(left),
-            Math.abs(right),
-            1
-
-        );
-
-    const difference =
-        Math.abs(
-            left -
-            right
-        );
-
-    return Math.max(
-
-        0,
-
-        Math.min(
-
-            100,
-
-            100 -
-            (
-                difference /
-                max
-            ) * 100
-
-        )
-
-    );
-
-}
-
-/* =========================================================
-   ARM ROM
-========================================================= */
-
-function calculateArmROM(
-    left,
-    right
-) {
-
-    const average =
-        (
-            left +
-            right
-        ) / 2;
-
-    const score =
-
-        (
-
-            (
-                average -
-                CONFIG.armClosedTarget
-            )
-
-            /
-
-            (
-                CONFIG.armOpenTarget -
-                CONFIG.armClosedTarget
-            )
-
-        ) * 100;
-
-    return Math.max(
-
-        0,
-
-        Math.min(
-            100,
-            score
-        )
-
-    );
-
-}
-
-/* =========================================================
-   LEG ROM
-========================================================= */
-
-function calculateLegROM(
-    footWidth,
-    shoulderWidth
-) {
-
-    if (
-        shoulderWidth <= 0
-    ) {
-
-        return 0;
-
-    }
-
-    const ratio =
-        footWidth /
-        shoulderWidth;
-
-    const score =
-
-        (
-
-            (
-                ratio -
-                CONFIG.legClosedTarget
-            )
-
-            /
-
-            (
-                CONFIG.legOpenTarget -
-                CONFIG.legClosedTarget
-            )
-
-        ) * 100;
-
-    return Math.max(
-
-        0,
-
-        Math.min(
-            100,
-            score
-        )
-
-    );
-
-}
-
-/* =========================================================
-   MOVEMENT ANALYSIS
-========================================================= */
-
-function analyzeMovementMetrics(
-    landmarks,
-    movement
-) {
-
-    const arms =
-        calculateArmAngles(
-            landmarks
-        );
-
-    const legs =
-        calculateLegAngles(
-            landmarks
-        );
-
-    const armROM =
-        calculateArmROM(
-
-            arms.left,
-            arms.right
-
-        );
-
-    const legROM =
-        calculateLegROM(
-
-            movement.footWidth,
-            movement.shoulderWidth
-
-        );
-
-    const armSymmetry =
-        calculateSymmetry(
-
-            arms.left,
-            arms.right
-
-        );
-
-    const legSymmetry =
-        calculateSymmetry(
-
-            legs.left,
-            legs.right
-
-        );
-
-    const symmetry =
-
-        (
-            armSymmetry +
-            legSymmetry
-        ) / 2;
-
-    const quality =
-
-        (
-            armROM +
-            legROM +
-            symmetry
-        ) / 3;
-
-    return {
-
-        leftArmAngle:
-            Math.round(
-                arms.left
-            ),
-
-        rightArmAngle:
-            Math.round(
-                arms.right
-            ),
-
-        leftLegAngle:
-            Math.round(
-                legs.left
-            ),
-
-        rightLegAngle:
-            Math.round(
-                legs.right
-            ),
-
-        armROM:
-            Math.round(
-                armROM
-            ),
-
-        legROM:
-            Math.round(
-                legROM
-            ),
-
-        symmetry:
-            Math.round(
-                symmetry
-            ),
-
-        quality:
-            Math.round(
-                quality
-            )
-
-    };
-
+function analyzeMovementMetrics(landmarks, movement) {
+    return analyzeJumpingJackMetrics(landmarks, movement);
 }
 
 function updateMovementMetrics(
@@ -2771,11 +2543,11 @@ function updateMovementMetrics(
 
             );
 
-        sessionROMValues.push(
+        sessionROMValues.add(
             rom
         );
 
-        sessionSymmetryValues.push(
+        sessionSymmetryValues.add(
             metrics.symmetry
         );
 
@@ -2951,7 +2723,7 @@ function updateMovementIntelligenceUI(
 function resetLiveUI() {
 
     if (liveROM) {
-        liveROM.textContent = "--%";
+        setText(liveROM, "--%");
     }
 
     if (liveROMBar) {
@@ -2959,15 +2731,15 @@ function resetLiveUI() {
     }
 
     if (liveArmROM) {
-        liveArmROM.textContent = "--%";
+        setText(liveArmROM, "--%");
     }
 
     if (liveLegROM) {
-        liveLegROM.textContent = "--%";
+        setText(liveLegROM, "--%");
     }
 
     if (liveSymmetry) {
-        liveSymmetry.textContent = "--%";
+        setText(liveSymmetry, "--%");
     }
 
     if (liveSymmetryBar) {
@@ -2975,25 +2747,24 @@ function resetLiveUI() {
     }
 
     if (liveLeftAngle) {
-        liveLeftAngle.textContent = "--°";
+        setText(liveLeftAngle, "--°");
     }
 
     if (liveRightAngle) {
-        liveRightAngle.textContent = "--°";
+        setText(liveRightAngle, "--°");
     }
 
     if (liveQuality) {
-        liveQuality.textContent = "--";
+        setText(liveQuality, "--");
     }
 
     if (liveQualityLabel) {
-        liveQualityLabel.textContent =
-            "รอการวิเคราะห์";
+        setText(liveQualityLabel, "รอการวิเคราะห์");
     }
 
     [liveMetricOne, liveMetricTwo, liveMetricThree].forEach(element => {
         if (element) {
-            element.textContent = "--";
+            setText(element, "--");
         }
     });
 
@@ -3089,8 +2860,8 @@ function processSquat(
 
     currentMovementMetrics = metrics;
     updateLiveMetricValues(metrics);
-    sessionROMValues.push(metrics.legROM);
-    sessionSymmetryValues.push(metrics.symmetry);
+    sessionROMValues.add(metrics.legROM);
+    sessionSymmetryValues.add(metrics.symmetry);
     updateMovementIntelligenceUI(metrics);
 
     const result = squatAnalyzer.process(
@@ -3148,15 +2919,15 @@ function processPushUp(
         alignment: Math.round(movement.alignment),
         elbowSymmetry: Math.round(movement.elbowSymmetry),
         elbowAngle: Math.round(movement.elbowAngle),
-        consistency: Math.round(movement.consistency)
+        consistency: Number.isFinite(movement.consistency) ? Math.round(movement.consistency) : null
     };
 
     currentMovementMetrics = metrics;
     updateLiveMetricValues(metrics);
-    sessionROMValues.push(
+    sessionROMValues.add(
         Math.round((metrics.armROM + metrics.legROM) / 2)
     );
-    sessionSymmetryValues.push(metrics.symmetry);
+    sessionSymmetryValues.add(metrics.symmetry);
     updateMovementIntelligenceUI(metrics);
 
     const result = pushUpAnalyzer.process(
@@ -3215,15 +2986,15 @@ function processLunge(
         alignment: Math.round(movement.alignment),
         stability: Math.round(movement.stability),
         activeLeg: movement.activeLeg,
-        consistency: Math.round(movement.consistency)
+        consistency: Number.isFinite(movement.consistency) ? Math.round(movement.consistency) : null
     };
 
     currentMovementMetrics = metrics;
     updateLiveMetricValues(metrics);
-    sessionROMValues.push(
+    sessionROMValues.add(
         Math.round((metrics.armROM + metrics.legROM) / 2)
     );
-    sessionSymmetryValues.push(metrics.symmetry);
+    sessionSymmetryValues.add(metrics.symmetry);
     updateMovementIntelligenceUI(metrics);
 
     const result = lungeAnalyzer.process(
@@ -3281,16 +3052,16 @@ function processBicepCurl(
         rom: Math.round(movement.rom),
         stability: Math.round(movement.stability),
         activeArm: movement.activeArm,
-        consistency: Math.round(movement.consistency),
+        consistency: Number.isFinite(movement.consistency) ? Math.round(movement.consistency) : null,
         speed: movement.speed
     };
 
     currentMovementMetrics = metrics;
     updateLiveMetricValues(metrics);
-    sessionROMValues.push(
+    sessionROMValues.add(
         Math.round((metrics.armROM + metrics.legROM) / 2)
     );
-    sessionSymmetryValues.push(metrics.symmetry);
+    sessionSymmetryValues.add(metrics.symmetry);
     updateMovementIntelligenceUI(metrics);
 
     const result = bicepCurlAnalyzer.process(
@@ -3340,7 +3111,7 @@ function processSixSeven(
     updateLiveMetricValues(result.metrics);
 
     if (movement?.hasRequiredLandmarks) {
-        sessionSymmetryValues.push(result.metrics.symmetry);
+        sessionSymmetryValues.add(result.metrics.symmetry);
         updateMovementIntelligenceUI(result.metrics);
     }
 
@@ -3382,6 +3153,7 @@ function drawSkeleton(
         label = ""
     } = {}
 ) {
+    if (!$("skeleton-toggle").checked) return;
 
     if (
         !landmarks ||
@@ -3639,9 +3411,10 @@ function drawSkeleton(
    AI LOOP
 ========================================================= */
 
-function predict() {
+async function predict() {
     predictFrame = null;
-    if (running && !poseFrameGate.shouldRun(performance.now())) { schedulePredict(); return; }
+    const frameGeneration = startupId;
+    if (running && !poseFrameGate.shouldRun(performance.now(), video.currentTime)) { schedulePredict(); return; }
 
     if (!running) {
         return;
@@ -3668,21 +3441,36 @@ function predict() {
             video.currentTime;
 
         let results;
+        inferenceStartedAt = performance.now();
+        lastInferenceMs = null;
+        repOnFrame = false;
 
         try {
 
             results =
-                detectPose(
+                await detectPose(
 
                     video,
 
                     performance.now()
 
                 );
+            if (!running || frameGeneration !== startupId) return;
+            if (results === null) { schedulePredict(); return; }
+            lastInferenceMs = results?.inferenceMs ?? null;
+            inferenceEndedAt = performance.now();
+            lastTrackingAt = inferenceEndedAt;
+            startupLatencyMs ??= inferenceEndedAt - pipelineStartedAt;
 
         }
 
         catch (error) {
+            if (!running || frameGeneration !== startupId) return;
+            poseFrameGate.error();
+            preparation.update(false, performance.now());
+            if (battleModeActive) battleUI.tracking(false);
+            clearUnavailableMetrics();
+            setStatus("วิเคราะห์ภาพไม่สำเร็จ · ลองเริ่มใหม่");
 
             console.error(
                 "Pose error:",
@@ -3697,6 +3485,7 @@ function predict() {
 
         if (localBattlePreparing || localBattleActive) {
             processLocalBattleFrame(results?.landmarks || []);
+            recordPipeline();
             schedulePredict();
             return;
         }
@@ -3738,6 +3527,16 @@ function predict() {
                 checkFullBody(
                     landmarks
                 );
+            if (battleModeActive && !workoutStarted) {
+                if (!fullBody) onlinePreparation.arm();
+                const ready = onlinePreparation.update(fullBody, performance.now());
+                battleUI.tracking(fullBody && ready.phase === 'active');
+            }
+            if (!battleModeActive && !workoutStarted) {
+                const state = preparation.update(fullBody, performance.now());
+                setText($("workout-preparation"), state.phase === 'countdown' ? `เริ่มใน ${state.remaining} วินาที` : 'ขยับเข้ากล้อง แล้วอยู่ให้มั่นคง 2 วินาที');
+                if (state.phase === 'active') beginWorkout();
+            }
 
             /*
                ถ้ายังเห็นตัวไม่ครบ
@@ -3745,6 +3544,7 @@ function predict() {
             */
 
             if (!fullBody) {
+                clearUnavailableMetrics();
                 const validation = activeExerciseId === "six-seven"
                     ? validateSixSevenLandmarks(landmarks)
                     : validateLandmarks(
@@ -3786,20 +3586,20 @@ function predict() {
                         : "ถอยออกจากกล้อง ให้เห็นตั้งแต่ศีรษะถึงเท้า"
                 );
 
-                updateScore(
-                    0
-                );
 
                 getActiveExerciseAnalyzer()
                     .resetMovementState();
 
                 updateMovementState();
 
+                recordPipeline();
                 schedulePredict();
 
                 return;
 
             }
+
+            if (!workoutStarted) { recordPipeline(); schedulePredict(); return; }
 
             captureMovementPose(landmarks);
 
@@ -3852,11 +3652,8 @@ function predict() {
                         landmarks
                     );
 
-                const metrics =
-                    analyzeMovementMetrics(
-                        landmarks,
-                        movement
-                    );
+                const metrics = analyzeMovementMetrics(landmarks, movement);
+                if (!metrics) { clearUnavailableMetrics(); jumpingJackAnalyzer.resetMovementState(); recordPipeline(); schedulePredict(); return; }
 
                 updateMovementMetrics(
                     metrics,
@@ -3877,6 +3674,10 @@ function predict() {
         /* NO PERSON */
 
         else {
+            if (!workoutStarted) preparation.update(false, performance.now());
+            if (battleModeActive && !workoutStarted) { onlinePreparation.arm(); battleUI.tracking(false); }
+            setText($("workout-preparation"), workoutStarted ? '' : 'ขยับเข้ากล้อง แล้วอยู่ให้มั่นคง 2 วินาที');
+            clearUnavailableMetrics();
             logPosePipeline({
                 phase: "no-pose",
                 landmarksValid: false,
@@ -3910,9 +3711,6 @@ function predict() {
 
             );
 
-            updateScore(
-                0
-            );
 
             resetLiveUI();
 
@@ -3927,6 +3725,7 @@ function predict() {
 
     }
 
+    recordPipeline();
     schedulePredict();
 
 }
@@ -3945,7 +3744,7 @@ function calculateConsistency() {
         repStartTimes.length < 2
     ) {
 
-        return 100;
+        return null;
 
     }
 
@@ -4041,6 +3840,7 @@ function calculateAverageRepTime() {
 function averageMetric(
     values
 ) {
+    if (typeof values.value === "function") return values.value();
     if (!values.length) {
         return null;
     }
@@ -5247,8 +5047,11 @@ function renderProfilePage() {
         0
     );
     const averageQuality = averageMetric(qualities);
+    const latestMeasuredSession = sessions.find(item => Number.isFinite(item.quality));
     const qualityHistory = sessions
         .filter(session =>
+            session.exerciseId === latestMeasuredSession?.exerciseId &&
+            getMeasurementVersion(session) === getMeasurementVersion(latestMeasuredSession) &&
             typeof session.quality === "number" &&
             Number.isFinite(session.quality) &&
             session.quality >= 0 &&
@@ -5303,7 +5106,7 @@ function renderProfilePage() {
             title.textContent = "คุณภาพการเคลื่อนไหว";
             const detail = document.createElement("span");
             detail.textContent =
-                typeof previousQuality === "number"
+                qualityHistory.length >= 3 && typeof previousQuality === "number"
                     ? `ครั้งล่าสุด ${latestQuality}% · ` +
                         `เปลี่ยนแปลง ${latestQuality >= previousQuality ? "+" : ""}` +
                         `${latestQuality - previousQuality}% จากครั้งก่อน`
@@ -5370,32 +5173,10 @@ function renderMovementMetrics(container, exerciseId, metrics) {
 
 function renderMovementResult(session) {
     const report = $("result-movement-report");
-    const visual = session?.movementVisual;
-
-    if (
-        !report ||
-        !renderMovementVisual(
-            movementPoseContainer,
-            visual,
-            session?.exerciseId
-        )
-    ) {
-        if (report) {
-            report.hidden = true;
-        }
-        if (movementMetricContainer) {
-            movementMetricContainer.replaceChildren();
-            movementMetricContainer.hidden = true;
-        }
-        return;
-    }
-
-    report.hidden = false;
-    renderMovementMetrics(
-        movementMetricContainer,
-        session.exerciseId,
-        session.movementMetrics
-    );
+    if (!report) return;
+    const hasVisual = renderMovementVisual(movementPoseContainer, session?.movementVisual, session?.exerciseId);
+    renderMovementMetrics(movementMetricContainer, session?.exerciseId, session?.movementMetrics);
+    report.hidden = !hasVisual && movementMetricContainer.hidden;
 }
 
 /* =========================================================
@@ -5440,7 +5221,7 @@ function generateResult(
 
             :
 
-            0;
+            null;
 
     const accuracy =
 
@@ -5459,7 +5240,7 @@ function generateResult(
 
             :
 
-            0;
+            null;
 
     const movementMetrics =
         summarizeMovementMetrics(
@@ -5477,7 +5258,7 @@ function generateResult(
     if (
         !sessionSaved &&
         sessionStartTime &&
-        exerciseState.repetitions > 0
+        workoutStarted
     ) {
         const session = createSession({
             exerciseId: activeExerciseId,
@@ -5498,6 +5279,7 @@ function generateResult(
 
         currentResultSession = session;
         sessionSaved = saveSession(session);
+        $("retry-save-session").hidden = sessionSaved;
 
         if (!sessionSaved) {
             const warning = $("session-save-warning");
@@ -5508,7 +5290,10 @@ function generateResult(
     }
 
     renderMovementResult(currentResultSession);
+    setText($("snapshot-explanation"), currentResultSession?.movementVisual ? "โครงร่างจาก 3 รอบแรกที่นับสำเร็จ เพื่อทบทวนเส้นทางข้อต่อระหว่างรอบ ไม่ใช่ภาพวินิจฉัยท่าผิด" : "ไม่ได้เก็บภาพหรือโครงร่างสำหรับเซสชันนี้");
     renderResultDailyGoal();
+    const issues = summarizeIssues(activeExerciseId, getSessions());
+    setText($("result-issues"), issues.length ? issues.map(issue => `${issue.label}: ${issue.sessions}/${issue.measuredSessions} เซสชัน${issue.recurring ? ' · พบซ้ำ' : ''}`).join(' • ') : 'ยังไม่พบรูปแบบปัญหาที่มีข้อมูลรองรับ');
 
     const consistency =
         calculateConsistency();
@@ -5533,7 +5318,7 @@ function generateResult(
     if (resultQualityBar) {
 
         resultQualityBar.style.width =
-            `${quality}%`;
+            `${quality ?? 0}%`;
 
     }
 
@@ -5547,7 +5332,7 @@ function generateResult(
     if (resultAccuracyBar) {
 
         resultAccuracyBar.style.width =
-            `${accuracy}%`;
+            `${accuracy ?? 0}%`;
 
     }
 
@@ -5713,13 +5498,14 @@ function generateAIRecommendation(
     }
 
     const currentSession = createCoachingSession({
+        measurementVersion: 2,
         exerciseId: activeExerciseId,
         repetitions: exerciseState.repetitions,
         quality, accuracy, consistency,
         movementMetrics: summarizeMovementMetrics(activeExerciseId, movementMetricRecords)
     });
     const history = getSessions().filter(session =>
-        session.exerciseId === activeExerciseId && session.id !== currentResultSession?.id
+        session.exerciseId === activeExerciseId && session.id !== currentResultSession?.id && session.repRecords?.length > 0 && session.repRecords.every(record => record.measurementVersion === 2)
     );
     const recommendation =
         generateRecommendation(
@@ -5820,14 +5606,25 @@ ensureLocalBattleUI();
 const battleUI = createBattleUI({
     screen: $("battle-screen"),
     showScreen,
-    onStart(state) {
+    async onPrepare(state) {
         activeExerciseId = state.exerciseId;
         updateExerciseLabels();
         battleModeActive = true;
         if (finishButton) finishButton.disabled = true;
         const backButton = $("back-home");
         if (backButton) backButton.disabled = true;
-        enterWorkout();
+        const success = await enterWorkout();
+        onlinePreparation.arm();
+        return success;
+    },
+    onStart() {
+        if (sessionActive && battleModeActive) beginWorkout();
+    },
+    onCancel() {
+        battleModeActive = false;
+        $("back-home").disabled = false;
+        stopSession();
+        showScreen($("battle-screen"));
     },
     onResult(state) {
         if (sessionActive) {
@@ -5843,6 +5640,21 @@ const battleUI = createBattleUI({
     }
 });
 
+const advanced = document.createElement('details');
+advanced.className = 'advanced-metrics';
+const advancedSummary = document.createElement('summary');
+advancedSummary.textContent = 'รายละเอียดการเคลื่อนไหว';
+advanced.append(advancedSummary);
+const metricsPanel = document.querySelector('.live-metrics');
+metricsPanel.before(advanced);
+advanced.append(metricsPanel);
+const cameraOptions = document.createElement('details');
+cameraOptions.className = 'workout-options';
+const cameraOptionsSummary = document.createElement('summary');
+cameraOptionsSummary.textContent = 'โครงร่างและความเป็นส่วนตัว';
+cameraOptions.append(cameraOptionsSummary);
+document.querySelectorAll('.workout-controls .skeleton-control').forEach(label => cameraOptions.append(label));
+advanced.before($("exercise-guide"), $("workout-preparation"), $("workout-targets"), cameraOptions, document.querySelector('.workout-controls'));
 initializePreferences();
 updateWorkoutControls();
 
@@ -6009,6 +5821,9 @@ function updateLiveMetricLabels() {
 }
 
 function updateLiveMetricValues(metrics) {
+    const now = performance.now();
+    if (now - lastMetricsUIAt < 100) return;
+    lastMetricsUIAt = now;
     if (!metrics) {
         return;
     }
@@ -6034,11 +5849,7 @@ function updateLiveMetricValues(metrics) {
         }
 
         const value = values[index];
-        element.textContent = formatLiveMetricValue(
-            value,
-            activeExerciseId,
-            index
-        );
+        setText(element, formatLiveMetricValue(value, activeExerciseId, index));
     });
 }
 

@@ -1,3 +1,4 @@
+import { createRepEvidence } from "./repEvidence.js";
 import {
     validateLandmarks
 } from "../ai/pose/landmarks.js";
@@ -46,6 +47,7 @@ export function createJumpingJackAnalyzer(
     };
 
     let exerciseState = createInitialState();
+    const evidence = createRepEvidence();
 
     function analyze(landmarks) {
         const validation = validateLandmarks(
@@ -183,6 +185,7 @@ export function createJumpingJackAnalyzer(
         exerciseState.validReps++;
 
         const record = {
+            measurementVersion: 2,
             rep: exerciseState.repetitions,
             quality,
             duration: Number(duration.toFixed(2)),
@@ -207,6 +210,7 @@ export function createJumpingJackAnalyzer(
         };
         let repCompleted = false;
         let record = null;
+        evidence.observe(data, metrics);
 
         if (!data?.hasRequiredLandmarks) {
             return {
@@ -281,7 +285,8 @@ export function createJumpingJackAnalyzer(
         }
         else if (exerciseState.state === "CLOSING") {
             if (data.isClosed) {
-                record = completeRep(metrics, timestamp);
+                record = completeRep(evidence.metrics(metrics), timestamp);
+                evidence.reset();
                 repCompleted = record !== null;
                 exerciseState.state = "CLOSED";
                 score = metrics.quality;
@@ -320,10 +325,12 @@ export function createJumpingJackAnalyzer(
     }
 
     function reset() {
+        evidence.reset();
         exerciseState = createInitialState();
     }
 
     function resetMovementState() {
+        evidence.reset();
         exerciseState.state = "CLOSED";
         exerciseState.currentRepStartTime = null;
     }

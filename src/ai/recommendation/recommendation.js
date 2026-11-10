@@ -1,5 +1,9 @@
 const TREND_TOLERANCE = 1;
 
+export function getMeasurementVersion(session) {
+    return session?.measurementVersion ?? session?.repRecords?.[0]?.measurementVersion ?? 1;
+}
+
 
 function metricValue(session, key) {
     return typeof session?.[key] === "number"
@@ -10,6 +14,7 @@ function metricValue(session, key) {
 
 function getTrend(currentSession, history) {
     const qualityHistory = history
+        .filter(session => session.exerciseId === currentSession.exerciseId && session.completedAt !== null && getMeasurementVersion(session) === getMeasurementVersion(currentSession))
         .map(session => metricValue(session, "quality"))
         .filter(value => value !== null);
 

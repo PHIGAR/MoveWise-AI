@@ -8,6 +8,7 @@ import {
     saveBattleCredentials,
     selectBattleExercise,
     setBattleReady,
+    leaveBattleRoom,
     submitBattleMetrics,
     subscribeToBattle
 } from "../api/battleApi.js";
@@ -17,6 +18,8 @@ import { getAvailableExercises } from "../exercises/exerciseRegistry.js";
 export function createBattleUI({
     screen,
     showScreen,
+    onPrepare,
+    onCancel,
     onStart,
     onResult
 }) {
@@ -42,6 +45,16 @@ export function createBattleUI({
     let statusTimer = null;
     let actionPending = false;
     let connectionError = "";
+    let readyIntent = false;
+    let trackingValid = false;
+    let readyTimer = null;
+    let readyRequest = false;
+    let serverOffset = 0;
+    let pendingMetrics = null;
+    let metricsUpload = null;
+    let lastPlayersSignature = '';
+    let lastExerciseSignature = '';
+    let connectionGeneration = 0;
 
     function setMessage(text, isError = false) {
         connectionError = isError ? text : "";
@@ -64,6 +77,8 @@ export function createBattleUI({
     }
 
     function connect(nextCredentials, initialSnapshot) {
+        const generation = ++connectionGeneration;
+        readyRequest = false; pendingMetrics = null; metricsUpload = null;
         credentials = nextCredentials;
         currentState = initialSnapshot ?? null;
         activeStarted = false;
@@ -72,14 +87,20 @@ export function createBattleUI({
         if (unsubscribe) unsubscribe();
         unsubscribe = subscribeToBattle(
             credentials,
-            updateState,
-            error => setMessage(error.message, true)
+            state => { if (generation === connectionGeneration) updateState(state); },
+            error => { if (generation === connectionGeneration) setMessage(error.message, true); }
         );
         if (initialSnapshot) updateState(initialSnapshot);
     }
 
     function updateState(state) {
+        if (currentState?.revision > state.revision) return;
+        if (Number.isFinite(state.serverNow)) serverOffset = state.serverNow - Date.now();
         currentState = state;
+        const duration = document.getElementById('battle-duration');
+        if (duration) { duration.value = String(state.durationSeconds); duration.disabled = state.status !== 'result'; }
+        const localButton = document.getElementById('battle-local-button');
+        if (localButton) localButton.hidden = state.status !== 'result';
         if (setup) setup.hidden = state.status !== "result";
         if (roomCodeElement) {
             roomCodeElement.textContent = state.roomCode;
@@ -92,11 +113,11 @@ export function createBattleUI({
             statusElement.textContent = statusText(state);
         }
         clearInterval(statusTimer);
-        if (liveHud) liveHud.hidden = state.status !== "active";
+        if (liveHud) liveHud.hidden = !["ready", "countdown", "active"].includes(state.status) || !readyIntent;
         if (["countdown", "active"].includes(state.status)) {
             const tick = () => {
                 if (statusElement) statusElement.textContent = statusText(state);
-                if (state.status === "active") renderLiveMatch(state);
+                renderLiveMatch(state);
             };
             tick();
             statusTimer = setInterval(tick, 250);
@@ -107,10 +128,13 @@ export function createBattleUI({
             onStart(state);
         }
         if (state.status === "result" && !resultShown) {
+            clearInterval(readyTimer);
+            readyIntent = trackingValid = false;
             resultShown = true;
             renderResult(state);
             onResult(state);
             clearBattleCredentials();
+            unsubscribe?.(); unsubscribe = null;
         }
     }
 
@@ -124,13 +148,20 @@ export function createBattleUI({
         document.getElementById("online-other-score").textContent = `${outcome.opponentScore} คะแนน`;
         document.getElementById("online-own-reps").textContent = `${own.repetitions} ครั้ง`;
         document.getElementById("online-other-reps").textContent = `${other.repetitions} ครั้ง`;
-        const seconds = Math.max(0, Math.ceil((state.startedAt + state.durationSeconds * 1000 - Date.now()) / 1000));
+        const now = Date.now() + serverOffset;
+        const seconds = state.status === 'countdown'
+            ? Math.max(0, Math.ceil((state.countdownStartsAt - now) / 1000))
+            : state.status === 'ready' ? state.durationSeconds
+            : Math.max(0, Math.ceil((state.startedAt + state.durationSeconds * 1000 - now) / 1000));
         document.getElementById("online-match-timer").textContent = `${String(Math.floor(seconds / 60)).padStart(2,"0")}:${String(seconds % 60).padStart(2,"0")}`;
-        document.getElementById("online-match-status").textContent = connectionError || (other.connected ? "กำลังแข่งขัน · คะแนนสด" : "รอคู่แข่งเชื่อมต่อใหม่");
+        document.getElementById("online-match-status").textContent = connectionError || (state.status === 'countdown' ? `เริ่มใน ${seconds}` : state.status === 'ready' ? (trackingValid ? 'พร้อม · รออีกคน' : 'อยู่ในเฟรมให้มั่นคง 2 วินาที') : (other.connected ? "กำลังแข่งขัน · คะแนนสด" : "รอคู่แข่งเชื่อมต่อใหม่"));
     }
 
     function renderPlayers(state) {
         if (!playersElement) return;
+        const signature = JSON.stringify(state.players);
+        if (signature === lastPlayersSignature) return;
+        lastPlayersSignature = signature;
         playersElement.replaceChildren(...state.players.map((player, index) => {
             const item = document.createElement("div");
             item.className = "battle-player";
@@ -151,12 +182,15 @@ export function createBattleUI({
 
     function renderExercises(state) {
         if (!exerciseSelect) return;
+        const signature = JSON.stringify([state.roomCode, state.status, state.exerciseId, state.players.map(player => [player.id, player.exerciseId, player.ready]), readyIntent]);
+        if (signature === lastExerciseSignature) return;
+        lastExerciseSignature = signature;
         const choosing = [
             "exercise-selection",
             "ready"
         ].includes(state.status);
         exerciseSelect.hidden = !choosing;
-        readyButton.hidden = state.status !== "ready";
+        readyButton.hidden = state.status !== "ready" && !(state.status === 'active' && !readyIntent);
         exerciseSelect.replaceChildren(...getAvailableExercises().map(exercise => {
             const button = document.createElement("button");
             button.type = "button";
@@ -185,6 +219,7 @@ export function createBattleUI({
                 ? "ยกเลิกความพร้อม"
                 : "พร้อมเริ่ม";
             readyButton.disabled = !state.exerciseId;
+            if (state.status === 'active' && !readyIntent) readyButton.textContent = 'เปิดกล้องเพื่อกลับเข้าการฝึก';
         }
     }
 
@@ -237,7 +272,7 @@ export function createBattleUI({
     });
 
     createButton?.addEventListener("click", () => runAction(async () => {
-        const result = await createBattleRoom();
+        const result = await createBattleRoom(Number(document.getElementById('battle-duration').value));
         connect(result, result.snapshot);
         showBattle();
     }));
@@ -249,10 +284,14 @@ export function createBattleUI({
         showBattle();
     }));
     readyButton?.addEventListener("click", () => runAction(async () => {
-        const player = currentState?.players.find(item =>
-            item.id === credentials?.playerId
-        );
-        updateState(await setBattleReady(credentials, !player?.ready));
+        readyIntent = true;
+        trackingValid = false;
+        if (!await onPrepare(currentState)) { readyIntent = false; onCancel?.(); throw new Error('เตรียมกล้องไม่สำเร็จ โปรดลองอีกครั้ง'); }
+        if (currentState.status === 'active') onStart(currentState);
+        if (liveHud) liveHud.hidden = false;
+        renderLiveMatch(currentState);
+        clearInterval(readyTimer);
+        readyTimer = setInterval(sendTracking, 400);
     }));
     homeButton?.addEventListener("click", () => showScreen(
         document.getElementById("home-screen")
@@ -266,16 +305,64 @@ export function createBattleUI({
         catch (error) { clearBattleCredentials(); credentials = null; throw error; }
     }));
 
-    return {
+    const controller = {
         open: showBattle,
         reportMetrics(metrics) {
             if (!credentials || currentState?.status !== "active") return;
-            return submitBattleMetrics(credentials, metrics);
+            const generation = connectionGeneration;
+            pendingMetrics = metrics;
+            metricsUpload ??= (async () => {
+                while (generation === connectionGeneration && pendingMetrics && credentials && currentState?.status === 'active') {
+                    const next = pendingMetrics; pendingMetrics = null;
+                    try { await submitBattleMetrics(credentials, next); }
+                    catch (error) { if (generation === connectionGeneration) setMessage('ส่งคะแนนสะดุด กำลังลองใหม่…', true); throw error; }
+                }
+            })().finally(() => { if (generation === connectionGeneration) metricsUpload = null; });
+            return metricsUpload;
         },
         isActive() {
             return currentState?.status === "active";
+        },
+        tracking(valid) {
+            if (valid === trackingValid) return;
+            trackingValid = valid;
+            void sendTracking();
+            if (currentState && readyIntent) renderLiveMatch(currentState);
+        },
+        async cancel() {
+            connectionGeneration++;
+            readyRequest = false; metricsUpload = null;
+            clearInterval(readyTimer);
+            readyIntent = trackingValid = false;
+            pendingMetrics = null;
+            const leaving = credentials;
+            credentials = null;
+            unsubscribe?.(); unsubscribe = null;
+            clearInterval(statusTimer);
+            clearBattleCredentials();
+            if (liveHud) liveHud.hidden = true;
+            onCancel?.();
+            if (leaving) { try { await leaveBattleRoom(leaving); } catch (error) { setMessage(error.message, true); } }
+            currentState = null;
+            if (setup) setup.hidden = false;
+            if (lobby) lobby.hidden = true;
+            document.getElementById('battle-duration').disabled = false;
+            document.getElementById('battle-local-button').hidden = false;
         }
     };
+    document.getElementById('battle-leave')?.addEventListener('click', () => void controller.cancel());
+    return controller;
+
+    async function sendTracking() {
+        if (!readyIntent || !credentials || readyRequest || !['ready', 'countdown'].includes(currentState?.status)) return;
+        const generation = connectionGeneration;
+        readyRequest = true;
+        try {
+            const state = await setBattleReady(credentials, trackingValid && !document.hidden);
+            if (readyIntent && generation === connectionGeneration) updateState(state);
+        } catch (error) { if (generation === connectionGeneration) setMessage(error.message, true); }
+        finally { if (generation === connectionGeneration) readyRequest = false; }
+    }
 }
 
 

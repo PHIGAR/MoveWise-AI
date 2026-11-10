@@ -33,7 +33,12 @@ export function createBattleService(options = {}) {
         options.resultTtlMs ?? BATTLE_RESULT_TTL_MS;
     let shuttingDown = false;
 
-    function createRoom() {
+    function createRoom(settings = {}) {
+        if (!settings || typeof settings !== 'object' || Array.isArray(settings)) throw serviceError(400, 'Room settings must be an object');
+        const requestedDuration = settings.durationSeconds ?? durationSeconds;
+        if (!Number.isFinite(requestedDuration) || requestedDuration < 0.01 || requestedDuration > 1800) {
+            throw serviceError(400, "durationSeconds must be from 0.01 to 1800");
+        }
         let code;
         do {
             code = createCode();
@@ -45,7 +50,7 @@ export function createBattleService(options = {}) {
             code,
             now() + roomTtlMs,
             countdownSeconds,
-            durationSeconds
+            requestedDuration
         );
         room.state = transitionBattleState(
             room.state,
@@ -127,15 +132,19 @@ export function createBattleService(options = {}) {
         if (typeof ready !== "boolean") {
             throw serviceError(400, "ready must be a boolean");
         }
+        room.players.get(playerId).readyAt = ready ? now() : null;
+        // A heartbeat refreshes the tracking lease without restarting the countdown.
+        if (room.state.status === "countdown" && ready) return snapshot(room);
         room.state = transitionBattleState(
             room.state,
             "SET_READY",
             { playerId, ready }
         );
+        if (!ready) clearTimeout(room.timers.countdown);
 
         if (
             room.state.players.length === 2 &&
-            room.state.players.every(player => player.ready)
+            room.state.players.every(player => player.ready && player.connected)
         ) {
             const countdownStartsAt =
                 now() + countdownSeconds * 1000;
@@ -147,18 +156,23 @@ export function createBattleService(options = {}) {
             clearTimeout(room.timers.countdown);
             room.timers.countdown = setTimeout(() => {
                 if (room.state.status !== "countdown") return;
+                const stale = room.state.players.find(item => !item.connected || now() - room.players.get(item.id).readyAt > 1500);
+                if (stale) {
+                    room.state = transitionBattleState(room.state, 'SET_READY', { playerId: stale.id, ready: false });
+                    publish(room); return;
+                }
                 room.state = transitionBattleState(
                     room.state,
                     "START_BATTLE",
-                    { startedAt: now() }
+                    { startedAt: countdownStartsAt }
                 );
                 room.expiresAt = now() +
-                    durationSeconds * 1000 +
+                    room.durationSeconds * 1000 +
                     disconnectTtlMs;
                 publish(room);
                 room.timers.duration = setTimeout(
                     () => finish(room, "time"),
-                    durationSeconds * 1000
+                    room.durationSeconds * 1000
                 );
                 room.timers.duration.unref?.();
             }, countdownSeconds * 1000);
@@ -189,11 +203,23 @@ export function createBattleService(options = {}) {
         return snapshot(room);
     }
 
+    function leave(code, playerId, token) {
+        const room = authorizedRoom(code, playerId, token);
+        if (room.state.status === 'active') finish(room, 'opponent-disconnected', playerId);
+        else if (room.state.status === 'countdown') {
+            clearTimeout(room.timers.countdown);
+            room.state = transitionBattleState(room.state, 'SET_READY', { playerId, ready: false });
+        }
+        disconnect(room, playerId);
+        return snapshot(room);
+    }
+
     function disconnect(room, playerId) {
         if (shuttingDown) return;
         const player = room.players.get(playerId);
         if (!player || room.state.status === "result") return;
         player.connected = false;
+        clearTimeout(room.timers.countdown);
         if (room.state.players.some(item => item.id === playerId)) {
             room.state = transitionBattleState(
                 room.state,
@@ -228,7 +254,7 @@ export function createBattleService(options = {}) {
         const timer = setTimeout(() => {
             if (player.connected || room.state.status === "result") return;
             if (room.state.status === "active") {
-                finish(room, "opponent-disconnected");
+                finish(room, "opponent-disconnected", playerId);
                 return;
             }
             expireRoom(room);
@@ -237,15 +263,16 @@ export function createBattleService(options = {}) {
         room.disconnectTimers.set(playerId, timer);
     }
 
-    function finish(room, reason) {
+    function finish(room, reason, forfeitingPlayerId = null) {
         if (room.state.status !== "active") return;
         clearTimeout(room.timers.duration);
         const first = room.players.get(room.state.players[0]?.id);
         const second = room.players.get(room.state.players[1]?.id);
-        const outcome = calculateBattleOutcome(
+        let outcome = calculateBattleOutcome(
             first?.metrics ?? emptyMetrics(),
             second?.metrics ?? emptyMetrics()
         );
+        if (forfeitingPlayerId) outcome = { ...outcome, result: forfeitingPlayerId === room.state.players[0]?.id ? 'loss' : 'win' };
         room.outcome = outcome;
         room.state = transitionBattleState(
             room.state,
@@ -284,6 +311,21 @@ export function createBattleService(options = {}) {
 
     const cleanupTimer = setInterval(sweepExpiredRooms, 30_000);
     cleanupTimer.unref?.();
+    // Missing camera frames, hidden tabs and lost network heartbeats revoke readiness.
+    const readinessTimer = setInterval(() => {
+        for (const room of rooms.values()) {
+            if (!["ready", "countdown"].includes(room.state.status)) continue;
+            for (const item of room.state.players) {
+                const player = room.players.get(item.id);
+                if (item.ready && (player.readyAt === null || now() - player.readyAt > 1500)) {
+                    clearTimeout(room.timers.countdown);
+                    room.state = transitionBattleState(room.state, "SET_READY", { playerId: item.id, ready: false });
+                    publish(room);
+                }
+            }
+        }
+    }, 250);
+    readinessTimer.unref?.();
 
     return {
         createRoom,
@@ -293,8 +335,10 @@ export function createBattleService(options = {}) {
         selectExercise,
         setReady,
         submitMetrics,
+        leave,
         close() {
             shuttingDown = true;
+            clearInterval(readinessTimer);
             clearInterval(cleanupTimer);
             for (const room of rooms.values()) expireRoom(room);
         }
@@ -335,6 +379,7 @@ function makeRoom(
         disconnectTimers: new Map(),
         timers: {},
         outcome: null,
+        revision: 0,
         countdownSeconds,
         durationSeconds,
         expiresAt
@@ -365,6 +410,8 @@ function credentials(room, playerId, token) {
 function snapshot(room) {
     return {
         ...room.state,
+        revision: room.revision,
+        serverNow: Date.now(),
         players: room.state.players.map(item => {
             const player = room.players.get(item.id);
             return {
@@ -434,6 +481,7 @@ function emptyMetrics() {
 
 
 function publish(room) {
+    room.revision++;
     const event = snapshot(room);
     for (const responses of room.connections.values()) {
         for (const response of responses) writeEvent(response, event);

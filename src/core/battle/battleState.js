@@ -111,7 +111,12 @@ export function transitionBattleState(state, event, payload = {}) {
             break;
         }
         case "SET_READY": {
+            if (state.status === "countdown" && payload.ready === false) {
+                next.status = "ready";
+                next.countdownStartsAt = null;
+            } else {
             requireStatus(state, "ready", event);
+            }
             const player = requirePlayer(next, payload.playerId);
             player.ready = Boolean(payload.ready);
             break;
@@ -165,14 +170,8 @@ export function transitionBattleState(state, event, payload = {}) {
             player.connected = false;
             player.ready = false;
             if (state.status === "countdown") {
-                next.status = "finished";
-                next.finishedAt = Number.isFinite(payload.disconnectedAt)
-                    ? payload.disconnectedAt
-                    : Date.now();
-                next.reason = "opponent-disconnected";
-                next.winnerId = next.players.find(item =>
-                    item.id !== payload.playerId && item.connected
-                )?.id ?? null;
+                next.status = "ready";
+                next.countdownStartsAt = null;
             }
             break;
         }

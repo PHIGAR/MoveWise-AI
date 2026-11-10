@@ -1,3 +1,4 @@
+import { createRepEvidence } from "./repEvidence.js";
 import {
     calculateAngle,
     normalizeROM
@@ -81,6 +82,7 @@ export function createLungeAnalyzer(config = {}) {
     };
 
     let exerciseState = createInitialState();
+    const evidence = createRepEvidence();
 
     function analyze(landmarks) {
         if (!hasRequiredLandmarks(landmarks)) {
@@ -181,7 +183,7 @@ export function createLungeAnalyzer(config = {}) {
         });
         const consistency = calculateConsistency();
         const quality = Math.round(
-            baseQuality.score * 0.85 + consistency * 0.15
+            consistency === null ? baseQuality.score : baseQuality.score * 0.85 + consistency * 0.15
         );
 
         return {
@@ -208,7 +210,7 @@ export function createLungeAnalyzer(config = {}) {
 
     function calculateConsistency() {
         if (exerciseState.repStartTimes.length < 2) {
-            return 100;
+            return null;
         }
 
         const average = exerciseState.repStartTimes.reduce(
@@ -274,6 +276,7 @@ export function createLungeAnalyzer(config = {}) {
         exerciseState.repStartTimes.push(duration);
 
         const record = {
+            measurementVersion: 2,
             rep: exerciseState.repetitions,
             activeLeg: exerciseState.activeLeg,
             quality: metrics.quality,
@@ -308,6 +311,7 @@ export function createLungeAnalyzer(config = {}) {
         };
         let repCompleted = false;
         let record = null;
+        evidence.observe(movement, metrics);
 
         updateRepMetrics(movement);
 
@@ -377,7 +381,8 @@ export function createLungeAnalyzer(config = {}) {
             };
 
             if (movement.isStanding) {
-                record = completeRep(metrics, timestamp);
+                record = completeRep(evidence.metrics(metrics), timestamp);
+                evidence.reset();
                 repCompleted = record !== null;
                 exerciseState.state = "STANDING";
                 feedback = {
@@ -405,10 +410,12 @@ export function createLungeAnalyzer(config = {}) {
     }
 
     function reset() {
+        evidence.reset();
         exerciseState = createInitialState();
     }
 
     function resetMovementState() {
+        evidence.reset();
         exerciseState.state = "STANDING";
         exerciseState.activeLeg = null;
         exerciseState.currentRepStartTime = null;

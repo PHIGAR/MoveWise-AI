@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-10",
+  "baselineCommit": "d151ce6fabcaec8ee35c2c43320be26f898070c9",
+  "model": "pose_landmarker_lite.task",
+  "sdk": "@mediapipe/tasks-vision@0.10.32",
+  "realModelMethod": "Same browser, 1280x800 viewport, generated non-person 640x480 video, CPU delegate, sequential warmed approximately 10-second windows, 20 FPS cap. No physical camera or exercise-accuracy validation.",
+  "before": {
+    "seconds": 10.065200000047684,
+    "frames": 164,
+    "mutations": 1804,
+    "meanTimerLagMs": 10.848000001907348,
+    "maxTimerLagMs": 78.09999996423721,
+    "heapMB": 14.987579345703125,
+    "startupMs": 1087.6000000238419,
+    "meanProcessingMs": 38.18475610126809,
+    "meanInferenceMs": 37.89634146377808,
+    "execution": "main-thread"
+  },
+  "after": {
+    "seconds": 10.033,
+    "frames": 116,
+    "mutations": 0,
+    "meanTimerLagMs": 1.4529999995231628,
+    "maxTimerLagMs": 22.399999976158142,
+    "heapMB": 10.287480354309082,
+    "startupMs": 1639.300000011921,
+    "meanProcessingMs": 67.99741379608368,
+    "meanInferenceMs": 65.68275861801773,
+    "execution": "worker",
+    "workerFallback": null
+  },
+  "syntheticUI": {
+    "method": "Earlier UI-refactoring sample using generated squat landmarks and no MediaPipe, approximately 10 active-workout seconds, default 20 FPS cap.",
+    "before": {
+      "seconds": 10.0006,
+      "frames": 173,
+      "mutations": 634,
+      "startupMs": 4.8,
+      "meanProcessingMs": 0.5696335073,
+      "repFeedbackMs": 1,
+      "heapMB": 6.7800722122,
+      "meanTimerLagMs": 1.512
+    },
+    "after": {
+      "seconds": 10.0102,
+      "frames": 170,
+      "mutations": 112,
+      "startupMs": 9.8,
+      "meanProcessingMs": 0.2803333324,
+      "repFeedbackMs": 0.7,
+      "heapMB": 8.9032964706,
+      "meanTimerLagMs": 2.814
+    },
+    "inferenceCapAlternatives": [
+      {
+        "fpsCap": 15,
+        "seconds": 10.0045,
+        "frames": 137,
+        "mutations": 108
+      },
+      {
+        "fpsCap": 30,
+        "seconds": 10.0972,
+        "frames": 286,
+        "mutations": 112
+      }
+    ]
+  },
+  "gpu": {
+    "selectedByDefault": false,
+    "measured": false,
+    "outcome": "Explicit GPU probe made the verification browser unresponsive; no GPU performance or compatibility claim is made. CPU worker remains the default."
+  },
+  "cpuUsage": null,
+  "totalProcessMemory": null,
+  "limits": "Browser timer lateness is a responsiveness proxy. Main JS heap excludes worker, WASM and GPU allocations. Startup cache state was not controlled. A single sample is not a statistically robust device benchmark."
+}

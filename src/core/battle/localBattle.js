@@ -91,6 +91,11 @@ export function assignLocalBattlePoses(
             Number.isFinite(firstCenter) &&
             Number.isFinite(secondCenter)
         ) {
+            const distances = [Math.abs(candidates[0].centerX - firstCenter), Math.abs(candidates[0].centerX - secondCenter)];
+            // Refuse ambiguous identity after occlusion rather than crediting the wrong athlete.
+            if (Math.abs(distances[0] - distances[1]) < 0.08 || Math.min(...distances) > 0.2) {
+                return { players, centers, detectedCount: 1 };
+            }
             const playerIndex =
                 Math.abs(candidates[0].centerX - firstCenter) <=
                 Math.abs(candidates[0].centerX - secondCenter)
@@ -110,6 +115,9 @@ export function assignLocalBattlePoses(
     const [first, second] = candidates
         .slice(0, 2)
         .sort((a, b) => a.centerX - b.centerX);
+    if (!hasDistinctLocalBattlePlayers([first.centerX, second.centerX])) {
+        return { players, centers, detectedCount: candidates.length };
+    }
     const [previousFirst, previousSecond] = previousCenters;
     let firstBelongsToPlayerOne = true;
 
@@ -138,6 +146,9 @@ export function assignLocalBattlePoses(
 
     const playerOne = firstBelongsToPlayerOne ? first : second;
     const playerTwo = firstBelongsToPlayerOne ? second : first;
+    if ([playerOne, playerTwo].some((candidate, index) => Number.isFinite(previousCenters[index]) && Math.abs(candidate.centerX - previousCenters[index]) > 0.2)) {
+        return { players, centers, detectedCount: candidates.length };
+    }
     players[0] = playerOne.landmarks;
     players[1] = playerTwo.landmarks;
     centers[0] = playerOne.centerX;

@@ -24,7 +24,7 @@ function createInitialState() {
         attempts: 0,
         validReps: 0,
         lastRepTime: null,
-        rhythm: 0,
+        rhythm: null,
         repRecords: [],
         qualityScores: []
     };
@@ -222,7 +222,7 @@ export function createSixSevenAnalyzer(config = {}) {
                 };
             }
             else if (!exerciseState.activeEndpoint) {
-                trackInitialEndpoint(endpoint);
+                trackInitialEndpoint(endpoint, timestamp);
                 feedback = {
                     type: "movement",
                     severity: "info",
@@ -324,7 +324,7 @@ export function createSixSevenAnalyzer(config = {}) {
         return null;
     }
 
-    function trackInitialEndpoint(endpoint) {
+    function trackInitialEndpoint(endpoint, timestamp) {
         if (exerciseState.candidateEndpoint !== endpoint) {
             exerciseState.candidateEndpoint = endpoint;
             exerciseState.candidateFrames = 1;
@@ -340,6 +340,7 @@ export function createSixSevenAnalyzer(config = {}) {
             settings.stableFrames
         ) {
             exerciseState.activeEndpoint = endpoint;
+            exerciseState.lastRepTime = timestamp;
             exerciseState.candidateEndpoint = null;
             exerciseState.candidateFrames = 0;
             exerciseState.state = endpoint;
@@ -364,7 +365,7 @@ export function createSixSevenAnalyzer(config = {}) {
             ? null
             : (timestamp - exerciseState.lastRepTime) / 1000;
         const rhythm = interval === null
-            ? 100
+            ? null
             : Math.round(
                 Math.max(
                     0,
@@ -375,7 +376,7 @@ export function createSixSevenAnalyzer(config = {}) {
             );
         const symmetry = Math.round(movement.symmetry);
         const quality = Math.round(
-            (100 + rhythm + symmetry) / 3
+            rhythm === null ? (100 + symmetry) / 2 : (100 + rhythm + symmetry) / 3
         );
 
         exerciseState.repetitions++;
@@ -385,6 +386,7 @@ export function createSixSevenAnalyzer(config = {}) {
         exerciseState.qualityScores.push(quality);
 
         const record = {
+            measurementVersion: 2,
             rep: exerciseState.repetitions,
             endpoint: movement.endpoint,
             alternation: 100,
@@ -408,8 +410,9 @@ export function createSixSevenAnalyzer(config = {}) {
             ? Math.round(
                 (exerciseState.validReps / exerciseState.attempts) * 100
             )
-            : 0;
+            : null;
         const rhythm = exerciseState.rhythm;
+        const available = [alternation, rhythm, symmetry].filter(Number.isFinite);
         return {
             alternation,
             rhythm,
@@ -420,9 +423,7 @@ export function createSixSevenAnalyzer(config = {}) {
             rightLevel: movement?.hasRequiredLandmarks
                 ? movement.rightLevel
                 : 0,
-            quality: Math.round(
-                (alternation + rhythm + symmetry) / 3
-            )
+            quality: Math.round(available.reduce((sum, value) => sum + value, 0) / available.length)
         };
     }
 
@@ -436,7 +437,7 @@ export function createSixSevenAnalyzer(config = {}) {
         exerciseState.candidateEndpoint = null;
         exerciseState.candidateFrames = 0;
         exerciseState.lastRepTime = null;
-        exerciseState.rhythm = 0;
+        exerciseState.rhythm = null;
     }
 
     function getState() {

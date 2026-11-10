@@ -86,3 +86,17 @@
 .online-match-clock strong{color:var(--ink);font-size:20px}
 @media(max-width:600px){.online-battle-hud{padding:12px;gap:10px}.online-battle-hud>div{display:grid;gap:2px}.online-battle-hud>div:last-child{text-align:right}.online-battle-hud strong{font-size:16px}.online-battle-hud small,.online-battle-hud span{font-size:9px}.online-match-clock{max-width:100px}}
 .local-battle-camera .exercise-timer{display:none}
+/* Readiness and scores live outside the video, leaving the full camera unobstructed. */
+.local-battle-overlay{position:static;inset:auto;padding:0 0 14px;color:var(--ink);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px 14px;pointer-events:auto}
+.local-battle-overlay-header{grid-column:1/3;grid-row:1;background:none;padding:0;color:var(--muted);align-self:center;flex-wrap:wrap;font-size:11px}
+.local-battle-live{display:contents}.local-battle-live>div{grid-column:1;grid-row:2;background:none;border-radius:0;padding:8px 0;color:var(--ink)}
+.local-battle-live>div:last-child{grid-column:3}.local-battle-live b{color:var(--ink)}.local-battle-live span{color:var(--muted)}.local-battle-live>div>strong{color:var(--accent)}.local-battle-live>div:last-child>strong{color:var(--accent)}
+.local-battle-timer{grid-column:2;grid-row:2;background:none;color:var(--ink);margin:0;padding:8px 0;font-size:24px;font-variant-numeric:tabular-nums}
+.local-battle-guides{grid-column:1/-1;grid-row:3;margin:0}.local-battle-guides>div{background:none;padding:0}.local-battle-guides strong,.local-battle-guides span{color:var(--muted);font-size:11px}
+#local-battle-instruction{grid-column:1/-1;background:none;color:var(--accent);margin:0;padding:0;max-width:100%;font-size:13px;justify-self:center}
+.local-battle-countdown{position:static;inset:auto;grid-column:1/-1;color:var(--primary);font-size:28px;text-shadow:none}.local-battle-countdown:empty{display:none}
+#local-battle-exit{grid-column:3;grid-row:1;justify-self:end;align-self:center;margin:0;background:var(--surface);color:var(--ink);border:1px solid var(--line);font-size:12px}
+.local-battle-camera .camera-card{aspect-ratio:16/9;min-height:240px;max-height:70dvh}.local-battle-camera .camera-section{max-width:none}
+.battle-duration-label{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px;margin:18px 0}.battle-duration-label small{width:100%;font-size:11px;color:var(--muted)}
+@media(max-width:600px){.local-battle-overlay{gap:6px 8px}.local-battle-live>div{padding:4px 0}.local-battle-live b{font-size:18px}.local-battle-live span{font-size:10px}.local-battle-timer{font-size:20px}.local-battle-camera .camera-card{aspect-ratio:4/3;min-height:220px;max-height:60dvh}.local-battle-guides strong{font-size:10px}}
+.local-battle-camera #webcam,.local-battle-camera #output_canvas{transform:none}
